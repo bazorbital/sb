@@ -1,0 +1,25 @@
+.smooth-booking-schema-status {
+    border: 1px solid #ccd0d4;
+    padding: 1em;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.smooth-booking-schema-status ul {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+.smooth-booking-schema-status .status-ok {
+    color: #007cba;
+}
+
+.smooth-booking-schema-status .status-missing {
+    color: #d63638;
+    font-weight: 600;
+}
+
+.smooth-booking-error {
+    color: #d63638;
+    font-weight: 600;
+}

@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Smooth Booking 0.1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: AI Assistant\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Placeholder POT file. Generate translations with wp i18n make-pot.
