@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ruleset name="Smooth Booking Coding Standards">
+    <description>WordPress coding standards for the Smooth Booking plugin.</description>
+    <file>./smooth-booking.php</file>
+    <file>./src</file>
+    <rule ref="WordPress"/>
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+    <config name="testVersion" value="8.1-"/>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+</ruleset>
