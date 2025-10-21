@@ -186,6 +186,11 @@ class EmployeesController {
             'phone'            => $params['phone'] ?? '',
             'specialization'   => $params['specialization'] ?? '',
             'available_online' => $params['available_online'] ?? false,
+            'profile_image_id' => $params['profile_image_id'] ?? 0,
+            'default_color'    => $params['default_color'] ?? '',
+            'visibility'       => $params['visibility'] ?? 'public',
+            'category_ids'     => $params['category_ids'] ?? [],
+            'new_categories'   => $params['new_categories'] ?? '',
         ];
     }
 }

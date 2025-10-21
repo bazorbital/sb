@@ -49,12 +49,41 @@ class SchemaDefinitionBuilder {
                 email VARCHAR(190) NULL,
                 phone VARCHAR(50) NULL,
                 specialization VARCHAR(120) NULL,
+                profile_image_id BIGINT UNSIGNED NULL,
+                default_color CHAR(7) NULL,
+                visibility ENUM(\'public\',\'private\',\'archived\') NOT NULL DEFAULT \'public\',
                 available_online TINYINT(1) NOT NULL DEFAULT 0,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY  (employee_id),
                 UNIQUE KEY email (email)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['employee_categories'] = sprintf(
+            'CREATE TABLE %1$ssmooth_employee_categories (
+                category_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(150) NOT NULL,
+                slug VARCHAR(160) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (category_id),
+                UNIQUE KEY slug (slug)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['employee_category_relationships'] = sprintf(
+            'CREATE TABLE %1$ssmooth_employee_category_relationships (
+                employee_id BIGINT UNSIGNED NOT NULL,
+                category_id BIGINT UNSIGNED NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (employee_id, category_id),
+                KEY category_lookup (category_id, employee_id)
             ) %2$s;',
             $prefix,
             $options

@@ -13,6 +13,7 @@ use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cron\CleanupScheduler;
+use SmoothBooking\Domain\Employees\EmployeeCategoryRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\SchemaStatusService;
@@ -21,6 +22,7 @@ use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
@@ -58,6 +60,15 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( EmployeeCategoryRepositoryInterface::class, static function ( ServiceContainer $container ): EmployeeCategoryRepositoryInterface {
+            global $wpdb;
+
+            return new EmployeeCategoryRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
         $container->singleton( EmployeeRepositoryInterface::class, static function ( ServiceContainer $container ): EmployeeRepositoryInterface {
             global $wpdb;
 
@@ -70,6 +81,7 @@ class ServiceProvider {
         $container->singleton( EmployeeService::class, static function ( ServiceContainer $container ): EmployeeService {
             return new EmployeeService(
                 $container->get( EmployeeRepositoryInterface::class ),
+                $container->get( EmployeeCategoryRepositoryInterface::class ),
                 $container->get( Logger::class )
             );
         } );

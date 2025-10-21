@@ -95,6 +95,7 @@ class Plugin {
 
         add_action( 'admin_post_smooth_booking_save_employee', [ $employees_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
+        add_action( 'admin_post_smooth_booking_restore_employee', [ $employees_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $employees_page, 'enqueue_assets' ] );
     }
 
