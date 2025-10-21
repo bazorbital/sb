@@ -1,0 +1,420 @@
+<?php
+/**
+ * Employees administration screen.
+ *
+ * @package SmoothBooking\Admin
+ */
+
+namespace SmoothBooking\Admin;
+
+use SmoothBooking\Domain\Employees\Employee;
+use SmoothBooking\Domain\Employees\EmployeeService;
+
+/**
+ * Renders and handles the employees management interface.
+ */
+class EmployeesPage {
+    /**
+     * Capability required to manage employees.
+     */
+    public const CAPABILITY = 'manage_options';
+
+    /**
+     * Menu slug used for the employees screen.
+     */
+    public const MENU_SLUG = 'smooth-booking';
+
+    /**
+     * Transient key template for admin notices.
+     */
+    private const NOTICE_TRANSIENT_TEMPLATE = 'smooth_booking_employee_notice_%d';
+
+    /**
+     * @var EmployeeService
+     */
+    private EmployeeService $service;
+
+    /**
+     * Constructor.
+     */
+    public function __construct( EmployeeService $service ) {
+        $this->service = $service;
+    }
+
+    /**
+     * Render the employees admin page.
+     */
+    public function render_page(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have permission to manage employees.', 'smooth-booking' ) );
+        }
+
+        $notice = $this->consume_notice();
+
+        $action      = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( (string) $_GET['action'] ) ) : '';
+        $employee_id = isset( $_GET['employee_id'] ) ? absint( $_GET['employee_id'] ) : 0;
+
+        $editing_employee = null;
+        $editing_error    = null;
+
+        if ( 'edit' === $action && $employee_id > 0 ) {
+            $employee = $this->service->get_employee( $employee_id );
+            if ( is_wp_error( $employee ) ) {
+                $editing_error = $employee->get_error_message();
+            } else {
+                $editing_employee = $employee;
+            }
+        }
+
+        $employees = $this->service->list_employees();
+
+        ?>
+        <div class="wrap smooth-booking-employees-wrap">
+            <h1><?php echo esc_html__( 'Employees', 'smooth-booking' ); ?></h1>
+
+            <?php if ( $notice ) : ?>
+                <div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
+                    <p><?php echo esc_html( $notice['message'] ); ?></p>
+                </div>
+            <?php endif; ?>
+
+            <?php if ( $editing_error ) : ?>
+                <div class="notice notice-error">
+                    <p><?php echo esc_html( $editing_error ); ?></p>
+                </div>
+            <?php endif; ?>
+
+            <div class="smooth-booking-employee-forms">
+                <?php $this->render_employee_form( $editing_employee ); ?>
+            </div>
+
+            <h2><?php echo esc_html__( 'Employee list', 'smooth-booking' ); ?></h2>
+            <p><?php esc_html_e( 'Manage staff members available for booking assignments.', 'smooth-booking' ); ?></p>
+
+            <div class="smooth-booking-employee-table">
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th scope="col"><?php esc_html_e( 'Name', 'smooth-booking' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Email', 'smooth-booking' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Specialization', 'smooth-booking' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Online booking', 'smooth-booking' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Last updated', 'smooth-booking' ); ?></th>
+                            <th scope="col" class="column-actions"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'smooth-booking' ); ?></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ( empty( $employees ) ) : ?>
+                        <tr>
+                            <td colspan="7"><?php esc_html_e( 'No employees have been added yet.', 'smooth-booking' ); ?></td>
+                        </tr>
+                    <?php else : ?>
+                        <?php foreach ( $employees as $employee ) : ?>
+                            <tr>
+                                <td><?php echo esc_html( $employee->get_name() ); ?></td>
+                                <td><?php echo $employee->get_email() ? esc_html( $employee->get_email() ) : esc_html( '—' ); ?></td>
+                                <td><?php echo $employee->get_phone() ? esc_html( $employee->get_phone() ) : esc_html( '—' ); ?></td>
+                                <td><?php echo $employee->get_specialization() ? esc_html( $employee->get_specialization() ) : esc_html( '—' ); ?></td>
+                                <td>
+                                    <?php
+                                    echo $employee->is_available_online()
+                                        ? esc_html__( 'Available', 'smooth-booking' )
+                                        : esc_html__( 'Offline only', 'smooth-booking' );
+                                    ?>
+                                </td>
+                                <td><?php echo esc_html( $this->format_datetime( $employee->get_updated_at() ) ); ?></td>
+                                <td class="smooth-booking-actions-cell">
+                                    <div class="smooth-booking-actions-menu" data-employee-id="<?php echo esc_attr( (string) $employee->get_id() ); ?>">
+                                        <button type="button" class="button button-link smooth-booking-actions-toggle" aria-haspopup="true" aria-expanded="false">
+                                            <span class="dashicons dashicons-ellipsis"></span>
+                                            <span class="screen-reader-text"><?php esc_html_e( 'Open actions menu', 'smooth-booking' ); ?></span>
+                                        </button>
+                                        <ul class="smooth-booking-actions-list" hidden>
+                                            <li>
+                                                <a href="<?php echo esc_url( $this->get_edit_link( $employee->get_id() ) ); ?>">
+                                                    <?php esc_html_e( 'Edit', 'smooth-booking' ); ?>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-delete-form">
+                                                    <?php wp_nonce_field( 'smooth_booking_delete_employee', '_smooth_booking_delete_nonce' ); ?>
+                                                    <input type="hidden" name="action" value="smooth_booking_delete_employee" />
+                                                    <input type="hidden" name="employee_id" value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" />
+                                                    <button type="submit" class="button-link delete-link" data-confirm-message="<?php echo esc_attr( __( 'Are you sure you want to delete this employee?', 'smooth-booking' ) ); ?>">
+                                                        <?php esc_html_e( 'Delete', 'smooth-booking' ); ?>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Handle create and update requests.
+     */
+    public function handle_save(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have permission to manage employees.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth_booking_save_employee', '_smooth_booking_save_nonce' );
+
+        $employee_id = isset( $_POST['employee_id'] ) ? absint( $_POST['employee_id'] ) : 0;
+
+        $data = [
+            'name'            => isset( $_POST['employee_name'] ) ? wp_unslash( (string) $_POST['employee_name'] ) : '',
+            'email'           => isset( $_POST['employee_email'] ) ? wp_unslash( (string) $_POST['employee_email'] ) : '',
+            'phone'           => isset( $_POST['employee_phone'] ) ? wp_unslash( (string) $_POST['employee_phone'] ) : '',
+            'specialization'  => isset( $_POST['employee_specialization'] ) ? wp_unslash( (string) $_POST['employee_specialization'] ) : '',
+            'available_online' => isset( $_POST['employee_available_online'] ) ? wp_unslash( (string) $_POST['employee_available_online'] ) : '0',
+        ];
+
+        $result = $employee_id > 0
+            ? $this->service->update_employee( $employee_id, $data )
+            : $this->service->create_employee( $data );
+
+        if ( is_wp_error( $result ) ) {
+            $this->add_notice( 'error', $result->get_error_message() );
+
+            $redirect = $employee_id > 0
+                ? $this->get_edit_link( $employee_id )
+                : $this->get_base_page();
+
+            wp_safe_redirect( $redirect );
+            exit;
+        }
+
+        $message = $employee_id > 0
+            ? __( 'Employee updated successfully.', 'smooth-booking' )
+            : __( 'Employee created successfully.', 'smooth-booking' );
+
+        $this->add_notice( 'success', $message );
+
+        wp_safe_redirect( $this->get_base_page() );
+        exit;
+    }
+
+    /**
+     * Handle delete requests.
+     */
+    public function handle_delete(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have permission to manage employees.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth_booking_delete_employee', '_smooth_booking_delete_nonce' );
+
+        $employee_id = isset( $_POST['employee_id'] ) ? absint( $_POST['employee_id'] ) : 0;
+
+        if ( 0 === $employee_id ) {
+            $this->add_notice( 'error', __( 'Missing employee identifier.', 'smooth-booking' ) );
+            wp_safe_redirect( $this->get_base_page() );
+            exit;
+        }
+
+        $result = $this->service->delete_employee( $employee_id );
+
+        if ( is_wp_error( $result ) ) {
+            $this->add_notice( 'error', $result->get_error_message() );
+            wp_safe_redirect( $this->get_base_page() );
+            exit;
+        }
+
+        $this->add_notice( 'success', __( 'Employee deleted.', 'smooth-booking' ) );
+        wp_safe_redirect( $this->get_base_page() );
+        exit;
+    }
+
+    /**
+     * Enqueue admin assets for the employees screen.
+     */
+    public function enqueue_assets( string $hook ): void {
+        if ( 'toplevel_page_' . self::MENU_SLUG !== $hook && 'smooth-booking_page_' . self::MENU_SLUG !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'smooth-booking-admin-employees',
+            SMOOTH_BOOKING_PLUGIN_URL . 'assets/css/admin-employees.css',
+            [],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_script(
+            'smooth-booking-admin-employees',
+            SMOOTH_BOOKING_PLUGIN_URL . 'assets/js/admin-employees.js',
+            [ 'jquery' ],
+            SMOOTH_BOOKING_VERSION,
+            true
+        );
+
+        wp_localize_script(
+            'smooth-booking-admin-employees',
+            'SmoothBookingEmployees',
+            [
+                'confirmDelete' => __( 'Are you sure you want to delete this employee?', 'smooth-booking' ),
+            ]
+        );
+    }
+
+    /**
+     * Render the employee form for creating or editing.
+     *
+     * @param Employee|null $employee Employee being edited or null for creation.
+     */
+    private function render_employee_form( ?Employee $employee ): void {
+        $is_edit = null !== $employee;
+
+        $name           = $is_edit ? $employee->get_name() : '';
+        $email          = $is_edit ? ( $employee->get_email() ?? '' ) : '';
+        $phone          = $is_edit ? ( $employee->get_phone() ?? '' ) : '';
+        $specialization = $is_edit ? ( $employee->get_specialization() ?? '' ) : '';
+        $available      = $is_edit ? $employee->is_available_online() : true;
+        ?>
+        <div class="smooth-booking-employee-form-card">
+            <h2><?php echo $is_edit ? esc_html__( 'Edit employee', 'smooth-booking' ) : esc_html__( 'Add new employee', 'smooth-booking' ); ?></h2>
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                <?php wp_nonce_field( 'smooth_booking_save_employee', '_smooth_booking_save_nonce' ); ?>
+                <input type="hidden" name="action" value="smooth_booking_save_employee" />
+                <?php if ( $is_edit ) : ?>
+                    <input type="hidden" name="employee_id" value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" />
+                <?php endif; ?>
+
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-employee-name"><?php esc_html_e( 'Name', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" class="regular-text" id="smooth-booking-employee-name" name="employee_name" value="<?php echo esc_attr( $name ); ?>" required />
+                                <p class="description"><?php esc_html_e( 'Full name as visible to customers.', 'smooth-booking' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-employee-email"><?php esc_html_e( 'Email', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="email" class="regular-text" id="smooth-booking-employee-email" name="employee_email" value="<?php echo esc_attr( $email ); ?>" />
+                                <p class="description"><?php esc_html_e( 'Notifications will be sent to this address.', 'smooth-booking' ); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-employee-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" class="regular-text" id="smooth-booking-employee-phone" name="employee_phone" value="<?php echo esc_attr( $phone ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-employee-specialization"><?php esc_html_e( 'Specialization', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" class="regular-text" id="smooth-booking-employee-specialization" name="employee_specialization" value="<?php echo esc_attr( $specialization ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Online booking availability', 'smooth-booking' ); ?></th>
+                            <td>
+                                <label for="smooth-booking-employee-available-online">
+                                    <input type="checkbox" id="smooth-booking-employee-available-online" name="employee_available_online" value="1" <?php checked( $available ); ?> />
+                                    <?php esc_html_e( 'Employee can be booked online by customers.', 'smooth-booking' ); ?>
+                                </label>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <?php submit_button( $is_edit ? __( 'Update employee', 'smooth-booking' ) : __( 'Add employee', 'smooth-booking' ) ); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Format MySQL datetime values for display.
+     */
+    private function format_datetime( ?string $datetime ): string {
+        if ( empty( $datetime ) ) {
+            return '';
+        }
+
+        $timestamp = strtotime( $datetime );
+        if ( false === $timestamp ) {
+            return $datetime;
+        }
+
+        return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+    }
+
+    /**
+     * Retrieve the edit link for the given employee.
+     */
+    private function get_edit_link( int $employee_id ): string {
+        return add_query_arg(
+            [
+                'page'        => self::MENU_SLUG,
+                'action'      => 'edit',
+                'employee_id' => $employee_id,
+            ],
+            admin_url( 'admin.php' )
+        );
+    }
+
+    /**
+     * Retrieve the base menu page URL.
+     */
+    private function get_base_page(): string {
+        return add_query_arg(
+            [
+                'page' => self::MENU_SLUG,
+            ],
+            admin_url( 'admin.php' )
+        );
+    }
+
+    /**
+     * Persist a flash notice for the current user.
+     */
+    private function add_notice( string $type, string $message ): void {
+        $key = $this->get_notice_key();
+
+        set_transient(
+            $key,
+            [
+                'type'    => $type,
+                'message' => $message,
+            ],
+            MINUTE_IN_SECONDS
+        );
+    }
+
+    /**
+     * Retrieve and clear the current notice.
+     *
+     * @return array{type:string,message:string}|null
+     */
+    private function consume_notice(): ?array {
+        $key    = $this->get_notice_key();
+        $notice = get_transient( $key );
+
+        if ( false !== $notice && is_array( $notice ) && isset( $notice['type'], $notice['message'] ) ) {
+            delete_transient( $key );
+            return $notice;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the transient key for the current user.
+     */
+    private function get_notice_key(): string {
+        return sprintf( self::NOTICE_TRANSIENT_TEMPLATE, get_current_user_id() );
+    }
+}

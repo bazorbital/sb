@@ -26,7 +26,7 @@ class SettingsPage {
     /**
      * Menu slug.
      */
-    private const MENU_SLUG = 'smooth-booking-settings';
+    public const MENU_SLUG = 'smooth-booking-settings';
 
     /**
      * @var SchemaStatusService
@@ -41,12 +41,13 @@ class SettingsPage {
     }
 
     /**
-     * Register admin menu entry.
+     * Register submenu entry under the Smooth Booking menu.
      */
-    public function register_menu(): void {
-        add_options_page(
+    public function register_submenu( string $parent_slug ): void {
+        add_submenu_page(
+            $parent_slug,
             __( 'Smooth Booking Settings', 'smooth-booking' ),
-            __( 'Smooth Booking', 'smooth-booking' ),
+            __( 'Beállítások', 'smooth-booking' ),
             self::CAPABILITY,
             self::MENU_SLUG,
             [ $this, 'render_page' ]
@@ -91,7 +92,7 @@ class SettingsPage {
      * @return array<string, int>
      */
     public function sanitize_settings( $input ): array {
-        $sanitized = [];
+        $sanitized                              = [];
         $sanitized['auto_repair_schema'] = empty( $input['auto_repair_schema'] ) ? 0 : 1;
 
         return $sanitized;

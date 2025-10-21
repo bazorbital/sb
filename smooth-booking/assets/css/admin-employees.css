@@ -1,0 +1,65 @@
+.smooth-booking-employees-wrap .smooth-booking-employee-form-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 24px;
+    max-width: 720px;
+}
+
+.smooth-booking-employee-table .smooth-booking-actions-cell {
+    width: 60px;
+    text-align: right;
+}
+
+.smooth-booking-actions-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.smooth-booking-actions-toggle .dashicons {
+    font-size: 18px;
+}
+
+.smooth-booking-actions-list {
+    position: absolute;
+    right: 0;
+    margin: 0;
+    padding: 8px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.smooth-booking-actions-list li {
+    margin: 0;
+    padding: 0;
+}
+
+.smooth-booking-actions-list a,
+.smooth-booking-actions-list button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 16px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.smooth-booking-actions-list a:hover,
+.smooth-booking-actions-list button:hover,
+.smooth-booking-actions-list a:focus,
+.smooth-booking-actions-list button:focus {
+    background-color: #f0f0f1;
+    outline: none;
+}
+
+.smooth-booking-delete-form .delete-link {
+    color: #b32d2e;
+}
