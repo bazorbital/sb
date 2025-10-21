@@ -108,7 +108,7 @@ class EmployeesPage {
                 </div>
             <?php endif; ?>
 
-            <div id="<?php echo esc_attr( $form_container_id ); ?>" class="smooth-booking-form-drawer smooth-booking-employee-form-drawer<?php echo $should_open_form ? ' is-open' : ''; ?>" data-context="employee-form" data-focus-selector="#smooth-booking-employee-name"<?php echo $should_open_form ? '' : ' hidden'; ?>>
+            <div id="<?php echo esc_attr( $form_container_id ); ?>" class="smooth-booking-form-drawer smooth-booking-employee-form-drawer<?php echo $should_open_form ? ' is-open' : ''; ?>" data-context="employee-form" data-focus-selector="#smooth-booking-employee-name">
                 <?php $this->render_employee_form( $editing_employee, $categories ); ?>
             </div>
 
