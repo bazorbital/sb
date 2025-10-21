@@ -5,7 +5,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 ## Features
 - Automatic schema installation and upgrades with `dbDelta()`
 - Schema health overview and configuration page under **Smooth Booking → Settings**
-- Employee and service directories with profile images, configurable colors, visibility controls, category/tag assignment, and soft-delete/restore actions
+- Employee and service directories with profile images, configurable colors, visibility controls, category/tag assignment, soft-delete/restore actions, and 2025-ready admin headers with on-demand creation/edit drawers
 - Rich services form with General/Time/Additional tabs, provider preference logic, color picker, payment method selection, online meeting integration, and customer booking constraints
 - REST API endpoints at `/wp-json/smooth-booking/v1/schema-status` and `/wp-json/smooth-booking/v1/employees`
 - REST API endpoint suite at `/wp-json/smooth-booking/v1/services` for listing, creating, updating, deleting, and restoring services
@@ -21,8 +21,8 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 3. Activate **Smooth Booking** from the Plugins screen or via WP-CLI: `wp plugin activate smooth-booking`.
 
 ## Usage
-- Visit **Smooth Booking → Services** to create offerings with dedicated General/Time/Additional tabs, provider preferences (including occupancy windows and random tie-breaking), color pickers, payment method selections, online meeting providers, customer booking limits, and soft-delete/restore workflows.
-- Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports media library profile images, WordPress color pickers, visibility options, category assignment, and a toggle to review or restore deleted employees.
+- Visit **Smooth Booking → Services** to create offerings with dedicated General/Time/Additional tabs, provider preferences (including occupancy windows and random tie-breaking), color pickers, payment method selections, online meeting providers, customer booking limits, and soft-delete/restore workflows. Use the prominent **Add new** button to open the creation drawer only when you need it.
+- Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports media library profile images, WordPress color pickers, visibility options, category assignment, a toggle to review or restore deleted employees, and the same on-demand drawer flow for creation or editing.
 - Configure schema repair behaviour under **Smooth Booking → Settings**.
 - Use the REST API for automation:
   - `GET /wp-json/smooth-booking/v1/employees` — list employees (active by default).

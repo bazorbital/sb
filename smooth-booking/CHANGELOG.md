@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+## [0.5.0] - 2024-09-15
+### Changed
+- Modernised the Services and Employees admin pages with 2025-ready headers, prominent "Add new" call-to-action buttons, and collapsible form drawers that open only when triggered or editing.
+- Added cancel/back affordances, focus management, and refreshed styling to align with current WordPress design guidelines.
+
+### Added
+- JavaScript drawer controller that synchronises button state, focus behaviour, and accessibility attributes across admin screens.
+
 ## [0.4.0] - 2024-08-01
 ### Added
 - Services administration screen with General/Time/Additional tabs, provider preference controls, online meeting configuration, booking limits, and media-enabled imagery.

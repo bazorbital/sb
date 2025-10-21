@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,10 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees` and `/wp-json/sm
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.5.0 =
+* Refreshed the Services and Employees admin experiences with modern headers, floating "Add new" actions, and collapsible form drawers that open on demand.
+* Added contextual cancel/back controls and improved focus management so creating and editing items aligns with 2025 WordPress design expectations.
+
 = 0.4.0 =
 * Added full Services administration screen with General/Time/Additional tabs, provider preference logic, media integration, booking limits, and soft delete/restore workflows.
 * Introduced service domain layer with repositories for services, categories, tags, and provider relationships plus automated schema updates.
@@ -60,6 +64,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees` and `/wp-json/sm
 * Initial release. Creates booking schema on activation and runtime. Provides Settings API integration, REST endpoint, shortcode, Gutenberg block, cron maintenance, and WP-CLI commands for schema management.
 
 == Upgrade Notice ==
+= 0.5.0 =
+Polished the Services and Employees admin interfaces with 2025-ready layouts, "Add new" toggles, and streamlined editing flows. Update to unlock the refreshed management experience.
+
 = 0.4.0 =
 Introduces the Services management screen with advanced scheduling preferences, REST/CLI tooling, and supporting schema updates. Update to configure offerings alongside employees.
 
