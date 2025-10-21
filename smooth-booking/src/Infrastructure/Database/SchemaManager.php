@@ -81,13 +81,34 @@ class SchemaManager {
      * Perform upgrade if stored version differs.
      */
     public function maybe_upgrade(): void {
-        $version = get_option( self::OPTION_DB_VERSION );
+        $version  = get_option( self::OPTION_DB_VERSION );
         $settings = get_option( 'smooth_booking_settings', [ 'auto_repair_schema' => 1 ] );
         $auto_fix = ! empty( $settings['auto_repair_schema'] );
 
-        if ( self::DB_VERSION !== $version || $auto_fix ) {
+        if ( self::DB_VERSION !== $version ) {
+            $this->ensure_schema();
+
+            return;
+        }
+
+        if ( $auto_fix && $this->schema_requires_repair() ) {
             $this->ensure_schema();
         }
+    }
+
+    /**
+     * Determine if any required tables are missing.
+     */
+    private function schema_requires_repair(): bool {
+        $tables = array_keys( $this->get_table_definitions() );
+
+        foreach ( $tables as $table_key ) {
+            if ( ! $this->table_exists( $this->get_table_name( $table_key ) ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
