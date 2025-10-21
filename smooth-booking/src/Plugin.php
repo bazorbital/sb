@@ -9,15 +9,18 @@ namespace SmoothBooking;
 
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu as AdminMenu;
+use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
+use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
+use SmoothBooking\Rest\ServicesController;
 use SmoothBooking\Support\ServiceContainer;
 use SmoothBooking\ServiceProvider;
 
@@ -92,11 +95,18 @@ class Plugin {
 
         /** @var EmployeesPage $employees_page */
         $employees_page = $this->container->get( EmployeesPage::class );
+        /** @var ServicesPage $services_page */
+        $services_page = $this->container->get( ServicesPage::class );
 
         add_action( 'admin_post_smooth_booking_save_employee', [ $employees_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
         add_action( 'admin_post_smooth_booking_restore_employee', [ $employees_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $employees_page, 'enqueue_assets' ] );
+
+        add_action( 'admin_post_smooth_booking_save_service', [ $services_page, 'handle_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_service', [ $services_page, 'handle_delete' ] );
+        add_action( 'admin_post_smooth_booking_restore_service', [ $services_page, 'handle_restore' ] );
+        add_action( 'admin_enqueue_scripts', [ $services_page, 'enqueue_assets' ] );
     }
 
     /**
@@ -116,6 +126,11 @@ class Plugin {
         $employees_command = $this->container->get( EmployeesCommand::class );
 
         \WP_CLI::add_command( 'smooth employees', $employees_command );
+
+        /** @var ServicesCommand $services_command */
+        $services_command = $this->container->get( ServicesCommand::class );
+
+        \WP_CLI::add_command( 'smooth services', $services_command );
     }
 
     /**
@@ -172,6 +187,10 @@ class Plugin {
         /** @var EmployeesController $employees */
         $employees = $this->container->get( EmployeesController::class );
         $employees->register_routes();
+
+        /** @var ServicesController $services */
+        $services = $this->container->get( ServicesController::class );
+        $services->register_routes();
     }
 
     /**

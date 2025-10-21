@@ -89,6 +89,105 @@ class SchemaDefinitionBuilder {
             $options
         );
 
+        $tables['services'] = sprintf(
+            'CREATE TABLE %1$ssmooth_services (
+                service_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(150) NOT NULL,
+                profile_image_id BIGINT UNSIGNED NULL,
+                default_color CHAR(7) NULL,
+                visibility ENUM(\'public\',\'private\') NOT NULL DEFAULT \'public\',
+                price DECIMAL(12,2) NULL,
+                payment_methods_mode ENUM(\'default\',\'custom\') NOT NULL DEFAULT \'default\',
+                info TEXT NULL,
+                providers_preference ENUM(\'most_expensive\',\'least_expensive\',\'specified_order\',\'least_occupied_day\',\'most_occupied_day\',\'least_occupied_period\',\'most_occupied_period\') NOT NULL DEFAULT \'specified_order\',
+                providers_random_tie TINYINT(1) NOT NULL DEFAULT 0,
+                occupancy_period_before INT NOT NULL DEFAULT 0,
+                occupancy_period_after INT NOT NULL DEFAULT 0,
+                duration_key VARCHAR(40) NOT NULL DEFAULT \'15_minutes\',
+                slot_length_key VARCHAR(40) NOT NULL DEFAULT \'default\',
+                padding_before_key VARCHAR(40) NOT NULL DEFAULT \'off\',
+                padding_after_key VARCHAR(40) NOT NULL DEFAULT \'off\',
+                online_meeting_provider ENUM(\'off\',\'zoom\',\'google_meet\') NOT NULL DEFAULT \'off\',
+                limit_per_customer ENUM(\'off\',\'upcoming\',\'per_24_hours\',\'per_day\',\'per_7_days\',\'per_week\',\'per_30_days\',\'per_month\',\'per_365_days\',\'per_year\') NOT NULL DEFAULT \'off\',
+                final_step_url_enabled TINYINT(1) NOT NULL DEFAULT 0,
+                final_step_url TEXT NULL,
+                min_time_prior_booking_key VARCHAR(40) NOT NULL DEFAULT \'default\',
+                min_time_prior_cancel_key VARCHAR(40) NOT NULL DEFAULT \'default\',
+                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (service_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['service_categories'] = sprintf(
+            'CREATE TABLE %1$ssmooth_service_categories (
+                category_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(150) NOT NULL,
+                slug VARCHAR(160) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (category_id),
+                UNIQUE KEY slug (slug)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['service_category_relationships'] = sprintf(
+            'CREATE TABLE %1$ssmooth_service_category_relationships (
+                service_id BIGINT UNSIGNED NOT NULL,
+                category_id BIGINT UNSIGNED NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (service_id, category_id),
+                KEY category_lookup (category_id, service_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['service_tags'] = sprintf(
+            'CREATE TABLE %1$ssmooth_service_tags (
+                tag_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(150) NOT NULL,
+                slug VARCHAR(160) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (tag_id),
+                UNIQUE KEY slug (slug)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['service_tag_relationships'] = sprintf(
+            'CREATE TABLE %1$ssmooth_service_tag_relationships (
+                service_id BIGINT UNSIGNED NOT NULL,
+                tag_id BIGINT UNSIGNED NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (service_id, tag_id),
+                KEY tag_lookup (tag_id, service_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['service_providers'] = sprintf(
+            'CREATE TABLE %1$ssmooth_service_providers (
+                service_id BIGINT UNSIGNED NOT NULL,
+                employee_id BIGINT UNSIGNED NOT NULL,
+                provider_order INT NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (service_id, employee_id),
+                KEY employee_lookup (employee_id, service_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
         $tables['locations'] = sprintf(
             'CREATE TABLE %1$ssmooth_locations (
                 location_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

@@ -2,6 +2,15 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+## [0.4.0] - 2024-08-01
+### Added
+- Services administration screen with General/Time/Additional tabs, provider preference controls, online meeting configuration, booking limits, and media-enabled imagery.
+- Service domain layer with repositories for services, categories, tags, and provider assignments alongside validation logging.
+- REST API controller at `/wp-json/smooth-booking/v1/services` with CRUD and restore operations.
+- WP-CLI command suite `wp smooth services <list|create|update|delete|restore>` for headless operations.
+- Dedicated admin CSS/JS assets powering tab navigation, provider toggles, color picker initialisation, and media selection for services.
+- PHPUnit coverage for `ServiceService` with in-memory repositories.
+
 ## [0.3.0] - 2024-07-01
 ### Added
 - Employee profile images with media library selection, removal controls, and avatar previews in the admin list.
