@@ -81,8 +81,12 @@ class SchemaStatusController {
 
     /**
      * Repair schema.
+     *
+     * @param WP_REST_Request $request REST request instance.
      */
-    public function repair_schema(): WP_REST_Response {
+    public function repair_schema( WP_REST_Request $request ): WP_REST_Response {
+        unset( $request );
+
         $this->schema_service->repair_schema();
 
         return new WP_REST_Response( [ 'message' => __( 'Schema check initiated.', 'smooth-booking' ) ], 200 );
