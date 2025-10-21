@@ -14,11 +14,14 @@ use WP_Error;
  */
 interface EmployeeRepositoryInterface {
     /**
-     * Retrieve all active employees.
+     * Retrieve employees.
+     *
+     * @param bool $include_deleted Include soft deleted employees.
+     * @param bool $only_deleted    Fetch only deleted employees.
      *
      * @return Employee[]
      */
-    public function all(): array;
+    public function all( bool $include_deleted = false, bool $only_deleted = false ): array;
 
     /**
      * Locate an employee by identifier.
@@ -26,6 +29,13 @@ interface EmployeeRepositoryInterface {
      * @return Employee|null
      */
     public function find( int $employee_id );
+
+    /**
+     * Locate an employee regardless of deletion status.
+     *
+     * @return Employee|null
+     */
+    public function find_with_deleted( int $employee_id );
 
     /**
      * Persist a new employee.
@@ -54,4 +64,13 @@ interface EmployeeRepositoryInterface {
      * @return true|WP_Error
      */
     public function soft_delete( int $employee_id );
+
+    /**
+     * Restore a previously deleted employee.
+     *
+     * @param int $employee_id Employee identifier.
+     *
+     * @return Employee|WP_Error
+     */
+    public function restore( int $employee_id );
 }

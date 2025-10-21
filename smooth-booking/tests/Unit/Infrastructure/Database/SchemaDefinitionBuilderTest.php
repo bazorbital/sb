@@ -19,5 +19,6 @@ class SchemaDefinitionBuilderTest extends TestCase {
         $this->assertArrayHasKey( 'customers', $tables );
         $this->assertStringContainsString( 'CREATE TABLE wp_smooth_customers', $tables['customers'] );
         $this->assertStringContainsString( 'ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci', $tables['customers'] );
+        $this->assertArrayHasKey( 'employee_categories', $tables );
     }
 }

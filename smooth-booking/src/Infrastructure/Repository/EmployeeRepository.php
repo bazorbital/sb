@@ -27,9 +27,19 @@ use function wp_json_encode;
  */
 class EmployeeRepository implements EmployeeRepositoryInterface {
     /**
-     * Cache key for listing employees.
+     * Cache key for listing active employees.
+     */
+    private const CACHE_KEY_ACTIVE = 'employees_active';
+
+    /**
+     * Cache key for listing all employees.
      */
     private const CACHE_KEY_ALL = 'employees_all';
+
+    /**
+     * Cache key for deleted employees.
+     */
+    private const CACHE_KEY_DELETED = 'employees_deleted';
 
     /**
      * Cache group.
@@ -62,19 +72,37 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
     /**
      * {@inheritDoc}
      */
-    public function all(): array {
-        $cached = wp_cache_get( self::CACHE_KEY_ALL, self::CACHE_GROUP );
+    public function all( bool $include_deleted = false, bool $only_deleted = false ): array {
+        $cache_key = $this->get_cache_key( $include_deleted, $only_deleted );
+        $cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
         if ( false !== $cached && is_array( $cached ) ) {
             return $cached;
         }
 
-        $table = $this->get_table_name();
+        $table      = $this->get_table_name();
+        $conditions = [];
+        $params     = [];
 
-        $sql = $this->wpdb->prepare(
-            "SELECT * FROM {$table} WHERE is_deleted = %d ORDER BY name ASC",
-            0
-        );
+        if ( $only_deleted ) {
+            $conditions[] = 'is_deleted = %d';
+            $params[]     = 1;
+        } elseif ( ! $include_deleted ) {
+            $conditions[] = 'is_deleted = %d';
+            $params[]     = 0;
+        }
+
+        $sql = "SELECT * FROM {$table}";
+
+        if ( ! empty( $conditions ) ) {
+            $sql .= ' WHERE ' . implode( ' AND ', $conditions );
+        }
+
+        $sql .= ' ORDER BY name ASC';
+
+        if ( ! empty( $params ) ) {
+            $sql = $this->wpdb->prepare( $sql, ...$params );
+        }
 
         $results = $this->wpdb->get_results( $sql, ARRAY_A );
 
@@ -89,7 +117,7 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
             $results
         );
 
-        wp_cache_set( self::CACHE_KEY_ALL, $employees, self::CACHE_GROUP, self::CACHE_TTL );
+        wp_cache_set( $cache_key, $employees, self::CACHE_GROUP, self::CACHE_TTL );
 
         return $employees;
     }
@@ -122,6 +150,30 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
     /**
      * {@inheritDoc}
      */
+    public function find_with_deleted( int $employee_id ) {
+        if ( $employee_id <= 0 ) {
+            return null;
+        }
+
+        $table = $this->get_table_name();
+
+        $sql = $this->wpdb->prepare(
+            "SELECT * FROM {$table} WHERE employee_id = %d",
+            $employee_id
+        );
+
+        $row = $this->wpdb->get_row( $sql, ARRAY_A );
+
+        if ( ! $row ) {
+            return null;
+        }
+
+        return Employee::from_row( $row );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function create( array $data ) {
         $table = $this->get_table_name();
 
@@ -133,10 +185,13 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
                 'phone'            => $data['phone'],
                 'specialization'   => $data['specialization'],
                 'available_online' => $data['available_online'],
+                'profile_image_id' => $data['profile_image_id'],
+                'default_color'    => $data['default_color'],
+                'visibility'       => $data['visibility'],
                 'created_at'       => current_time( 'mysql' ),
                 'updated_at'       => current_time( 'mysql' ),
             ],
-            [ '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
+            [ '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' ]
         );
 
         if ( false === $inserted ) {
@@ -167,10 +222,13 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
                 'phone'            => $data['phone'],
                 'specialization'   => $data['specialization'],
                 'available_online' => $data['available_online'],
+                'profile_image_id' => $data['profile_image_id'],
+                'default_color'    => $data['default_color'],
+                'visibility'       => $data['visibility'],
                 'updated_at'       => current_time( 'mysql' ),
             ],
             [ 'employee_id' => $employee_id ],
-            [ '%s', '%s', '%s', '%s', '%d', '%s' ],
+            [ '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s' ],
             [ '%d' ]
         );
 
@@ -198,10 +256,11 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
             $table,
             [
                 'is_deleted' => 1,
+                'visibility' => 'archived',
                 'updated_at' => current_time( 'mysql' ),
             ],
             [ 'employee_id' => $employee_id ],
-            [ '%d', '%s' ],
+            [ '%d', '%s', '%s' ],
             [ '%d' ]
         );
 
@@ -220,6 +279,46 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function restore( int $employee_id ) {
+        $table = $this->get_table_name();
+
+        $updated = $this->wpdb->update(
+            $table,
+            [
+                'is_deleted' => 0,
+                'updated_at' => current_time( 'mysql' ),
+            ],
+            [ 'employee_id' => $employee_id ],
+            [ '%d', '%s' ],
+            [ '%d' ]
+        );
+
+        if ( false === $updated ) {
+            $this->logger->error( sprintf( 'Employee restore failed for #%d: %s', $employee_id, wp_json_encode( $this->wpdb->last_error ) ) );
+
+            return new WP_Error(
+                'smooth_booking_employee_restore_failed',
+                __( 'Unable to restore employee. Please try again.', 'smooth-booking' )
+            );
+        }
+
+        $this->flush_cache();
+
+        $employee = $this->find_with_deleted( $employee_id );
+
+        if ( null === $employee ) {
+            return new WP_Error(
+                'smooth_booking_employee_restore_missing',
+                __( 'Unable to locate the employee after restore.', 'smooth-booking' )
+            );
+        }
+
+        return $employee;
+    }
+
+    /**
      * Resolve the employees table name.
      */
     private function get_table_name(): string {
@@ -230,6 +329,23 @@ class EmployeeRepository implements EmployeeRepositoryInterface {
      * Invalidate cached employee collections.
      */
     private function flush_cache(): void {
+        wp_cache_delete( self::CACHE_KEY_ACTIVE, self::CACHE_GROUP );
         wp_cache_delete( self::CACHE_KEY_ALL, self::CACHE_GROUP );
+        wp_cache_delete( self::CACHE_KEY_DELETED, self::CACHE_GROUP );
+    }
+
+    /**
+     * Determine cache key based on filters.
+     */
+    private function get_cache_key( bool $include_deleted, bool $only_deleted ): string {
+        if ( $only_deleted ) {
+            return self::CACHE_KEY_DELETED;
+        }
+
+        if ( $include_deleted ) {
+            return self::CACHE_KEY_ALL;
+        }
+
+        return self::CACHE_KEY_ACTIVE;
     }
 }

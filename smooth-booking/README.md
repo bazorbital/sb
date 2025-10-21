@@ -4,13 +4,13 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 
 ## Features
 - Automatic schema installation and upgrades with `dbDelta()`
-- Schema health overview and configuration page under **Smooth Booking → Beállítások**
-- Employee directory with create, update, and soft-delete actions
+- Schema health overview and configuration page under **Smooth Booking → Settings**
+- Employee directory with profile images, color preferences, visibility controls, category assignment, and soft-delete/restore actions
 - REST API endpoints at `/wp-json/smooth-booking/v1/schema-status` and `/wp-json/smooth-booking/v1/employees`
 - Shortcode `[smooth_booking_schema_status]` and Gutenberg block “Smooth Booking Schema Status”
-- Top-level Smooth Booking admin menu with the **Alkalmazottak** screen
+- Top-level Smooth Booking admin menu with the **Employees** screen
 - Daily cron health check
-- WP-CLI commands `wp smooth schema <status|repair>` and `wp smooth employees <list|create|update|delete>`
+- WP-CLI commands `wp smooth schema <status|repair>` and `wp smooth employees <list|create|update|delete|restore>`
 - Multisite-aware activation, deactivation, and uninstall workflows
 
 ## Installation
@@ -19,21 +19,22 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 3. Activate **Smooth Booking** from the Plugins screen or via WP-CLI: `wp plugin activate smooth-booking`.
 
 ## Usage
-- Visit **Smooth Booking → Alkalmazottak** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports inline flash notices, dropdown action menus, and bulk-aware validation.
-- Configure schema repair behaviour under **Smooth Booking → Beállítások**.
+- Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page now supports media library profile images, WordPress color pickers, visibility options, category assignment, and a toggle to review or restore deleted employees.
+- Configure schema repair behaviour under **Smooth Booking → Settings**.
 - Use the REST API for employee automation:
-  - `GET /wp-json/smooth-booking/v1/employees` — list employees.
-  - `POST /wp-json/smooth-booking/v1/employees` — create an employee with JSON body fields `name`, `email`, `phone`, `specialization`, `available_online`.
-  - `GET/PUT/DELETE /wp-json/smooth-booking/v1/employees/<id>` — retrieve, update, or soft-delete a record.
+  - `GET /wp-json/smooth-booking/v1/employees` — list employees (active by default).
+  - `POST /wp-json/smooth-booking/v1/employees` — create an employee with JSON body fields `name`, `email`, `phone`, `specialization`, `available_online`, `profile_image_id`, `default_color`, `visibility`, `category_ids`, and `new_categories`.
+  - `GET/PUT/DELETE /wp-json/smooth-booking/v1/employees/<id>` — retrieve, update, or soft-delete a record. Updates accept the same payload keys as creation.
 - Run WP-CLI helpers:
   - `wp smooth employees list`
-  - `wp smooth employees create --name="Jane Doe" --email=jane@example.com`
-  - `wp smooth employees update 12 --available-online=off`
+  - `wp smooth employees create --name="Jane Doe" --email=jane@example.com --default-color="#3366ff" --visibility=private`
+  - `wp smooth employees update 12 --available-online=off --profile-image-id=321`
   - `wp smooth employees delete 12`
+  - `wp smooth employees restore 12`
 
 ## Developer Notes
 - PHP 8.1+ and WordPress 6.x are required.
-- Tables are prefixed with the site prefix plus `smooth_` to avoid collisions.
+- Tables are prefixed with the site prefix plus `smooth_` to avoid collisions and include dedicated employee category and relationship tables.
 - Schema definitions live in `src/Infrastructure/Database/SchemaDefinitionBuilder.php`.
 - Employee persistence is handled by `src/Infrastructure/Repository/EmployeeRepository.php` and exposed via `SmoothBooking\Domain\Employees\EmployeeService`.
 - Database versioning is stored in the `smooth_booking_db_version` option.

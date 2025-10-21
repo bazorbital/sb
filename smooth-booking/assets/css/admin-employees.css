@@ -12,6 +12,56 @@
     text-align: right;
 }
 
+.smooth-booking-toolbar {
+    margin-bottom: 16px;
+}
+
+.smooth-booking-employee-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.smooth-booking-avatar-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+}
+
+.smooth-booking-avatar-wrapper--placeholder {
+    color: #646970;
+}
+
+.smooth-booking-avatar-image {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+}
+
+.smooth-booking-avatar-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.smooth-booking-avatar-preview {
+    min-width: 32px;
+}
+
+.smooth-booking-color-indicator {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .smooth-booking-actions-menu {
     position: relative;
     display: inline-block;
@@ -41,7 +91,8 @@
 }
 
 .smooth-booking-actions-list a,
-.smooth-booking-actions-list button {
+.smooth-booking-actions-list button,
+.smooth-booking-actions-link {
     display: block;
     width: 100%;
     text-align: left;
@@ -55,11 +106,17 @@
 .smooth-booking-actions-list a:hover,
 .smooth-booking-actions-list button:hover,
 .smooth-booking-actions-list a:focus,
-.smooth-booking-actions-list button:focus {
+.smooth-booking-actions-list button:focus,
+.smooth-booking-actions-link:hover,
+.smooth-booking-actions-link:focus {
     background-color: #f0f0f1;
     outline: none;
 }
 
 .smooth-booking-delete-form .delete-link {
     color: #b32d2e;
+}
+
+.smooth-booking-category-select {
+    min-width: 240px;
 }
