@@ -23,7 +23,7 @@ class EmployeesPage {
     /**
      * Menu slug used for the employees screen.
      */
-    public const MENU_SLUG = 'smooth-booking';
+    public const MENU_SLUG = 'smooth-booking-employees';
 
     /**
      * Transient key template for admin notices.

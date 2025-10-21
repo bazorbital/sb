@@ -21,6 +21,48 @@ if ( ! function_exists( 'sanitize_text_field' ) ) {
     }
 }
 
+if ( ! function_exists( 'sanitize_hex_color' ) ) {
+    function sanitize_hex_color( string $color ): string {
+        $color = trim( $color );
+
+        if ( '' === $color ) {
+            return '';
+        }
+
+        $color = ltrim( $color, '#' );
+
+        if ( preg_match( '/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/', $color ) ) {
+            return '#' . strtolower( $color );
+        }
+
+        return '';
+    }
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+    function sanitize_key( string $key ): string {
+        return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $key ) ?? '' );
+    }
+}
+
+if ( ! function_exists( 'esc_url_raw' ) ) {
+    function esc_url_raw( string $url ): string {
+        return filter_var( $url, FILTER_SANITIZE_URL ) ?: '';
+    }
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+    function wp_kses_post( string $text ): string {
+        return $text;
+    }
+}
+
+if ( ! function_exists( 'absint' ) ) {
+    function absint( $maybeint ): int {
+        return abs( (int) $maybeint );
+    }
+}
+
 if ( ! function_exists( 'sanitize_email' ) ) {
     function sanitize_email( string $email ): string {
         return filter_var( $email, FILTER_SANITIZE_EMAIL ) ?: '';

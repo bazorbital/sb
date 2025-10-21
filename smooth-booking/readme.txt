@@ -4,19 +4,19 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Smooth Booking ensures the booking database environment is ready for custom scheduling workflows and now ships with an employee directory for staffing management.
+Smooth Booking ensures the booking database environment is ready for custom scheduling workflows and now ships with full employee and service management tooling.
 
 == Description ==
-Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee management UI, and WP-CLI tooling for administrators.
+Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee and service management UIs, and WP-CLI tooling for administrators.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
 2. Activate the plugin through the "Plugins" screen in WordPress.
-3. Visit **Smooth Booking → Employees** to create staff profiles and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
+3. Visit **Smooth Booking → Services** to configure offerings, **Smooth Booking → Employees** to create staff profiles, and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
 
 == Frequently Asked Questions ==
 = Does the plugin support multisite? =
@@ -27,14 +27,21 @@ Use WP-CLI:
 
 `wp smooth schema status`
 
-= Can I manage employees programmatically? =
-Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees` or the CLI commands `wp smooth employees <list|create|update|delete|restore>`.
+= Can I manage employees and services programmatically? =
+Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees` and `/wp-json/smooth-booking/v1/services` or the CLI commands `wp smooth employees <list|create|update|delete|restore>` and `wp smooth services <list|create|update|delete|restore>`.
 
 == Screenshots ==
 1. Settings page summarizing schema health.
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.4.0 =
+* Added full Services administration screen with General/Time/Additional tabs, provider preference logic, media integration, booking limits, and soft delete/restore workflows.
+* Introduced service domain layer with repositories for services, categories, tags, and provider relationships plus automated schema updates.
+* Added REST API routes at `/wp-json/smooth-booking/v1/services` with CRUD and restore operations.
+* Added WP-CLI commands `wp smooth services <list|create|update|delete|restore>` for headless service management.
+* Bundled dedicated admin CSS/JS for the Services form including color pickers, media selection, tab navigation, and dynamic provider controls.
+
 = 0.3.0 =
 * Added employee profile images with media library integration and remove/reset controls.
 * Introduced visibility states (public, private, archived) and automatic archiving on delete with restore support.
@@ -53,6 +60,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees` or the CLI comma
 * Initial release. Creates booking schema on activation and runtime. Provides Settings API integration, REST endpoint, shortcode, Gutenberg block, cron maintenance, and WP-CLI commands for schema management.
 
 == Upgrade Notice ==
+= 0.4.0 =
+Introduces the Services management screen with advanced scheduling preferences, REST/CLI tooling, and supporting schema updates. Update to configure offerings alongside employees.
+
 = 0.3.0 =
 Adds profile images, visibility controls, categories, and restore workflows for employees. Update to access the enhanced staff directory.
 

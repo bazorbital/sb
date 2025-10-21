@@ -14,12 +14,17 @@ class Menu {
     /**
      * Top-level menu icon.
      */
-    private const MENU_ICON = 'dashicons-groups';
+    private const MENU_ICON = 'dashicons-calendar-alt';
 
     /**
      * Menu position.
      */
     private const MENU_POSITION = 56;
+
+    /**
+     * @var ServicesPage
+     */
+    private ServicesPage $services_page;
 
     /**
      * @var EmployeesPage
@@ -34,7 +39,8 @@ class Menu {
     /**
      * Constructor.
      */
-    public function __construct( EmployeesPage $employees_page, SettingsPage $settings_page ) {
+    public function __construct( ServicesPage $services_page, EmployeesPage $employees_page, SettingsPage $settings_page ) {
+        $this->services_page  = $services_page;
         $this->employees_page = $employees_page;
         $this->settings_page  = $settings_page;
     }
@@ -46,15 +52,24 @@ class Menu {
         add_menu_page(
             __( 'Smooth Booking', 'smooth-booking' ),
             __( 'Smooth Booking', 'smooth-booking' ),
-            EmployeesPage::CAPABILITY,
-            EmployeesPage::MENU_SLUG,
-            [ $this->employees_page, 'render_page' ],
+            ServicesPage::CAPABILITY,
+            ServicesPage::MENU_SLUG,
+            [ $this->services_page, 'render_page' ],
             self::MENU_ICON,
             self::MENU_POSITION
         );
 
         add_submenu_page(
-            EmployeesPage::MENU_SLUG,
+            ServicesPage::MENU_SLUG,
+            __( 'Services', 'smooth-booking' ),
+            __( 'Szolgáltatások', 'smooth-booking' ),
+            ServicesPage::CAPABILITY,
+            ServicesPage::MENU_SLUG,
+            [ $this->services_page, 'render_page' ]
+        );
+
+        add_submenu_page(
+            ServicesPage::MENU_SLUG,
             __( 'Employees', 'smooth-booking' ),
             __( 'Alkalmazottak', 'smooth-booking' ),
             EmployeesPage::CAPABILITY,
@@ -62,6 +77,6 @@ class Menu {
             [ $this->employees_page, 'render_page' ]
         );
 
-        $this->settings_page->register_submenu( EmployeesPage::MENU_SLUG );
+        $this->settings_page->register_submenu( ServicesPage::MENU_SLUG );
     }
 }
