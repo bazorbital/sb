@@ -22,11 +22,6 @@ use function wp_cache_get;
 use function wp_cache_set;
 use function wp_json_encode;
 
-use function wp_cache_delete;
-use function wp_cache_get;
-use function wp_cache_set;
-use function wp_json_encode;
-
 /**
  * Provides CRUD operations for employees.
  */
