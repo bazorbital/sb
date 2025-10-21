@@ -8,6 +8,66 @@
         $('.smooth-booking-actions-toggle').attr('aria-expanded', 'false');
     }
 
+    function syncTriggerState($trigger, isOpen) {
+        if (!$trigger || !$trigger.length) {
+            return;
+        }
+
+        const $label = $trigger.find('.smooth-booking-open-form__label');
+
+        if (typeof $trigger.data('initialLabel') === 'undefined') {
+            const initial = $label.length ? $label.text() : $trigger.text();
+            $trigger.data('initialLabel', initial);
+        }
+
+        const openLabel = $trigger.data('openLabel');
+        const closeLabel = $trigger.data('closeLabel');
+        const fallback = $trigger.data('initialLabel') || '';
+        const nextLabel = isOpen ? (closeLabel || fallback) : (openLabel || fallback);
+
+        if ($label.length && nextLabel) {
+            $label.text(nextLabel);
+        } else if (nextLabel) {
+            $trigger.text(nextLabel);
+        }
+
+        $trigger.attr('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function toggleDrawer(target, forceOpen) {
+        if (!target) {
+            return;
+        }
+
+        const $drawer = $('.smooth-booking-form-drawer[data-context="' + target + '"]');
+
+        if (!$drawer.length) {
+            return;
+        }
+
+        const isOpen = $drawer.hasClass('is-open') && !$drawer.attr('hidden');
+        const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
+        const $trigger = $('.smooth-booking-open-form[data-target="' + target + '"]');
+
+        if (shouldOpen) {
+            $drawer.removeAttr('hidden').addClass('is-open');
+            syncTriggerState($trigger, true);
+
+            const focusSelector = $drawer.data('focusSelector');
+            if (focusSelector) {
+                window.setTimeout(function () {
+                    const $focus = $(focusSelector).first();
+                    if ($focus.length) {
+                        $focus.trigger('focus');
+                    }
+                }, 75);
+            }
+        } else {
+            $drawer.attr('hidden', true).removeClass('is-open');
+            syncTriggerState($trigger, false);
+        }
+    }
+
     function getPlaceholderHtml($field) {
         const fromAttr = $field.attr('data-placeholder');
         return fromAttr || settings.placeholderHtml || '';
@@ -39,6 +99,11 @@
 
     $(function () {
         $('.smooth-booking-color-field').wpColorPicker();
+
+        $('.smooth-booking-form-drawer.is-open').each(function () {
+            const target = $(this).data('context');
+            toggleDrawer(target, true);
+        });
     });
 
     $(document).on('click', '.smooth-booking-actions-toggle', function (event) {
@@ -103,5 +168,20 @@
 
         const $field = $(this).closest('.smooth-booking-avatar-field');
         updateAvatar($field, null);
+    });
+
+    $(document).on('click', '.smooth-booking-open-form', function (event) {
+        event.preventDefault();
+        toggleDrawer($(this).data('target'));
+    });
+
+    $(document).on('click', '.smooth-booking-form-dismiss', function (event) {
+        const target = $(this).data('target');
+        if (!target) {
+            return;
+        }
+
+        event.preventDefault();
+        toggleDrawer(target, false);
     });
 })(jQuery);

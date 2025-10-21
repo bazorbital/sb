@@ -1,10 +1,99 @@
+
+.smooth-booking-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.smooth-booking-admin-header__content h1 {
+    margin: 0;
+}
+
+.smooth-booking-admin-header__content .description {
+    margin: 4px 0 0;
+    color: #50575e;
+}
+
+.smooth-booking-admin-header__actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.smooth-booking-open-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.smooth-booking-open-form .dashicons {
+    margin: 0;
+}
+
+.smooth-booking-form-drawer {
+    display: none;
+    margin-bottom: 24px;
+}
+
+.smooth-booking-form-drawer.is-open {
+    display: block;
+    animation: smooth-booking-form-fade-in 0.2s ease-out;
+}
+
+@keyframes smooth-booking-form-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .smooth-booking-employees-wrap .smooth-booking-employee-form-card {
     background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 24px;
-    max-width: 720px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 0;
+    max-width: 820px;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.05);
+}
+
+.smooth-booking-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.smooth-booking-form-header h2 {
+    margin: 0;
+}
+
+.smooth-booking-form-header__actions {
+    display: inline-flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.smooth-booking-form-header__actions .button-link {
+    color: #2271b1;
+    text-decoration: none;
+    padding: 4px 0;
+}
+
+.smooth-booking-form-header__actions .button-link:hover,
+.smooth-booking-form-header__actions .button-link:focus {
+    color: #135e96;
+    text-decoration: underline;
 }
 
 .smooth-booking-employee-table .smooth-booking-actions-cell {

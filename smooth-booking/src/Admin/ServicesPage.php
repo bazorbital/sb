@@ -130,9 +130,25 @@ class ServicesPage {
         $tags       = $this->services->list_tags();
         $employees  = $this->employees->list_employees();
 
+        $should_open_form   = $editing_service instanceof Service;
+        $form_container_id  = 'smooth-booking-service-form-panel';
+        $open_label         = __( 'Add new service', 'smooth-booking' );
+        $close_label        = __( 'Close form', 'smooth-booking' );
+
         ?>
         <div class="wrap smooth-booking-services-wrap">
-            <h1><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></h1>
+            <div class="smooth-booking-admin-header">
+                <div class="smooth-booking-admin-header__content">
+                    <h1><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></h1>
+                    <p class="description"><?php esc_html_e( 'Manage services, their availability, and provider preferences.', 'smooth-booking' ); ?></p>
+                </div>
+                <div class="smooth-booking-admin-header__actions">
+                    <button type="button" class="button button-primary smooth-booking-open-form" data-target="service-form" data-open-label="<?php echo esc_attr( $open_label ); ?>" data-close-label="<?php echo esc_attr( $close_label ); ?>" aria-expanded="<?php echo $should_open_form ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $form_container_id ); ?>">
+                        <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+                        <span class="smooth-booking-open-form__label"><?php echo esc_html( $should_open_form ? $close_label : $open_label ); ?></span>
+                    </button>
+                </div>
+            </div>
 
             <?php if ( $notice ) : ?>
                 <div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -146,12 +162,11 @@ class ServicesPage {
                 </div>
             <?php endif; ?>
 
-            <div class="smooth-booking-service-forms">
+            <div id="<?php echo esc_attr( $form_container_id ); ?>" class="smooth-booking-form-drawer smooth-booking-service-form-drawer<?php echo $should_open_form ? ' is-open' : ''; ?>" data-context="service-form" data-focus-selector="#smooth-booking-service-name"<?php echo $should_open_form ? '' : ' hidden'; ?>>
                 <?php $this->render_service_form( $editing_service, $categories, $tags, $employees ); ?>
             </div>
 
             <h2><?php echo esc_html__( 'Service list', 'smooth-booking' ); ?></h2>
-            <p><?php esc_html_e( 'Manage services, their availability, and provider preferences.', 'smooth-booking' ); ?></p>
 
             <div class="smooth-booking-toolbar">
                 <?php if ( $show_deleted ) : ?>
@@ -558,9 +573,22 @@ class ServicesPage {
         $show_occupancy     = in_array( $providers_preference, [ 'least_occupied_day', 'most_occupied_day' ], true );
 
         ?>
-        <div class='smooth-booking-service-form'>
-            <h2><?php echo $is_edit ? esc_html__( 'Edit service', 'smooth-booking' ) : esc_html__( 'Add new service', 'smooth-booking' ); ?></h2>
-            <form method='post' action='<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>'>
+        <div class="smooth-booking-service-form-card">
+            <div class="smooth-booking-form-header">
+                <h2><?php echo $is_edit ? esc_html__( 'Edit service', 'smooth-booking' ) : esc_html__( 'Add new service', 'smooth-booking' ); ?></h2>
+                <div class="smooth-booking-form-header__actions">
+                    <?php if ( $is_edit ) : ?>
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="button-link smooth-booking-form-cancel">
+                            <?php esc_html_e( 'Back to list', 'smooth-booking' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button type="button" class="button-link smooth-booking-form-dismiss" data-target="service-form">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <form class="smooth-booking-service-form" method='post' action='<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>'>
                 <?php wp_nonce_field( 'smooth_booking_save_service', '_smooth_booking_save_service_nonce' ); ?>
                 <input type='hidden' name='action' value='smooth_booking_save_service' />
                 <input type='hidden' name='service_id' value='<?php echo esc_attr( $is_edit ? (string) $service->get_id() : '0' ); ?>' />
