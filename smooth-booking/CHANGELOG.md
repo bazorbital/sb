@@ -2,6 +2,18 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+## [0.2.0] - 2024-06-15
+### Added
+- Employee management service, repository, and domain model with validation and soft delete support.
+- Smooth Booking top-level admin menu and **Alkalmazottak** screen with flash notices, dropdown actions, and enqueueable assets.
+- REST API endpoints at `/wp-json/smooth-booking/v1/employees` for listing, creating, updating, and deleting employees.
+- WP-CLI command suite `wp smooth employees <list|create|update|delete>` for headless operations.
+- PHPUnit coverage for employee entities and service sanitisation behaviour.
+
+### Changed
+- Settings page now appears under the Smooth Booking menu as **Beállítások**.
+- Plugin version bumped to 0.2.0.
+
 ## [0.1.0] - 2024-06-01
 ### Added
 - Initial plugin bootstrap with schema auto-provisioning via `dbDelta()`.

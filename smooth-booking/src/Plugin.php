@@ -7,12 +7,16 @@
 
 namespace SmoothBooking;
 
+use SmoothBooking\Admin\EmployeesPage;
+use SmoothBooking\Admin\Menu as AdminMenu;
 use SmoothBooking\Admin\SettingsPage;
+use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
+use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Support\ServiceContainer;
 use SmoothBooking\ServiceProvider;
@@ -41,7 +45,7 @@ class Plugin {
     public static function instance(): Plugin {
         if ( null === static::$instance ) {
             $container = new ServiceContainer();
-            $provider = new ServiceProvider();
+            $provider  = new ServiceProvider();
             $provider->register( $container );
 
             static::$instance = new Plugin( $container );
@@ -85,6 +89,13 @@ class Plugin {
         /** @var SchemaManager $schema_manager */
         $schema_manager = $this->container->get( SchemaManager::class );
         $schema_manager->maybe_upgrade();
+
+        /** @var EmployeesPage $employees_page */
+        $employees_page = $this->container->get( EmployeesPage::class );
+
+        add_action( 'admin_post_smooth_booking_save_employee', [ $employees_page, 'handle_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
+        add_action( 'admin_enqueue_scripts', [ $employees_page, 'enqueue_assets' ] );
     }
 
     /**
@@ -99,6 +110,11 @@ class Plugin {
         $command = $this->container->get( SchemaCommand::class );
 
         \WP_CLI::add_command( 'smooth schema', $command );
+
+        /** @var EmployeesCommand $employees_command */
+        $employees_command = $this->container->get( EmployeesCommand::class );
+
+        \WP_CLI::add_command( 'smooth employees', $employees_command );
     }
 
     /**
@@ -112,9 +128,9 @@ class Plugin {
      * Register admin menu page.
      */
     public function register_admin_menu(): void {
-        /** @var SettingsPage $settings */
-        $settings = $this->container->get( SettingsPage::class );
-        $settings->register_menu();
+        /** @var AdminMenu $menu */
+        $menu = $this->container->get( AdminMenu::class );
+        $menu->register();
     }
 
     /**
@@ -151,6 +167,10 @@ class Plugin {
         /** @var SchemaStatusController $controller */
         $controller = $this->container->get( SchemaStatusController::class );
         $controller->register_routes();
+
+        /** @var EmployeesController $employees */
+        $employees = $this->container->get( EmployeesController::class );
+        $employees->register_routes();
     }
 
     /**
