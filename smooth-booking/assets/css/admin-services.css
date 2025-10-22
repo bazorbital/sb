@@ -34,12 +34,19 @@
 }
 
 .smooth-booking-form-drawer {
-    display: none;
     margin-bottom: 24px;
 }
 
-.smooth-booking-form-drawer.is-open {
+.js .smooth-booking-form-drawer {
+    display: none;
+}
+
+.no-js .smooth-booking-form-drawer,
+.js .smooth-booking-form-drawer.is-open {
     display: block;
+}
+
+.js .smooth-booking-form-drawer.is-open {
     animation: smooth-booking-form-fade-in 0.2s ease-out;
 }
 
