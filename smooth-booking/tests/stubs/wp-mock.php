@@ -21,6 +21,12 @@ if ( ! function_exists( 'sanitize_text_field' ) ) {
     }
 }
 
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+    function sanitize_textarea_field( string $value ): string {
+        return trim( str_replace( ["\r", "\n"], ' ', $value ) );
+    }
+}
+
 if ( ! function_exists( 'sanitize_hex_color' ) ) {
     function sanitize_hex_color( string $color ): string {
         $color = trim( $color );
@@ -42,6 +48,16 @@ if ( ! function_exists( 'sanitize_hex_color' ) ) {
 if ( ! function_exists( 'sanitize_key' ) ) {
     function sanitize_key( string $key ): string {
         return strtolower( preg_replace( '/[^a-z0-9_\-]/', '', $key ) ?? '' );
+    }
+}
+
+if ( ! function_exists( 'sanitize_title' ) ) {
+    function sanitize_title( string $title ): string {
+        $title = strtolower( trim( $title ) );
+        $title = preg_replace( '/[^a-z0-9\- ]/', '', $title ) ?? '';
+        $title = preg_replace( '/\s+/', '-', $title ) ?? '';
+
+        return trim( $title, '-' );
     }
 }
 
@@ -90,6 +106,36 @@ if ( ! function_exists( 'rest_sanitize_boolean' ) ) {
 if ( ! function_exists( 'apply_filters' ) ) {
     function apply_filters( string $tag, $value ) {
         return $value;
+    }
+}
+
+if ( ! function_exists( 'sanitize_user' ) ) {
+    function sanitize_user( string $username ): string {
+        return preg_replace( '/[^a-z0-9_\-\.]/i', '', strtolower( $username ) ) ?? '';
+    }
+}
+
+if ( ! function_exists( 'username_exists' ) ) {
+    function username_exists( string $username ): bool {
+        return false;
+    }
+}
+
+if ( ! function_exists( 'wp_generate_password' ) ) {
+    function wp_generate_password(): string {
+        return 'password';
+    }
+}
+
+if ( ! function_exists( 'wp_insert_user' ) ) {
+    function wp_insert_user( array $userdata ) {
+        return rand( 1000, 9999 );
+    }
+}
+
+if ( ! function_exists( 'get_user_by' ) ) {
+    function get_user_by( string $field, int $value ) {
+        return null;
     }
 }
 

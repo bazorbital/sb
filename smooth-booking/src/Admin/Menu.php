@@ -32,6 +32,11 @@ class Menu {
     private EmployeesPage $employees_page;
 
     /**
+     * @var CustomersPage
+     */
+    private CustomersPage $customers_page;
+
+    /**
      * @var SettingsPage
      */
     private SettingsPage $settings_page;
@@ -39,9 +44,10 @@ class Menu {
     /**
      * Constructor.
      */
-    public function __construct( ServicesPage $services_page, EmployeesPage $employees_page, SettingsPage $settings_page ) {
+    public function __construct( ServicesPage $services_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
         $this->services_page  = $services_page;
         $this->employees_page = $employees_page;
+        $this->customers_page = $customers_page;
         $this->settings_page  = $settings_page;
     }
 
@@ -75,6 +81,15 @@ class Menu {
             EmployeesPage::CAPABILITY,
             EmployeesPage::MENU_SLUG,
             [ $this->employees_page, 'render_page' ]
+        );
+
+        add_submenu_page(
+            ServicesPage::MENU_SLUG,
+            __( 'Customers', 'smooth-booking' ),
+            __( 'Vásárlók', 'smooth-booking' ),
+            CustomersPage::CAPABILITY,
+            CustomersPage::MENU_SLUG,
+            [ $this->customers_page, 'render_page' ]
         );
 
         $this->settings_page->register_submenu( ServicesPage::MENU_SLUG );
