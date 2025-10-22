@@ -240,9 +240,3 @@ class ServiceProvider {
         } );
     }
 }
-use SmoothBooking\Rest\CustomersController;
-use SmoothBooking\Infrastructure\Repository\CustomerRepository;
-use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
-use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
-use SmoothBooking\Domain\Customers\CustomerService;
-use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;
