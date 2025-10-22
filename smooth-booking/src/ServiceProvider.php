@@ -7,14 +7,19 @@
 
 namespace SmoothBooking;
 
+use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu;
 use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Admin\ServicesPage;
+use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
+use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
+use SmoothBooking\Domain\Customers\CustomerService;
+use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeCategoryRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeService;
@@ -28,11 +33,14 @@ use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Repository\CustomerRepository;
+use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
+use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
@@ -96,6 +104,32 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( CustomerTagRepositoryInterface::class, static function ( ServiceContainer $container ): CustomerTagRepositoryInterface {
+            global $wpdb;
+
+            return new CustomerTagRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( CustomerRepositoryInterface::class, static function ( ServiceContainer $container ): CustomerRepositoryInterface {
+            global $wpdb;
+
+            return new CustomerRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( CustomerService::class, static function ( ServiceContainer $container ): CustomerService {
+            return new CustomerService(
+                $container->get( CustomerRepositoryInterface::class ),
+                $container->get( CustomerTagRepositoryInterface::class ),
+                $container->get( Logger::class )
+            );
+        } );
+
         $container->singleton( ServiceCategoryRepositoryInterface::class, static function ( ServiceContainer $container ): ServiceCategoryRepositoryInterface {
             global $wpdb;
 
@@ -148,10 +182,15 @@ class ServiceProvider {
             return new EmployeesPage( $container->get( EmployeeService::class ) );
         } );
 
+        $container->singleton( CustomersPage::class, static function ( ServiceContainer $container ): CustomersPage {
+            return new CustomersPage( $container->get( CustomerService::class ) );
+        } );
+
         $container->singleton( Menu::class, static function ( ServiceContainer $container ): Menu {
             return new Menu(
                 $container->get( ServicesPage::class ),
                 $container->get( EmployeesPage::class ),
+                $container->get( CustomersPage::class ),
                 $container->get( SettingsPage::class )
             );
         } );
@@ -172,6 +211,10 @@ class ServiceProvider {
             return new EmployeesController( $container->get( EmployeeService::class ) );
         } );
 
+        $container->singleton( CustomersController::class, static function ( ServiceContainer $container ): CustomersController {
+            return new CustomersController( $container->get( CustomerService::class ) );
+        } );
+
         $container->singleton( ServicesController::class, static function ( ServiceContainer $container ): ServicesController {
             return new ServicesController( $container->get( ServiceService::class ) );
         } );
@@ -188,8 +231,18 @@ class ServiceProvider {
             return new EmployeesCommand( $container->get( EmployeeService::class ) );
         } );
 
+        $container->singleton( CustomersCommand::class, static function ( ServiceContainer $container ): CustomersCommand {
+            return new CustomersCommand( $container->get( CustomerService::class ) );
+        } );
+
         $container->singleton( ServicesCommand::class, static function ( ServiceContainer $container ): ServicesCommand {
             return new ServicesCommand( $container->get( ServiceService::class ) );
         } );
     }
 }
+use SmoothBooking\Rest\CustomersController;
+use SmoothBooking\Infrastructure\Repository\CustomerRepository;
+use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
+use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
+use SmoothBooking\Domain\Customers\CustomerService;
+use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;

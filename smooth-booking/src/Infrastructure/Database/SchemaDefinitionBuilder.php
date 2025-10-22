@@ -27,16 +27,59 @@ class SchemaDefinitionBuilder {
         $tables['customers'] = sprintf(
             'CREATE TABLE %1$ssmooth_customers (
                 customer_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                name VARCHAR(150) NOT NULL,
-                email VARCHAR(190) NULL,
-                phone VARCHAR(50) NULL,
-                category VARCHAR(50) NULL,
-                contact_json JSON NULL,
+                name VARCHAR(191) NOT NULL,
+                user_id BIGINT UNSIGNED NULL,
+                profile_image_id BIGINT UNSIGNED NULL,
+                first_name VARCHAR(191) NULL,
+                last_name VARCHAR(191) NULL,
+                phone VARCHAR(75) NULL,
+                email VARCHAR(191) NULL,
+                date_of_birth DATE NULL,
+                country VARCHAR(120) NULL,
+                state_region VARCHAR(120) NULL,
+                postal_code VARCHAR(30) NULL,
+                city VARCHAR(120) NULL,
+                street_address VARCHAR(191) NULL,
+                additional_address VARCHAR(191) NULL,
+                street_number VARCHAR(60) NULL,
+                notes TEXT NULL,
+                last_appointment_at DATETIME NULL,
+                total_appointments INT UNSIGNED NOT NULL DEFAULT 0,
+                total_payments DECIMAL(12,2) NOT NULL DEFAULT 0.00,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY  (customer_id),
-                UNIQUE KEY email (email)
+                KEY email (email),
+                KEY phone (phone),
+                KEY name (name),
+                KEY user_lookup (user_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['customer_tags'] = sprintf(
+            'CREATE TABLE %1$ssmooth_customer_tags (
+                tag_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(150) NOT NULL,
+                slug VARCHAR(160) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (tag_id),
+                UNIQUE KEY slug (slug)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['customer_tag_relationships'] = sprintf(
+            'CREATE TABLE %1$ssmooth_customer_tag_relationships (
+                customer_id BIGINT UNSIGNED NOT NULL,
+                tag_id BIGINT UNSIGNED NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (customer_id, tag_id),
+                KEY tag_lookup (tag_id, customer_id)
             ) %2$s;',
             $prefix,
             $options

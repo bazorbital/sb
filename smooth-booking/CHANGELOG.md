@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+## [0.6.0] - 2024-10-01
+### Added
+- Customers administration screen with search, sorting, pagination, soft-delete toggles, and full CRUD workflow including profile image selection and tag management.
+- Customer domain layer with repositories, tag entities, validation service, and multisite-aware schema tables for storing extended customer profiles.
+- REST API endpoints at `/wp-json/smooth-booking/v1/customers` supporting list, create, update, delete, and restore operations.
+- WP-CLI commands `wp smooth customers <list|create|update|delete|restore>` for headless customer maintenance.
+- PHPUnit coverage for customer service sanitisation rules using in-memory repositories.
+
 ## [0.5.0] - 2024-09-15
 ### Changed
 - Modernised the Services and Employees admin pages with 2025-ready headers, prominent "Add new" call-to-action buttons, and collapsible form drawers that open only when triggered or editing.

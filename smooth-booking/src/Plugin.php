@@ -7,10 +7,12 @@
 
 namespace SmoothBooking;
 
+use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu as AdminMenu;
 use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Admin\SettingsPage;
+use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
@@ -18,6 +20,7 @@ use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
+use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
@@ -95,6 +98,8 @@ class Plugin {
 
         /** @var EmployeesPage $employees_page */
         $employees_page = $this->container->get( EmployeesPage::class );
+        /** @var CustomersPage $customers_page */
+        $customers_page = $this->container->get( CustomersPage::class );
         /** @var ServicesPage $services_page */
         $services_page = $this->container->get( ServicesPage::class );
 
@@ -102,6 +107,11 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
         add_action( 'admin_post_smooth_booking_restore_employee', [ $employees_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $employees_page, 'enqueue_assets' ] );
+
+        add_action( 'admin_post_smooth_booking_save_customer', [ $customers_page, 'handle_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_customer', [ $customers_page, 'handle_delete' ] );
+        add_action( 'admin_post_smooth_booking_restore_customer', [ $customers_page, 'handle_restore' ] );
+        add_action( 'admin_enqueue_scripts', [ $customers_page, 'enqueue_assets' ] );
 
         add_action( 'admin_post_smooth_booking_save_service', [ $services_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_service', [ $services_page, 'handle_delete' ] );
@@ -126,6 +136,11 @@ class Plugin {
         $employees_command = $this->container->get( EmployeesCommand::class );
 
         \WP_CLI::add_command( 'smooth employees', $employees_command );
+
+        /** @var CustomersCommand $customers_command */
+        $customers_command = $this->container->get( CustomersCommand::class );
+
+        \WP_CLI::add_command( 'smooth customers', $customers_command );
 
         /** @var ServicesCommand $services_command */
         $services_command = $this->container->get( ServicesCommand::class );
@@ -187,6 +202,10 @@ class Plugin {
         /** @var EmployeesController $employees */
         $employees = $this->container->get( EmployeesController::class );
         $employees->register_routes();
+
+        /** @var CustomersController $customers */
+        $customers = $this->container->get( CustomersController::class );
+        $customers->register_routes();
 
         /** @var ServicesController $services */
         $services = $this->container->get( ServicesController::class );
