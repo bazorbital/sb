@@ -139,6 +139,18 @@ if ( ! function_exists( 'get_user_by' ) ) {
     }
 }
 
+if ( ! function_exists( 'get_option' ) ) {
+    function get_option( string $option, $default = false ) {
+        return $default ?: 'HUF';
+    }
+}
+
+if ( ! function_exists( 'wp_timezone' ) ) {
+    function wp_timezone(): \DateTimeZone {
+        return new \DateTimeZone( 'UTC' );
+    }
+}
+
 if ( ! class_exists( 'WP_Error' ) ) {
     class WP_Error {
         private string $code;

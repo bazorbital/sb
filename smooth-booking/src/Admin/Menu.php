@@ -27,6 +27,11 @@ class Menu {
     private ServicesPage $services_page;
 
     /**
+     * @var AppointmentsPage
+     */
+    private AppointmentsPage $appointments_page;
+
+    /**
      * @var EmployeesPage
      */
     private EmployeesPage $employees_page;
@@ -44,11 +49,12 @@ class Menu {
     /**
      * Constructor.
      */
-    public function __construct( ServicesPage $services_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
-        $this->services_page  = $services_page;
-        $this->employees_page = $employees_page;
-        $this->customers_page = $customers_page;
-        $this->settings_page  = $settings_page;
+    public function __construct( ServicesPage $services_page, AppointmentsPage $appointments_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
+        $this->services_page     = $services_page;
+        $this->appointments_page = $appointments_page;
+        $this->employees_page    = $employees_page;
+        $this->customers_page    = $customers_page;
+        $this->settings_page     = $settings_page;
     }
 
     /**
@@ -81,6 +87,15 @@ class Menu {
             EmployeesPage::CAPABILITY,
             EmployeesPage::MENU_SLUG,
             [ $this->employees_page, 'render_page' ]
+        );
+
+        add_submenu_page(
+            ServicesPage::MENU_SLUG,
+            __( 'Appointments', 'smooth-booking' ),
+            __( 'Foglalások', 'smooth-booking' ),
+            AppointmentsPage::CAPABILITY,
+            AppointmentsPage::MENU_SLUG,
+            [ $this->appointments_page, 'render_page' ]
         );
 
         add_submenu_page(

@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.7.0] - 2024-11-01
+### Added
+- Appointments administration screen with filterable list, soft-delete workflow, and form drawer for creating bookings, including provider, service, customer selection, schedule period, and notification controls.
+- Appointment domain layer with repository, validation service, and updated database schema storing payment status, internal notes, notification flags, and contact overrides.
+- REST API endpoints at `/wp-json/smooth-booking/v1/appointments` supporting list, create, update, delete, and restore operations aligned with admin validations.
+- WP-CLI command suite `wp smooth appointments <list|delete|restore>` for headless management of bookings.
+- Dedicated admin CSS/JS assets powering search-enabled selects, action menus, and dynamic time-slot handling, plus PHPUnit coverage for appointment entities and service validation.
+
 ## [0.6.0] - 2024-10-01
 ### Added
 - Customers administration screen with search, sorting, pagination, soft-delete toggles, and full CRUD workflow including profile image selection and tag management.

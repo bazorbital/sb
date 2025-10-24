@@ -94,6 +94,7 @@ class CustomersPage {
         $action       = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( (string) $_GET['action'] ) ) : '';
         $customer_id  = isset( $_GET['customer_id'] ) ? absint( $_GET['customer_id'] ) : 0;
         $view         = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( (string) $_GET['view'] ) ) : 'active';
+        $open         = isset( $_GET['open'] ) ? sanitize_key( wp_unslash( (string) $_GET['open'] ) ) : '';
         $show_deleted = 'deleted' === $view;
 
         $search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['s'] ) ) : '';
@@ -132,7 +133,7 @@ class CustomersPage {
 
         $tags = $this->service->list_tags();
 
-        $should_open_form  = $editing_customer instanceof Customer;
+        $should_open_form  = $editing_customer instanceof Customer || 'form' === $open;
         $form_container_id = 'smooth-booking-customer-form-panel';
         $open_label        = __( 'Add new customer', 'smooth-booking' );
         $close_label       = __( 'Close form', 'smooth-booking' );
