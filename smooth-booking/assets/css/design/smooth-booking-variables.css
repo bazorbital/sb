@@ -1,0 +1,47 @@
+:root{
+	--sba-pt-main-green:#12D488;
+	--sba-pt-main-green-darker:#0DC37C;
+	--sba-pt-navy-blue:#2C33AE;
+	--sba-pt-fuchsia-purple:#D436C4;
+	--sba-pt-royal-blue:#2167F1;
+	--sba-pt-blue:#1F63E7;
+	--sba-pt-brown:#834E1E;
+	--sba-pt-secondary-orange:#F5AE41;
+	--sba-pt-secondary-orange-darker:#ECA335;
+	--sba-sc-success:#01CB62;
+	--sba-sc-success-darker:#0BAC58;
+	--sba-sc-warning:#F4B125;
+	--sba-sc-danger:#EE2445;
+	--sba-sc-danger-darker:#CB1936;
+	--sba-dt-black-400:#202C45;
+	--sba-dt-black-400-darker:#121B2C;
+	--sba-dt-black-300:#535D71;
+	--sba-dt-black-200:#727E95;
+	--sba-dt-black-100:#B8C1D3;
+	--sba-gt-gray-400:#CFD6E5;
+	--sba-gt-gray-300:#DCE4F5;
+	--sba-gt-gray-200:#E9EDF5;
+	--sba-gt-gray-100:#F4F7FB;
+	--sba-gt-gray-50:#FAFCFF;
+	--sba-cl-white:#ffffff;
+	--sba-pt-main-green-alpha-12:rgba(18,212,136,0.12);
+	--sba-pt-main-green-alpha-08:rgba(18,212,136,0.08);
+	--sba-pt-secondary-orange-alpha-08:rgba(245,174,65,0.08);
+	--sba-pt-secondary-orange-alpha-12:rgba(245,174,65,0.12);
+	--sba-pt-royal-blue-alpha-08:rgba(33,103,241,0.08);
+	--sba-pt-fuchsia-purple-alpha-08:rgba(212,54,196,0.08);
+	--sba-dt-black-400-alpha-08:rgba(32,44,69,0.08);
+	--sba-dt-black-200-alpha-12:rgba(114,126,149,0.12);
+	--sba-sc-danger-alpha-08:rgba(238, 36, 69, 0.08);
+	--sba-pt-blue-alpha-08:rgba(31, 99, 231, 0.08);
+	--sba-pt-brown-alpha-08:rgba(131, 78, 30, 0.08);
+	--sba-primary-font:'Poppins',sans-serif;
+	--sba-secondary-font:'Inter',sans-serif;
+	--sba-radius-12px:12px;
+	--sba-radius-16px:16px;
+	--sba-radius-8px:8px;
+	--sba-radius-6px:6px;
+	--sba-radius-4px:4px;
+	--sba-radius-2px:2px;
+	--sba-radius-circle:50%
+}
