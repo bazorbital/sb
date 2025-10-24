@@ -245,8 +245,10 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
              LEFT JOIN {$customers} AS c ON b.customer_id = c.customer_id
              LEFT JOIN {$employees} AS e ON b.employee_id = e.employee_id
              LEFT JOIN {$services} AS s ON b.service_id = s.service_id
-             WHERE b.booking_id = %d",
-            $appointment_id
+             WHERE b.booking_id = %d
+               AND b.booking_type = %s",
+            $appointment_id,
+            'appointment'
         );
 
         $row = $this->wpdb->get_row( $sql, ARRAY_A );
@@ -333,9 +335,12 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
                 'customer_phone'  => $data['customer_phone'],
                 'updated_at'      => current_time( 'mysql' ),
             ],
-            [ 'booking_id' => $appointment_id ],
+            [
+                'booking_id'   => $appointment_id,
+                'booking_type' => 'appointment',
+            ],
             [ '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%d', '%s', '%s', '%s' ],
-            [ '%d' ]
+            [ '%d', '%s' ]
         );
 
         if ( false === $updated ) {
@@ -364,9 +369,12 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
                 'is_deleted' => 1,
                 'updated_at' => current_time( 'mysql' ),
             ],
-            [ 'booking_id' => $appointment_id ],
+            [
+                'booking_id'   => $appointment_id,
+                'booking_type' => 'appointment',
+            ],
             [ '%d', '%s' ],
-            [ '%d' ]
+            [ '%d', '%s' ]
         );
 
         if ( false === $updated ) {
@@ -390,9 +398,12 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
                 'is_deleted' => 0,
                 'updated_at' => current_time( 'mysql' ),
             ],
-            [ 'booking_id' => $appointment_id ],
+            [
+                'booking_id'   => $appointment_id,
+                'booking_type' => 'appointment',
+            ],
             [ '%d', '%s' ],
-            [ '%d' ]
+            [ '%d', '%s' ]
         );
 
         if ( false === $updated ) {
