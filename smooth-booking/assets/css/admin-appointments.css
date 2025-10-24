@@ -1,0 +1,117 @@
+.smooth-booking-appointments-wrap .smooth-booking-appointment-form-drawer {
+    max-width: 960px;
+}
+
+.smooth-booking-appointment-datetime {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.smooth-booking-inline-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+}
+
+.smooth-booking-time-select {
+    min-width: 140px;
+}
+
+.smooth-booking-customer-select {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.smooth-booking-customer-select select {
+    min-width: 240px;
+}
+
+.smooth-booking-appointment-filters {
+    margin: 20px 0;
+    background: var(--sba-gt-gray-50);
+    padding: 16px;
+    border-radius: var(--sba-radius-large);
+}
+
+.smooth-booking-filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.smooth-booking-filter-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--sba-dt-black-200);
+}
+
+.smooth-booking-filter-row input,
+.smooth-booking-filter-row select {
+    width: 100%;
+}
+
+.smooth-booking-appointments-table .column-actions {
+    width: 80px;
+    text-align: right;
+}
+
+.smooth-booking-appointments-table .smooth-booking-actions-menu {
+    position: relative;
+}
+
+.smooth-booking-appointments-table .smooth-booking-actions-list {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: var(--sba-radius-medium);
+    padding: 8px 0;
+    box-shadow: 0 12px 24px rgba(36, 42, 48, 0.12);
+    min-width: 160px;
+    z-index: 5;
+}
+
+.smooth-booking-appointments-table .smooth-booking-actions-list li {
+    margin: 0;
+}
+
+.smooth-booking-appointments-table .smooth-booking-actions-list a,
+.smooth-booking-appointments-table .smooth-booking-actions-list button {
+    display: block;
+    width: 100%;
+    padding: 6px 16px;
+    text-align: left;
+}
+
+.smooth-booking-appointments-table .smooth-booking-actions-list button.delete {
+    color: var(--sba-dt-red-400);
+}
+
+.smooth-booking-appointments-table td {
+    vertical-align: top;
+}
+
+@media (max-width: 782px) {
+    .smooth-booking-appointment-datetime {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .smooth-booking-customer-select {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .smooth-booking-customer-select select,
+    .smooth-booking-customer-select .button {
+        width: 100%;
+    }
+}

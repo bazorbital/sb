@@ -4,19 +4,19 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Smooth Booking ensures the booking database environment is ready for custom scheduling workflows and now ships with full employee, customer, and service management tooling.
+Smooth Booking ensures the booking database environment is ready for custom scheduling workflows and now ships with full employee, customer, service, and appointment management tooling.
 
 == Description ==
-Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee/customer/service management UIs, and WP-CLI tooling for administrators.
+Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee/customer/service/appointment management UIs, and WP-CLI tooling for administrators.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
 2. Activate the plugin through the "Plugins" screen in WordPress.
-3. Visit **Smooth Booking → Services** to configure offerings, **Smooth Booking → Employees** to create staff profiles, **Smooth Booking → Customers** to manage client records, and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
+3. Visit **Smooth Booking → Appointments** to manage bookings, **Smooth Booking → Services** to configure offerings, **Smooth Booking → Employees** to create staff profiles, **Smooth Booking → Customers** to manage client records, and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
 
 == Frequently Asked Questions ==
 = Does the plugin support multisite? =
@@ -27,14 +27,20 @@ Use WP-CLI:
 
 `wp smooth schema status`
 
-= Can I manage employees, customers, and services programmatically? =
-Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, and `/wp-json/smooth-booking/v1/services` or the CLI commands `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, and `wp smooth services <list|create|update|delete|restore>`.
+= Can I manage employees, customers, services, and appointments programmatically? =
+Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, `/wp-json/smooth-booking/v1/services`, and `/wp-json/smooth-booking/v1/appointments` or the CLI commands `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, and `wp smooth appointments <list|delete|restore>`.
 
 == Screenshots ==
 1. Settings page summarizing schema health.
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.7.0 =
+* Added Appointments administration screen with searchable filters, soft delete/restore, Select2-powered provider/service/customer dropdowns, schedule selectors, and notification toggles matching the existing admin design system.
+* Introduced appointment domain service and repository backed by schema upgrades storing payment status, internal notes, notification flags, and contact overrides.
+* Registered REST API routes at `/wp-json/smooth-booking/v1/appointments` with list, create, update, delete, and restore operations plus pagination filters.
+* Added WP-CLI commands `wp smooth appointments <list|delete|restore>` and PHPUnit coverage for appointment entity parsing and validation.
+
 = 0.6.0 =
 * Added Customers administration screen with searchable, sortable, and paginated listings, full CRUD forms, WordPress user linking, profile imagery, tagging, soft delete/restore, and admin notices.
 * Introduced customer domain layer with repositories, tag entities, sanitising service, and new database tables for customer records and tag relations.
@@ -70,6 +76,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smoot
 * Initial release. Creates booking schema on activation and runtime. Provides Settings API integration, REST endpoint, shortcode, Gutenberg block, cron maintenance, and WP-CLI commands for schema management.
 
 == Upgrade Notice ==
+= 0.7.0 =
+Introduces a full Appointments hub with CRUD forms, filters, REST/CLI automation, and upgraded schema fields for payments and notifications. Update to manage bookings alongside services, staff, and customers.
+
 = 0.6.0 =
 Introduces a full Customers directory with tagging, WordPress user linkage, REST/CLI automation, and upgraded schema. Update to manage clients alongside services and staff.
 

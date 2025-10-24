@@ -7,16 +7,20 @@
 
 namespace SmoothBooking;
 
+use SmoothBooking\Admin\AppointmentsPage;
 use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu;
 use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Admin\ServicesPage;
+use SmoothBooking\Cli\Commands\AppointmentsCommand;
 use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
+use SmoothBooking\Domain\Appointments\AppointmentRepositoryInterface;
+use SmoothBooking\Domain\Appointments\AppointmentService;
 use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
 use SmoothBooking\Domain\Customers\CustomerService;
 use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;
@@ -33,6 +37,7 @@ use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Repository\AppointmentRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
@@ -40,6 +45,7 @@ use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
+use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
@@ -104,6 +110,15 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( AppointmentRepositoryInterface::class, static function ( ServiceContainer $container ): AppointmentRepositoryInterface {
+            global $wpdb;
+
+            return new AppointmentRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
         $container->singleton( CustomerTagRepositoryInterface::class, static function ( ServiceContainer $container ): CustomerTagRepositoryInterface {
             global $wpdb;
 
@@ -126,6 +141,16 @@ class ServiceProvider {
             return new CustomerService(
                 $container->get( CustomerRepositoryInterface::class ),
                 $container->get( CustomerTagRepositoryInterface::class ),
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( AppointmentService::class, static function ( ServiceContainer $container ): AppointmentService {
+            return new AppointmentService(
+                $container->get( AppointmentRepositoryInterface::class ),
+                $container->get( EmployeeService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( CustomerService::class ),
                 $container->get( Logger::class )
             );
         } );
@@ -178,6 +203,15 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( AppointmentsPage::class, static function ( ServiceContainer $container ): AppointmentsPage {
+            return new AppointmentsPage(
+                $container->get( AppointmentService::class ),
+                $container->get( EmployeeService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( CustomerService::class )
+            );
+        } );
+
         $container->singleton( EmployeesPage::class, static function ( ServiceContainer $container ): EmployeesPage {
             return new EmployeesPage( $container->get( EmployeeService::class ) );
         } );
@@ -189,6 +223,7 @@ class ServiceProvider {
         $container->singleton( Menu::class, static function ( ServiceContainer $container ): Menu {
             return new Menu(
                 $container->get( ServicesPage::class ),
+                $container->get( AppointmentsPage::class ),
                 $container->get( EmployeesPage::class ),
                 $container->get( CustomersPage::class ),
                 $container->get( SettingsPage::class )
@@ -223,6 +258,10 @@ class ServiceProvider {
             return new CleanupScheduler( $container->get( Logger::class ), $container->get( SchemaManager::class ) );
         } );
 
+        $container->singleton( AppointmentsController::class, static function ( ServiceContainer $container ): AppointmentsController {
+            return new AppointmentsController( $container->get( AppointmentService::class ) );
+        } );
+
         $container->singleton( SchemaCommand::class, static function ( ServiceContainer $container ): SchemaCommand {
             return new SchemaCommand( $container->get( SchemaManager::class ), $container->get( Logger::class ) );
         } );
@@ -237,6 +276,10 @@ class ServiceProvider {
 
         $container->singleton( ServicesCommand::class, static function ( ServiceContainer $container ): ServicesCommand {
             return new ServicesCommand( $container->get( ServiceService::class ) );
+        } );
+
+        $container->singleton( AppointmentsCommand::class, static function ( ServiceContainer $container ): AppointmentsCommand {
+            return new AppointmentsCommand( $container->get( AppointmentService::class ) );
         } );
     }
 }
