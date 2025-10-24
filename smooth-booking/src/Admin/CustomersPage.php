@@ -32,9 +32,11 @@ use function get_option;
 use function get_transient;
 use function get_user_by;
 use function get_users;
+use function is_rtl;
 use function is_wp_error;
 use function number_format_i18n;
 use function paginate_links;
+use function plugins_url;
 use function remove_query_arg;
 use function sanitize_key;
 use function sanitize_text_field;
@@ -148,19 +150,20 @@ class CustomersPage {
         ];
 
         ?>
-        <div class="wrap smooth-booking-customers-wrap">
-            <div class="smooth-booking-admin-header">
-                <div class="smooth-booking-admin-header__content">
-                    <h1><?php echo esc_html__( 'Customers', 'smooth-booking' ); ?></h1>
-                    <p class="description"><?php esc_html_e( 'Manage your client records, contact details, and booking history.', 'smooth-booking' ); ?></p>
+        <div class="wrap smooth-booking-admin smooth-booking-customers-wrap">
+            <div class="smooth-booking-admin__content">
+                <div class="smooth-booking-admin-header">
+                    <div class="smooth-booking-admin-header__content">
+                        <h1><?php echo esc_html__( 'Customers', 'smooth-booking' ); ?></h1>
+                        <p class="description"><?php esc_html_e( 'Manage your client records, contact details, and booking history.', 'smooth-booking' ); ?></p>
+                    </div>
+                    <div class="smooth-booking-admin-header__actions">
+                        <button type="button" class="sba-btn sba-btn--primary sba-btn__medium smooth-booking-open-form" data-target="customer-form" data-open-label="<?php echo esc_attr( $open_label ); ?>" data-close-label="<?php echo esc_attr( $close_label ); ?>" aria-expanded="<?php echo $should_open_form ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $form_container_id ); ?>">
+                            <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+                            <span class="smooth-booking-open-form__label"><?php echo esc_html( $should_open_form ? $close_label : $open_label ); ?></span>
+                        </button>
+                    </div>
                 </div>
-                <div class="smooth-booking-admin-header__actions">
-                    <button type="button" class="button button-primary smooth-booking-open-form" data-target="customer-form" data-open-label="<?php echo esc_attr( $open_label ); ?>" data-close-label="<?php echo esc_attr( $close_label ); ?>" aria-expanded="<?php echo $should_open_form ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $form_container_id ); ?>">
-                        <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
-                        <span class="smooth-booking-open-form__label"><?php echo esc_html( $should_open_form ? $close_label : $open_label ); ?></span>
-                    </button>
-                </div>
-            </div>
 
             <?php if ( $notice ) : ?>
                 <div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -185,17 +188,17 @@ class CustomersPage {
                 <input type="hidden" name="view" value="<?php echo esc_attr( $show_deleted ? 'deleted' : 'active' ); ?>" />
                 <label class="screen-reader-text" for="smooth-booking-customer-search"><?php esc_html_e( 'Search customers', 'smooth-booking' ); ?></label>
                 <input type="search" id="smooth-booking-customer-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php echo esc_attr__( 'Search by name, email or phone…', 'smooth-booking' ); ?>" />
-                <button type="submit" class="button"><?php esc_html_e( 'Search', 'smooth-booking' ); ?></button>
+                <button type="submit" class="sba-btn sba-btn--primary sba-btn__medium"><?php esc_html_e( 'Search', 'smooth-booking' ); ?></button>
                 <?php if ( $search ) : ?>
-                    <a class="button button-link" href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>"><?php esc_html_e( 'Clear search', 'smooth-booking' ); ?></a>
+                    <a class="sba-btn sba-btn__medium sba-btn__filled-light" href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>"><?php esc_html_e( 'Clear search', 'smooth-booking' ); ?></a>
                 <?php endif; ?>
             </form>
 
             <div class="smooth-booking-toolbar">
                 <?php if ( $show_deleted ) : ?>
-                    <a class="button" href="<?php echo esc_url( add_query_arg( [ 'view' => 'active' ], $base_url ) ); ?>"><?php esc_html_e( 'Back to active customers', 'smooth-booking' ); ?></a>
+                    <a class="sba-btn sba-btn__medium sba-btn__filled-light" href="<?php echo esc_url( add_query_arg( [ 'view' => 'active' ], $base_url ) ); ?>"><?php esc_html_e( 'Back to active customers', 'smooth-booking' ); ?></a>
                 <?php else : ?>
-                    <a class="button" href="<?php echo esc_url( add_query_arg( [ 'view' => 'deleted' ], $base_url ) ); ?>"><?php esc_html_e( 'Show deleted customers', 'smooth-booking' ); ?></a>
+                    <a class="sba-btn sba-btn__medium sba-btn__filled-light" href="<?php echo esc_url( add_query_arg( [ 'view' => 'deleted' ], $base_url ) ); ?>"><?php esc_html_e( 'Show deleted customers', 'smooth-booking' ); ?></a>
                 <?php endif; ?>
             </div>
 
@@ -254,7 +257,7 @@ class CustomersPage {
                                 <td><?php echo esc_html( $this->format_payments( $customer->get_total_payments() ) ); ?></td>
                                 <td class="smooth-booking-actions-cell">
                                     <div class="smooth-booking-actions-menu" data-customer-id="<?php echo esc_attr( (string) $customer->get_id() ); ?>">
-                                        <button type="button" class="button button-link smooth-booking-actions-toggle" aria-haspopup="true" aria-expanded="false">
+                                        <button type="button" class="sba-btn sba-btn--icon-without-box smooth-booking-actions-toggle" aria-haspopup="true" aria-expanded="false">
                                             <span class="dashicons dashicons-ellipsis"></span>
                                             <span class="screen-reader-text"><?php esc_html_e( 'Open actions menu', 'smooth-booking' ); ?></span>
                                         </button>
@@ -309,7 +312,9 @@ class CustomersPage {
                     </div>
                 </div>
             <?php endif; ?>
+            </div>
         </div>
+    </div>
         <?php
     }
 
@@ -446,14 +451,51 @@ class CustomersPage {
             return;
         }
 
+        wp_enqueue_media();
+
         wp_enqueue_style(
-            'smooth-booking-admin-customers',
-            SMOOTH_BOOKING_PLUGIN_URL . 'assets/css/admin-customers.css',
+            'smooth-booking-admin-variables',
+            plugins_url( 'assets/css/design/smooth-booking-variables.css', SMOOTH_BOOKING_PLUGIN_FILE ),
             [],
             SMOOTH_BOOKING_VERSION
         );
 
-        wp_enqueue_media();
+        wp_enqueue_style(
+            'smooth-booking-admin-components',
+            plugins_url( 'assets/css/design/smooth-booking-admin-components.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-variables' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_style(
+            'smooth-booking-admin-base',
+            plugins_url( 'assets/css/design/smooth-booking-admin.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-components' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_style(
+            'smooth-booking-admin-shared',
+            plugins_url( 'assets/css/admin-shared.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-base' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        if ( is_rtl() ) {
+            wp_enqueue_style(
+                'smooth-booking-admin-rtl',
+                plugins_url( 'assets/css/design/smooth-booking-admin-rtl.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+                [ 'smooth-booking-admin-base' ],
+                SMOOTH_BOOKING_VERSION
+            );
+        }
+
+        wp_enqueue_style(
+            'smooth-booking-admin-customers',
+            plugins_url( 'assets/css/admin-customers.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-shared' ],
+            SMOOTH_BOOKING_VERSION
+        );
 
         wp_enqueue_script(
             'smooth-booking-admin-customers',
@@ -520,14 +562,14 @@ class CustomersPage {
         );
 
         ?>
-        <div class="smooth-booking-customer-form-card">
+        <div class="smooth-booking-customer-form-card smooth-booking-card">
             <div class="smooth-booking-form-header">
                 <h2><?php echo $is_edit ? esc_html__( 'Edit customer', 'smooth-booking' ) : esc_html__( 'Add new customer', 'smooth-booking' ); ?></h2>
                 <div class="smooth-booking-form-header__actions">
                     <?php if ( $is_edit ) : ?>
-                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="button-link smooth-booking-form-cancel"><?php esc_html_e( 'Back to list', 'smooth-booking' ); ?></a>
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-cancel"><?php esc_html_e( 'Back to list', 'smooth-booking' ); ?></a>
                     <?php else : ?>
-                        <button type="button" class="button-link smooth-booking-form-dismiss" data-target="customer-form"><?php esc_html_e( 'Cancel', 'smooth-booking' ); ?></button>
+                        <button type="button" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-dismiss" data-target="customer-form"><?php esc_html_e( 'Cancel', 'smooth-booking' ); ?></button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -552,8 +594,8 @@ class CustomersPage {
                                         <?php echo $this->get_customer_avatar_html( $customer, esc_html__( 'Customer avatar', 'smooth-booking' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                     </div>
                                     <div class="smooth-booking-avatar-actions">
-                                        <button type="button" class="button smooth-booking-avatar-select"><?php esc_html_e( 'Choose image', 'smooth-booking' ); ?></button>
-                                        <button type="button" class="button button-link smooth-booking-avatar-remove"<?php echo $profile_image_id ? '' : ' style="display:none"'; ?>><?php esc_html_e( 'Remove', 'smooth-booking' ); ?></button>
+                                        <button type="button" class="sba-btn sba-btn__small sba-btn__filled smooth-booking-avatar-select"><?php esc_html_e( 'Choose image', 'smooth-booking' ); ?></button>
+                                        <button type="button" class="sba-btn sba-btn__small sba-btn__filled-light smooth-booking-avatar-remove"<?php echo $profile_image_id ? '' : ' style="display:none"'; ?>><?php esc_html_e( 'Remove', 'smooth-booking' ); ?></button>
                                         <input type="hidden" name="customer_profile_image_id" value="<?php echo esc_attr( (string) $profile_image_id ); ?>" />
                                     </div>
                                 </div>
@@ -650,9 +692,9 @@ class CustomersPage {
                     </tbody>
                 </table>
 
-                <p class="submit">
-                    <button type="submit" class="button button-primary"><?php echo $is_edit ? esc_html__( 'Update customer', 'smooth-booking' ) : esc_html__( 'Create customer', 'smooth-booking' ); ?></button>
-                </p>
+                <div class="smooth-booking-form-actions">
+                    <button type="submit" class="sba-btn sba-btn--primary sba-btn__large smooth-booking-form-submit"><?php echo $is_edit ? esc_html__( 'Update customer', 'smooth-booking' ) : esc_html__( 'Create customer', 'smooth-booking' ); ?></button>
+                </div>
             </form>
         </div>
         <?php

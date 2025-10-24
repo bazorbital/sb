@@ -1,0 +1,1087 @@
+:root{
+	--sba-radius-6px:6px
+}
+.el-tooltip__popper[x-placement^=top] .popper__arrow::after{
+	margin-right:-5px;
+	margin-left:0
+}
+body.rtl{
+	padding-right:0!important
+}
+.el-button+.el-button{
+	margin-right:10px
+}
+.sba-header-navbar{
+	padding-left:0;
+	padding-right:32px;
+	margin-left:0;
+	margin-right:-20px
+}
+.sba-date-range-picker__is-filter-enabled .el-picker-panel__sidebar+.el-picker-panel__body{
+	margin-left:0;
+	margin-right:110px
+}
+.sba-hd-body__item-head{
+	border-left:none;
+	border-right:3px solid var(--sba-pt-main-green);
+	padding-left:0;
+	padding-right:10px
+}
+.sba-ni-dropdown-menu .sba-ni-dropdown-menu--item .sba-dm--item-link{
+	padding-left:0;
+	padding-right:8px
+}
+.sba-ni-dropdown-menu .sba-ni-dropdown-menu--item .sba-dm--item-link span{
+	margin-right:unset;
+	margin-left:8px
+}
+.sba-main-listing-card-container{
+	margin:44px 20px 40px 40px
+}
+.sba-dashboard-summary-filter{
+	display:flex;
+	flex-direction:column
+}
+.sba-dashboard-summary .sba-dash-summary-item:last-child{
+	margin-right:24px
+}
+.sba-dashboard-summary .sba-dash-summary-item:first-child{
+	margin-right:0
+}
+.sba-form-control__left-icon span.el-input__prefix{
+	left:auto;
+	right:16px
+}
+.sba-form-control--date-range-picker.el-date-editor{
+	padding:3px 16px 3px 0
+}
+.sba-form-control__country-dropdown .el-input__inner{
+	padding-left:0;
+	padding-right:12px
+}
+.el-input__suffix{
+	right:auto;
+	left:5px
+}
+.sba-ev-right-content{
+	margin-left:0;
+	margin-right:40px
+}
+.sba-dialog--fullscreen.is-fullscreen{
+	margin-left:auto;
+	margin-right:160px
+}
+body.folded .sba-dialog--fullscreen.is-fullscreen{
+	margin-left:0;
+	margin-right:36px
+}
+.sba-dialog--fullscreen .sba-dialog-heading h1{
+	padding-left:0;
+	padding-right:40px
+}
+.sba-dialog--fullscreen .sba-dh__btn-group-col{
+	padding-left:40px;
+	padding-right:0;
+	text-align:left
+}
+.sba-btn+.sba-btn{
+	margin-right:16px;
+	margin-left:0
+}
+.sba-btn:not(.sba-btn--icon-without-box) span .material-icons-round,.sba-btn:not(.sba-btn--icon-without-box) span svg{
+	margin-right:unset;
+	margin-left:4px
+}
+.sba-upload-component .sba-upload-component__icon{
+	margin-right:0;
+	margin-left:20px
+}
+.sba-mlc-left-heading--is-visible-help .sba-btn--icon-without-box.__sba-is-label{
+	margin-right:8px;
+	margin-left:0
+}
+.sba-grid-list--manage-categories .sba-card__heading-row{
+	padding:0 52px 0 0
+}
+.sba-grid-list--manage-categories .sba-card__body-row{
+	padding:14px 52px 14px 0
+}
+.sba-table-actions-wrap{
+	left:12px;
+	right:auto;
+	transform:translateX(-200%);
+	width:max-content
+}
+.sba-table-container .el-table__body-wrapper table tbody tr td{
+	padding:12px
+}
+#sba_category_add_modal{
+	right:0;
+	left:calc(320px - 48%)
+}
+.sba-dailog__small .sba-dialog-heading{
+	padding:24px 24px 16px 0
+}
+.sba-dailog__small .sba-dialog-footer{
+	padding:16px 0 16px 24px
+}
+.sba-dialog-footer .sba-df-btn-group{
+	padding:24px 0 24px 32px
+}
+.el-form-item.is-required:not(.is-no-asterisk) .el-form-item__label-wrap>.el-form-item__label:before,.el-form-item.is-required:not(.is-no-asterisk)>.el-form-item__label:before{
+	left:-12px;
+	right:auto
+}
+.sba-grid-list-container .sba-card__body-row .sba-card__item--drag-icon-wrap{
+	left:auto;
+	right:40px
+}
+.sba-grid-list--manage-categories .sba-card__body-row .sba-card__item--drag-icon-wrap{
+	left:auto;
+	right:20px
+}
+.sba-grid-list-container .sba-card .sba-card__item--ischecbox .el-checkbox{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-grid-list-container .sba-card .sba-table-actions-wrap .sba-btn--icon-without-box+.sba-btn--icon-without-box{
+	margin-right:0
+}
+.el-popper[x-placement^=bottom] .popper__arrow::after{
+	margin-right:-7px;
+	margin-left:0
+}
+.el-input-group--prepend .el-input__inner{
+	border-top-left-radius:var(--sba-radius-6px);
+	border-bottom-left-radius:var(--sba-radius-6px);
+	border-top-right-radius:0;
+	border-bottom-right-radius:0
+}
+.el-input-group__prepend{
+	border-left:0;
+	border-right:1px solid #dcdfe6;
+	border-top-right-radius:var(--sba-radius-6px);
+	border-bottom-right-radius:var(--sba-radius-6px);
+	border-top-left-radius:0;
+	border-bottom-left-radius:0
+}
+.el-table .cell{
+	max-width:100%
+}
+.sba-manage-appointment-items .el-table__body-wrapper table tbody tr .el-table-column--selection .el-checkbox,.sba-manage-appointment-items .el-table__header-wrapper table thead tr .el-table-column--selection .el-checkbox,.sba-manage-payment-items .el-table__body-wrapper table tbody tr .el-table-column--selection .el-checkbox,.sba-manage-payment-items .el-table__header-wrapper table thead tr .el-table-column--selection .el-checkbox{
+	left:auto!important;
+	right:5px!important
+}
+.sba-table-container .el-table__body-wrapper table tbody tr td:nth-child(2),.sba-table-container .el-table__header-wrapper table thead tr th:nth-child(2){
+	padding-left:0
+}
+.sba-table-container .el-table__body-wrapper table tbody tr td:last-child,.sba-table-container .el-table__header-wrapper table thead tr th:nth-last-child(2){
+	padding-left:52px
+}
+.el-table__body-wrapper table tbody tr .el-table-column--selection .el-checkbox,.el-table__header-wrapper table thead tr .el-table-column--selection .el-checkbox{
+	left:auto;
+	right:40px
+}
+.sba-appointment-status--approved,.sba-appointment-status--cancelled,.sba-appointment-status--rejected,.sba-appointment-status--warning{
+	width:50%!important
+}
+.sba-table-container .el-table .sba-table-column-avatar{
+	margin-right:0;
+	margin-left:8px
+}
+.sba-pagination-per-page{
+	margin-left:0;
+	padding-left:0;
+	border-left:none;
+	margin-right:16px;
+	padding-right:16px;
+	border-right:2px solid var(--sba-gt-gray-200)
+}
+.sba-pagination-per-page .sba-form-control{
+	margin-right:12px;
+	margin-left:auto
+}
+.el-select .el-tag{
+	margin:0 8px 0 0
+}
+.el-tag .el-icon-close{
+	right:3px
+}
+.el-input--suffix .el-input__inner{
+	padding-left:30px;
+	padding-right:16px
+}
+.el-input--prefix .el-input__inner{
+	padding-left:0;
+	padding-right:42px
+}
+.sba-fsc--custom-filter-header .sba-cfh__legends{
+	justify-content:flex-start
+}
+.sba-fsc--custom-filter-header .sba-cfh__legends .sba-cfh__legends--item:last-child{
+	margin-right:12px
+}
+.sba-fsc--custom-filter-header .sba-cfh__legends .sba-cfh__legends--item:first-child{
+	margin-right:0
+}
+.sba-custom-checkbox--is-label .el-checkbox__inner{
+	margin-right:0;
+	margin-left:6px
+}
+.sba-uploaded-avatar__preview{
+	left:auto;
+	right:auto
+}
+.sba-bulk-actions-card{
+	left:auto;
+	right:0;
+	padding:16px 16px 16px 40px
+}
+.sba-bac__close-icon{
+	left:4px;
+	right:auto
+}
+.sba-bulk-actions-card .sba-bac__right-area .sba-form-control{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-bulk-actions-card .sba-bac__left-area span{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-form-control--number .el-input-number__decrease{
+	left:2px
+}
+.sba-form-control--number .el-input-number__increase{
+	right:4px
+}
+.sba-form-control.--sba-country-dropdown .vti__dropdown{
+	border-left:1px solid var(--sba-gt-gray-400);
+	border-right:none
+}
+.el-tabs__nav,.wp-editor-tabs{
+	float:right
+}
+.sba-cbf--tabs.el-tabs--top .el-tabs__item.is-top:nth-child(2){
+	margin-right:0
+}
+.sba-customize--edit-label-popover-actions .sba-btn+.sba-btn{
+	margin-right:0
+}
+.sba-customize--edit-label-popover-actions .sba-btn:first-child{
+	margin-left:8px
+}
+.sba-customize-step-top-panel .sba-tp__body .sba-tp__body-item{
+	border-right:unset;
+	border-left:1px solid var(--sba-gt-gray-400)
+}
+.sba-customize-step-top-panel .sba-tp__body .sba-tp__body-item:last-child{
+	padding-left:0;
+	padding-right:32px;
+	border-left:none
+}
+.sba-cbf--tabs.el-tabs--top .el-tabs__item.is-top:last-child{
+	margin-right:40px
+}
+.sba-cbf--preview-step--tab-menu .sba-cbf--ps--tm__item:last-child{
+	margin-right:40px
+}
+.sba-cbf--preview-step--tab-menu .sba-cbf--ps--tm__item:first-child{
+	margin-right:0
+}
+.sba-tp__body-item.__sba-is-style-type .sba-bi__body .sba-customize-tp__color-picker{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-tp__body-item.__sba-is-style-type .sba-bi__body .sba-customize-tp__color-picker:last-child{
+	margin-left:0
+}
+.sba-cbf--tabs .el-tabs__nav-wrap{
+	padding-left:0;
+	padding-right:28px
+}
+.sba-cbf--tabs .el-tabs__item a span{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-cbf--preview-step--tab-menu{
+	padding:20px 28px 20px 0
+}
+.sba-cbf--preview--module-container .sba-cbf--preview__module-desc--is-edit span.material-icons-round,.sba-cbf--preview--module-container .sba-cbf--preview__module-heading i.material-icons-round,.sba-cbf--preview-step--tab-menu .sba-cbf--ps--tm__item i.material-icons-round,.sba-customize-booking-form-preview-container.--sba-my-bookings .sba-cbf--preview__module-heading span.material-icons-round{
+	margin-right:6px;
+	margin-left:0
+}
+.sba-front-module--service-item .sba-front-si-card{
+	padding:28px 28px 28px 0
+}
+.sba-front-cat-items .sba-front-ci-pill.el-tag{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-front-cat-items .sba-front-ci-pill.el-tag i{
+	margin-left:0;
+	margin-right:6px
+}
+.sba-front-module--service-item .sba-front-si-card .sba-front-si-card__left{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-front-module--service-item .sba-front-si-card .sba-front-si-card--checkmark-icon{
+	left:12px;
+	right:auto
+}
+.sba-front-module--service-item .sba-front-si-card .sba-front-si__card-body .sba-front-si-cb__specs .sba-front-si-cb__specs-item strong{
+	margin-left:0;
+	margin-right:6px
+}
+.sba-front-module--service-item .sba-front-si-card .sba-front-si__card-body .sba-front-si-cb__specs .sba-front-si-cb__specs-item:first-child{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-front-module--payment-methods .sba-front-module--pm-body .sba-front-module--pm-body__item>span.material-icons-round{
+	margin-left:8px;
+	margin-right:0
+}
+.sba-front-module--payment-methods .sba-front-module--pm-body .sba-front-module--pm-body__item .sba-front-si-card--checkmark-icon{
+	left:12px;
+	right:auto
+}
+.sba-front-module--payment-methods .sba-front-module--pm-body .sba-front-module--pm-body__item .sba-front-si-card--checkmark-icon span{
+	margin-right:6px;
+	margin-left:0
+}
+.sba-front-module--payment-methods .sba-front-module--pm-body .sba-front-module--pm-body__item:first-child{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-front-module--booking-summary .sba-front-module--bs-summary-content .sba-front-module--bs-summary-content-item{
+	border-left:1px solid var(--sba-dt-black-100);
+	border-right:none
+}
+.sba-front-module--booking-summary .sba-front-module--bs-summary-content .sba-front-module--bs-summary-content-item:last-child{
+	border-left:none
+}
+.sba-front-tabs--foot{
+	padding:24px 0 24px 40px
+}
+.sba-front--dt__time-slots .sba-front--dt__ts-body .sba-front--dt__ts-body--row .sba-front--dt__ts-body--items .sba-front--dt__ts-body--item{
+	margin-left:10px;
+	margin-right:0
+}
+.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item{
+	margin-right:24px
+}
+.sba-cfs-item-card .sba-cfs-ic--head .sba-cfs-ic--head__field-controls .sba-cfs-ic--head__fc-swtich{
+	margin-left:12px;
+	margin-right:0
+}
+.sba-cfs-item-card .sba-cfs-ic--head .sba-cfs-ic--head__field-controls .sba-cfs-ic--head__fc-swtich label{
+	margin-right:6px;
+	margin-left:0
+}
+.sba-front-ma-header__profile-dropdown .sba-front-ma-header__profile-dropdown--img img{
+	margin-left:12px;
+	margin-right:0
+}
+.sba-front-ma-list--item-row .sba-front-ma-list--item__item-card p span{
+	margin-left:8px;
+	margin-right:0
+}
+.sba-front-cp--fw__col:not(:last-child){
+	margin-right:0;
+	margin-left:16px
+}
+.sba-front-mat__row .sba-mat-body__item.--sba-is-expand-icon span.material-icons-round{
+	right:-32px;
+	left:auto;
+	margin-left:12px;
+	margin-right:0
+}
+.sba-front-ma-table-actions-wrap{
+	-webkit-transform:translateX(-200%);
+	-moz-transform:translateX(-200%);
+	-o-transform:translateX(-200%);
+	transform:translateX(-200%);
+	right:90px
+}
+.sba-front-mat__row:hover .sba-front-ma-table-actions-wrap{
+	transform:translateX(0)
+}
+.sba-tabs--vertical__left-side .el-tabs__header.is-left{
+	margin-right:0;
+	margin-left:64px
+}
+.el-tabs--left .el-tabs__nav-wrap.is-left{
+	margin-right:0
+}
+.el-select__tags input[type=text]{
+	margin-left:0;
+	margin-right:16px
+}
+.sba-tabs--vertical__left-side.el-tabs--card .el-tabs__item.is-left span i{
+	margin-right:0;
+	margin-left:12px
+}
+input[type=email],input[type=url]{
+	direction:rtl
+}
+.el-radio{
+	margin-right:0;
+	margin-left:16px
+}
+.el-radio__label{
+	padding-right:6px;
+	padding-left:0
+}
+.sba-daysoff-highlight-types-row{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-daysoff-highlight-types-row .sba-daysoff-htr--item:first-child{
+	margin-right:0;
+	margin-left:16px
+}
+.el-drawer.rtl{
+	right:auto;
+	left:0
+}
+.el-drawer__header{
+	left:auto;
+	right:-28px
+}
+.el-form-item__error{
+	left:auto;
+	right:16px;
+	padding-left:0;
+	padding-right:20px
+}
+.el-form-item__error::before{
+	left:auto;
+	right:0
+}
+.el-notification.right{
+	right:auto;
+	left:16px
+}
+.el-notification .el-notification__group{
+	margin-left:0;
+	margin-right:16px
+}
+.el-notification .el-notification__content{
+	text-align:right
+}
+.el-notification__closeBtn{
+	right:auto;
+	left:16px
+}
+.sba-dashboard--upcoming-appointments .sba-appointment-status--approved,.sba-dashboard--upcoming-appointments .sba-appointment-status--cancelled,.sba-dashboard--upcoming-appointments .sba-appointment-status--rejected,.sba-dashboard--upcoming-appointments .sba-appointment-status--warning{
+	width:65%!important
+}
+.sba-appointment-status-dropdown-popper .el-select-group__title{
+	padding-left:16px;
+	font-size:14px
+}
+.sba-appointment-status-dropdown-popper.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item{
+	padding:6px 12px
+}
+.el-select-dropdown .el-select-dropdown__list{
+	text-align:right
+}
+.el-select-group__title{
+	padding-left:0;
+	padding-right:40px
+}
+.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item{
+	margin-right:20px
+}
+.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item::before{
+	right:auto;
+	left:12px
+}
+.el-select-dropdown.sba-pagination-dropdown .el-select-dropdown__list .el-select-dropdown__item::before{
+	right:auto;
+	left:8px
+}
+.sba-appointment-status-dropdown-popper .el-select-group__title{
+	padding-left:0;
+	padding-right:32px
+}
+.sba-appointment-status--approved,.sba-appointment-status--cancelled,.sba-appointment-status--rejected,.sba-appointment-status--warning{
+	width:55%!important
+}
+div.el-color-hue-slider.is-vertical{
+	float:left!important
+}
+.sba-form-control--date-picker .el-input__prefix,.sba-form-control--time-picker .el-input__prefix{
+	left:auto;
+	right:16px
+}
+.el-date-table td.end-date div{
+	margin-left:5px;
+	margin-right:unset;
+	border-top-left-radius:15px;
+	border-bottom-left-radius:15px;
+	border-top-right-radius:unset;
+	border-bottom-right-radius:unset
+}
+.el-date-table td.start-date div{
+	margin-right:5px;
+	margin-left:unset;
+	border-top-right-radius:15px;
+	border-bottom-right-radius:15px;
+	border-top-left-radius:unset;
+	border-bottom-left-radius:unset
+}
+.el-date-range-picker.sba-el-select--is-with-navbar{
+	right:240px!important
+}
+.el-date-range-picker.sba-date-range-picker__is-filter-enabled{
+	left:80px!important;
+	right:unset!important
+}
+.el-date-range-picker.sba-el-select--is-with-navbar .popper__arrow{
+	right:40px!important
+}
+.el-date-range-picker.sba-date-range-picker__is-filter-enabled .popper__arrow{
+	right:auto!important;
+	left:116px!important
+}
+.sba-dropdown--bulk-actions{
+	min-width:150px!important
+}
+.sba-add-dayoff-dialog .sba-hw-right-btn-group{
+	justify-content:flex-start
+}
+.sba-dialog--vpi__body--ef-row .el-row .el-col:first-child{
+	order:1
+}
+.sba-dialog--vpi__body--ef-row .el-row .el-col:last-child{
+	order:2
+}
+.sba-add-dayoff-dialog .sba-dialog-footer .sba-hw-right-btn-group>button.sba-btn:first-child{
+	margin-right:0
+}
+div.el-notification-fade-enter.right{
+	-webkit-transform:translateX(-100%)!important;
+	transform:translateX(-100%)!important
+}
+.sba-add-dayoff-dialog .sba-dialog-footer .sba-hw-right-btn-group>button.sba-btn:first-child{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-add-dayoff-dialog .sba-dialog-footer .sba-hw-right-btn-group>button.sba-btn:last-child{
+	margin-right:0;
+	margin-left:0
+}
+.sba-back-loader-container{
+	left:50%
+}
+.sba-vac--head__left>span{
+	text-align:right
+}
+.sba-vac--head__left .sba-left__service-detail .sba-sd__price{
+	margin-left:unset;
+	margin-right:12px
+}
+.sba-ad__basic-details .sba-bd__item .sba-bd__item-body,.sba-ad__customer-details .sba-bd__item .sba-bd__item-body{
+	justify-content:flex-end
+}
+.el-table__expand-icon>.el-icon{
+	margin-left:-16px
+}
+.sba-aaf__service-selection-col .sba-btn{
+	margin-right:8px;
+	margin-left:0
+}
+.sba-vpc-csw__item .sba-csw--customer-info .sba-ci--avatar{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-vpc__customer-summary-wrapper .sba-vpc-csw__item{
+	border-left:1px solid var(--sba-gt-gray-400);
+	border-right:none
+}
+.sba-vpc__customer-summary-wrapper .sba-vpc-csw__item:last-child{
+	border-left:none
+}
+.sba-break-hours-wrapper h4{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-form-control.--sba-country-dropdown .vti__flag-wrapper span{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-form-control.--sba-country-dropdown .vti__dropdown-list.below{
+	top:45px;
+	left:auto;
+	right:0;
+	text-align:right
+}
+.sba-break-hours-wrapper .sba-bh--items .sba-bh__item{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-break-hours-wrapper .sba-bh--items .sba-bh__item span{
+	margin-left:0;
+	margin-right:6px
+}
+.sba-form-control.--sba-fc-field-pass .el-input__suffix{
+	right:auto;
+	left:12px
+}
+.sba-front-cp--fw__date-picker-col .sba-form-control:first-child{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-vac-body--payment-details .sba-pd__body .sba-pd__item span{
+	padding-left:12px
+}
+.sba-gs--tabs-pb__cb-item-row .sba-debug-item__btns .sba-di__btn-item{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-alert-message-default .el-alert .el-alert__closebtn{
+	right:auto;
+	left:15px
+}
+.sba-form-control--number .el-input-number__increase{
+	left:2px;
+	right:auto;
+	border-radius:4px 0 0 4px
+}
+.sba-form-control--number .el-input-number__decrease{
+	right:4px;
+	left:auto;
+	border-radius:0 4px 4px 0
+}
+.sba-vac-body--payment-details .sba-pd__body .sba-pd__item p{
+	width:28%;
+	text-align:left
+}
+.sba-manage-appointment-items .sba-apc__amount-row,.sba-manage-payment-items .sba-mpi__amount-row{
+	justify-content:flex-end
+}
+.sba-manage-appointment-items .sba-apc__ar-body,.sba-manage-payment-items .sba-mpi__ar-body{
+	text-align:right
+}
+.sba-vpc__appointment-details .sba-vac__sec-heading{
+	text-align:right
+}
+.sba-fc__item--currency-custom-dropdown-item .el-image{
+	margin-right:0;
+	margin-left:12px
+}
+.sba-fc__item--currency-custom-dropdown-item .sba-fc__item--currency-custom-dropdown-item__body span{
+	margin-right:4px;
+	margin-left:0
+}
+.sba-fws__header .sba-fws__help-btn{
+	right:auto;
+	left:52px
+}
+.sba-fws-tab-wrapper.el-tabs--card>.el-tabs__header .el-tabs__item,.sba-fws-tab-wrapper.el-tabs--card>.el-tabs__header .el-tabs__item:nth-child(2){
+	padding-right:0;
+	padding-left:100px
+}
+.sba-fws-tab-wrapper.el-tabs--card>.el-tabs__header .el-tabs__item::after{
+	right:auto;
+	left:20px
+}
+.sba-fws-tab-wrapper .el-tabs__item .sba-tpi__tab-menu-item .sba-tpi__counter{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-wizard-setup-upload-component__wrapper .sba-upload-component .sba-upload-component__icon{
+	margin-right:0;
+	margin-left:16px
+}
+.sba-tpb__form-body .sba-tpb__full-width-inline .sba-fwi__right{
+	justify-content:flex-start
+}
+.sba-tpb__foot-action-btns .sba-fab--wrapper{
+	padding-right:0;
+	padding-left:64px
+}
+.sba-stb__color-picker-row .sba-cpr__item:not(:last-child){
+	margin-right:0;
+	margin-left:32px
+}
+.sba-fws-final-summary-body .sba-sd__items .sba-sd__item{
+	margin-right:0;
+	margin-left:20px
+}
+.sba-fws-final-summary-body .sba-sd__items .sba-sd__item:last-child{
+	margin-left:0
+}
+.sba-fws-final-summary-body .sba-sd__items .sba-sd__item span.material-icons-round{
+	margin-right:16px;
+	margin-left:0
+}
+.sba-fws-final-summary-body .sba-sdi__social-links a:not(:last-child){
+	margin-right:0;
+	margin-left:12px
+}
+.sba-wizard-setup-upload-component__wrapper .sba-uploaded-avatar__preview .sba-avatar-close-icon{
+	left:auto;
+	right:44px
+}
+.sba-kf__item .sba-kf__item-title{
+	margin-right:12px;
+	margin-left:0
+}
+body.rtl .sba-dailog__small::before{
+	right:unset;
+	left:42px
+}
+body.rtl .sba-dailog__small::after{
+	right:unset;
+	left:43px
+}
+body.rtl .sba-work-hours-tab--pb__card .sba-gs__cb-item-right .el-col{
+	float:right
+}
+body.rtl .sba-elm-tab-container .el-tabs__nav{
+	transform:rotateY(180deg)!important;
+	-webkit-transform:rotateY(180deg)!important;
+	-o-transform:rotateY(180deg)!important;
+	-moz-transform:rotateY(180deg)!important
+}
+body.rtl .sba-elm-tab-container .el-tabs__item{
+	float:left;
+	transform:rotateY(180deg);
+	-webkit-transform:rotateY(180deg);
+	-o-transform:rotateY(180deg);
+	-moz-transform:rotateY(180deg)
+}
+body.rtl .sba-el-datepicker-widget-wrapper .el-date-picker__header{
+	transform:rotateY(180deg)
+}
+body.rtl .sba-el-datepicker-widget-wrapper .el-date-picker__header span.el-date-picker__header-label{
+	transform:rotateY(180deg);
+	display:inline-block
+}
+body.rtl .sba-el-datepicker-widget-wrapper .popper__arrow{
+	left:auto;
+	right:28px!important
+}
+body.rtl .sba-date-range-picker-widget-wrapper .el-picker-panel__sidebar{
+	border-left:none;
+	border-right:1px solid #e4e4e4
+}
+body.rtl .sba-date-range-picker-widget-wrapper .el-date-range-picker__content{
+	float:right
+}
+body.rtl .sba-date-range-picker-widget-wrapper .el-date-range-picker__content.is-left .el-date-range-picker__header [class*=arrow-left]{
+	float:right;
+	transform:rotateY(180deg);
+	-webkit-transform:rotateY(180deg);
+	-o-transform:rotateY(180deg);
+	-moz-transform:rotateY(180deg)
+}
+body.rtl .sba-date-range-picker-widget-wrapper .el-date-range-picker__content.is-right .el-date-range-picker__header [class*=arrow-right]{
+	float:left;
+	transform:rotateY(180deg);
+	-webkit-transform:rotateY(180deg);
+	-o-transform:rotateY(180deg);
+	-moz-transform:rotateY(180deg)
+}
+.sba-toast-notification span{
+	margin-left:8px;
+	margin-right:0
+}
+@keyframes rtl-drawer-in{
+	0%{
+		-webkit-transform:translate(-100%,0);
+		transform:translate(-100%,0)
+	}
+	100%{
+		-webkit-transform:translate(0,0);
+		transform:translate(0,0)
+	}
+}
+@-webkit-keyframes rtl-drawer-in{
+	0%{
+		-webkit-transform:translate(-100%,0);
+		transform:translate(-100%,0)
+	}
+	100%{
+		-webkit-transform:translate(0,0);
+		transform:translate(0,0)
+	}
+}
+@keyframes rtl-drawer-out{
+	0%{
+		-webkit-transform:translate(0,0);
+		transform:translate(0,0)
+	}
+	100%{
+		-webkit-transform:translate(-100%,0);
+		transform:translate(-100%,0)
+	}
+}
+@-webkit-keyframes rtl-drawer-out{
+	0%{
+		-webkit-transform:translate(0,0);
+		transform:translate(0,0)
+	}
+	100%{
+		-webkit-transform:translate(-100%,0);
+		transform:translate(-100%,0)
+	}
+}
+.sba-sm__field-helper-label,.sba-vac-body--payment-details{
+	text-align:right
+}
+.sba-help-drawer .el-drawer__close-btn{
+	border-radius:0 var(--sba-radius-4px) var(--sba-radius-4px) 0
+}
+.sba-toast-notification{
+	border-left:unset;
+	border-right:4px solid var(--sba-sc-danger)
+}
+.sba-toast-notification.--sba-warning{
+	border-left-color:transparent;
+	border-right-color:var(--sba-pt-secondary-orange)
+}
+.sba-tn__dropdown-menu.el-popper[x-placement^=top] .popper__arrow{
+	margin-right:0
+}
+.sba-tn__dropdown-menu.el-popper[x-placement^=top] .popper__arrow::after{
+	left:0
+}
+.sba-sf-items-wrapper .sba-sf-item{
+	margin-right:0;
+	margin-left:24px
+}
+.sba-full-screen-calendar .vuecal .vuecal__weekdays-headings .vuecal__heading .weekday-label{
+	justify-content:flex-start
+}
+.sba-fc-item-accordion .el-collapse-item__header .el-collapse-item__arrow{
+	right:auto;
+	left:4px
+}
+.sba-fc-item__expand-card .sba-iec-body__customer-detail p span{
+	margin-right:0;
+	margin-left:6px
+}
+.sba-full-screen-calendar .sba-cal-event-card .vuecal__event-time,.sba-full-screen-calendar .sba-cal-event-card .vuecal__event-title{
+	text-align:right
+}
+.sba-full-screen-calendar .vuecal--view-with-time .vuecal__weekdays-headings{
+	padding-left:0;
+	padding-right:100px
+}
+.sba-full-screen-calendar .vuecal--day-view .vuecal__time-column,.sba-full-screen-calendar .vuecal--week-view .vuecal__time-column{
+	border-left:none;
+	border-right:1px solid var(--sba-gt-gray-400)
+}
+.sba-fsc--custom-filter-header .sba-cfh__left button.sba-btn__medium{
+	left:-150px
+}
+.sba-fsc--custom-filter-header .sba-cfh__left button.sba-btn__medium:last-child{
+	left:auto;
+	right:-150px
+}
+.sba-fab-component{
+	left:32px;
+	right:unset
+}
+.sba-fab-component .sba-fc__active-box{
+	left:0;
+	right:unset
+}
+.sba-pg-warning-belt-box .sba-wbb__desc span.sba-wbb__desc-icon{
+	margin-left:8px;
+	margin-right:0
+}
+.sba-pg-warning-belt-box span.sba-uwb-close-icon{
+	left:12px;
+	right:unset!important
+}
+.sba-pg-warning-belt-box .sba-pg-warning-belt-footer{
+	text-align:left
+}
+.sba-pg-warning-belt-box .sba-pg-warning-lists li{
+	margin-right:15px
+}
+@media (min-width:1200px) and (max-width:1367px){
+	.sba-dashboard-summary .sba-dash-summary-item:last-child,.sba-dashboard-summary .sba-dash-summary-item:nth-child(3n+3){
+		margin-right:24px
+	}
+	.sba-dashboard-summary .sba-dash-summary-item:first-child,.sba-dashboard-summary .sba-dash-summary-item:nth-last-child(2){
+		margin-right:0
+	}
+}
+@media (max-width:1024px){
+	.sba-main-listing-card-container{
+		margin:28px
+	}
+	.sba-dashboard-summary .sba-dash-summary-item:first-child{
+		margin-left:20px;
+		margin-right:0
+	}
+	.sba-dashboard-summary .sba-dash-summary-item:last-child{
+		margin-right:0
+	}
+	.sba-dashboard-summary .sba-dash-summary-item:nth-child(3n+3){
+		margin-left:20px;
+		margin-right:0
+	}
+	.sba-header-navbar .sba-navbar-nav ul{
+		left:0;
+		right:unset;
+		transform:translateX(-100%)
+	}
+	.sba--is-page-non-scrollable-mob .sba-manage-appointment-items .sba-view-appointment-card{
+		text-align:right
+	}
+	.sba--is-page-non-scrollable-mob .sba-table-container .el-table__body-wrapper table tbody tr td:last-child{
+		padding-left:12px
+	}
+	.sba-header-navbar{
+		padding-left:28px;
+		margin-right:0
+	}
+	body.folded #wpcontent{
+		padding-right:0
+	}
+	.sba-table-container .el-table__body-wrapper table tbody tr td,.sba-table-container .el-table__header-wrapper table thead tr th{
+		text-align:right
+	}
+	.sba-manage-appointment-items .sba-item__dt-col-duration-md span.material-icons-round{
+		margin-left:8px;
+		margin-right:unset
+	}
+	.el-table__body-wrapper table tbody tr .el-table-column--selection .el-checkbox,.el-table__header-wrapper table thead tr .el-table-column--selection .el-checkbox{
+		right:20px
+	}
+}
+@media (max-width:1023px){
+	.sba-header-navbar{
+		padding-right:60px
+	}
+	body.folded #wpcontent,body.folded #wpfooter{
+		margin-right:0
+	}
+	.sba-main-listing-card-container{
+		margin:32px 56px 32px 20px
+	}
+	.sba-vac--head__right .sba-btn span .material-icons-round{
+		margin-right:0;
+		margin-left:unset
+	}
+	body.folded .sba-dialog--fullscreen.is-fullscreen{
+		width:calc(100% - 36px)
+	}
+}
+@media (max-width:768px){
+	.sba-main-listing-card-container{
+		margin:32px 20px 32px 20px
+	}
+	.sba-header-navbar{
+		padding-right:32px
+	}
+	.sba-header-navbar .sba-navbar-nav ul{
+		top:134px
+	}
+}
+@media (max-width:767px){
+	.sba-dailog__small .sba-dialog-footer{
+		padding-left:0;
+		padding-right:24px
+	}
+	.sba-dashboard-summary .sba-dash-summary-item:first-child,.sba-dashboard-summary .sba-dash-summary-item:nth-child(3n+3){
+		margin-left:0
+	}
+	.sba-manage-appointment-container--sm .sba-mpay-item--foot .sba-table-status-dropdown-wrapper,.sba-manage-payments-container--sm .sba-mpay-item--foot .sba-table-status-dropdown-wrapper{
+		margin-left:12px;
+		margin-right:unset
+	}
+	.sba-manage-appointment-container--sm .sba-mac-fi__actions>span:not(:first-child),.sba-manage-payments-container--sm .sba-mpay-fi__actions>span:not(:first-child){
+		margin-right:12px;
+		margin-left:unset
+	}
+	body.folded .sba--is-page-non-scrollable-mob.sba-dialog--fullscreen.is-fullscreen{
+		margin-right:0
+	}
+	.sba--is-page-non-scrollable-mob.sba-dialog--fullscreen .sba-dialog-heading h1{
+		padding-right:20px;
+		padding-left:0
+	}
+	.sba--is-page-non-scrollable-mob.sba-dialog--fullscreen .sba-dh__btn-group-col .sba-btn+.sba-btn{
+		margin-right:8px;
+		margin-left:0
+	}
+	.sba--is-page-non-scrollable-mob.sba-dialog--fullscreen .sba-dh__btn-group-col{
+		padding-left:16px;
+		padding-right:0
+	}
+	.sba-dialog--share-url{
+		left:28px!important;
+		right:unset
+	}
+	.sba--is-page-non-scrollable-mob .sba-hw-right-btn-group .sba-btn+.sba-btn,.sba--is-page-non-scrollable-mob .sba-tf-btn-group .sba-btn+.sba-btn{
+		margin-right:0
+	}
+	.sba--is-page-non-scrollable-mob .sba-hw-right-btn-group{
+		justify-content:start
+	}
+	.sba-hw-right-btn-group{
+		justify-content:flex-start
+	}
+	body.folded .sba-dialog--fullscreen.is-fullscreen{
+		width:100%
+	}
+	.sba-form-control .vti__dropdown-list{
+		right:5px;
+		left:unset;
+		text-align:right
+	}
+	.sba--is-page-non-scrollable-mob .sba-data-empty-view .sba-ev-right-content{
+		margin-right:0
+	}
+	.sba--is-page-non-scrollable-mob .sba-ap-item__mob .sba-api--head-apointment-details p span.material-icons-round{
+		margin-right:unset;
+		margin-left:8px
+	}
+	.sba-manage-appointment-container--sm .sba-mac-fi__actions .sba-btn:not(.sba-btn--icon-without-box) span .material-icons-round,.sba-manage-payments-container--sm .sba-mpay-fi__actions .sba-btn:not(.sba-btn--icon-without-box) span .material-icons-round{
+		margin-left:0
+	}
+	.sba-manage-appointment-container--sm .sba-manage-appointment-items .sba-table-status-dropdown-wrapper .sba-form-control input,.sba-manage-payments-container--sm .sba-manage-payment-items .sba-table-status-dropdown-wrapper .sba-form-control input{
+		text-align:right;
+		padding:6px 12px 6px 0!important
+	}
+	.sba-appointment-status-dropdown-popper.el-popper[x-placement^=top] .popper__arrow::after{
+		left:0
+	}
+	.sba--is-page-non-scrollable-mob .sba-manage-customer-container--sm .el-table .cell{
+		margin-right:20px;
+		width:calc(95% - 20px)
+	}
+	.sba-manage-customer-container--sm .sba-mcc__item-btns-sm>span{
+		margin-right:8px;
+		margin-left:0
+	}
+	.sba-dropdown--bulk-actions{
+		min-width:180px!important
+	}
+	.sba-dropdown--bulk-actions.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item,.sba-pagination-dropdown.el-select-dropdown .el-select-dropdown__list .el-select-dropdown__item{
+		margin-right:8px
+	}
+	.sba-fsc-item__popover-card .sba-fc-ipc__head-title{
+		padding-left:0;
+		padding-right:20px
+	}
+	.sba-fc-ipc__head-title .sba-ht__close-icon{
+		right:auto;
+		left:16px
+	}
+	.sba-fsc-item__popover-card .sba-fc-ipc__head-title svg{
+		margin-right:0;
+		margin-left:4px
+	}
+	.sba-fc-item-accordion .el-collapse-item__header .el-collapse-item__arrow{
+		left:16px
+	}
+}

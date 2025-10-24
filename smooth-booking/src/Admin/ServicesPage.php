@@ -38,6 +38,7 @@ use function get_option;
 use function get_transient;
 use function in_array;
 use function is_wp_error;
+use function is_rtl;
 use function number_format;
 use function number_format_i18n;
 use function plugins_url;
@@ -45,7 +46,6 @@ use function sanitize_key;
 use function selected;
 use function set_transient;
 use function strtotime;
-use function submit_button;
 use function wp_die;
 use function wp_enqueue_media;
 use function wp_enqueue_script;
@@ -136,19 +136,20 @@ class ServicesPage {
         $close_label        = __( 'Close form', 'smooth-booking' );
 
         ?>
-        <div class="wrap smooth-booking-services-wrap">
-            <div class="smooth-booking-admin-header">
-                <div class="smooth-booking-admin-header__content">
-                    <h1><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></h1>
-                    <p class="description"><?php esc_html_e( 'Manage services, their availability, and provider preferences.', 'smooth-booking' ); ?></p>
+        <div class="wrap smooth-booking-admin smooth-booking-services-wrap">
+            <div class="smooth-booking-admin__content">
+                <div class="smooth-booking-admin-header">
+                    <div class="smooth-booking-admin-header__content">
+                        <h1><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></h1>
+                        <p class="description"><?php esc_html_e( 'Manage services, their availability, and provider preferences.', 'smooth-booking' ); ?></p>
+                    </div>
+                    <div class="smooth-booking-admin-header__actions">
+                        <button type="button" class="sba-btn sba-btn--primary sba-btn__medium smooth-booking-open-form" data-target="service-form" data-open-label="<?php echo esc_attr( $open_label ); ?>" data-close-label="<?php echo esc_attr( $close_label ); ?>" aria-expanded="<?php echo $should_open_form ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $form_container_id ); ?>">
+                            <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+                            <span class="smooth-booking-open-form__label"><?php echo esc_html( $should_open_form ? $close_label : $open_label ); ?></span>
+                        </button>
+                    </div>
                 </div>
-                <div class="smooth-booking-admin-header__actions">
-                    <button type="button" class="button button-primary smooth-booking-open-form" data-target="service-form" data-open-label="<?php echo esc_attr( $open_label ); ?>" data-close-label="<?php echo esc_attr( $close_label ); ?>" aria-expanded="<?php echo $should_open_form ? 'true' : 'false'; ?>" aria-controls="<?php echo esc_attr( $form_container_id ); ?>">
-                        <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
-                        <span class="smooth-booking-open-form__label"><?php echo esc_html( $should_open_form ? $close_label : $open_label ); ?></span>
-                    </button>
-                </div>
-            </div>
 
             <?php if ( $notice ) : ?>
                 <div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible">
@@ -170,11 +171,11 @@ class ServicesPage {
 
             <div class="smooth-booking-toolbar">
                 <?php if ( $show_deleted ) : ?>
-                    <a class="button" href="<?php echo esc_url( $this->get_view_link( 'active' ) ); ?>">
+                    <a class="sba-btn sba-btn__medium sba-btn__filled-light" href="<?php echo esc_url( $this->get_view_link( 'active' ) ); ?>">
                         <?php esc_html_e( 'Back to active services', 'smooth-booking' ); ?>
                     </a>
                 <?php else : ?>
-                    <a class="button" href="<?php echo esc_url( $this->get_view_link( 'deleted' ) ); ?>">
+                    <a class="sba-btn sba-btn__medium sba-btn__filled-light" href="<?php echo esc_url( $this->get_view_link( 'deleted' ) ); ?>">
                         <?php esc_html_e( 'Show deleted services', 'smooth-booking' ); ?>
                     </a>
                 <?php endif; ?>
@@ -268,7 +269,7 @@ class ServicesPage {
                                 <td><?php echo esc_html( $this->format_datetime( $service->get_updated_at()->format( 'Y-m-d H:i:s' ) ) ); ?></td>
                                 <td class="smooth-booking-actions-cell">
                                     <div class="smooth-booking-actions-menu" data-service-id="<?php echo esc_attr( (string) $service->get_id() ); ?>">
-                                        <button type="button" class="button button-link smooth-booking-actions-toggle" aria-haspopup="true" aria-expanded="false">
+                                        <button type="button" class="sba-btn sba-btn--icon-without-box smooth-booking-actions-toggle" aria-haspopup="true" aria-expanded="false">
                                             <span class="dashicons dashicons-ellipsis"></span>
                                             <span class="screen-reader-text"><?php esc_html_e( 'Open actions menu', 'smooth-booking' ); ?></span>
                                         </button>
@@ -313,6 +314,7 @@ class ServicesPage {
                 </table>
             </div>
         </div>
+    </div>
         <?php
     }
 
@@ -482,9 +484,46 @@ class ServicesPage {
         wp_enqueue_media();
 
         wp_enqueue_style(
+            'smooth-booking-admin-variables',
+            plugins_url( 'assets/css/design/smooth-booking-variables.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_style(
+            'smooth-booking-admin-components',
+            plugins_url( 'assets/css/design/smooth-booking-admin-components.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-variables' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_style(
+            'smooth-booking-admin-base',
+            plugins_url( 'assets/css/design/smooth-booking-admin.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-components' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_style(
+            'smooth-booking-admin-shared',
+            plugins_url( 'assets/css/admin-shared.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-base' ],
+            SMOOTH_BOOKING_VERSION
+        );
+
+        if ( is_rtl() ) {
+            wp_enqueue_style(
+                'smooth-booking-admin-rtl',
+                plugins_url( 'assets/css/design/smooth-booking-admin-rtl.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+                [ 'smooth-booking-admin-base' ],
+                SMOOTH_BOOKING_VERSION
+            );
+        }
+
+        wp_enqueue_style(
             'smooth-booking-admin-services',
             plugins_url( 'assets/css/admin-services.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [],
+            [ 'smooth-booking-admin-shared', 'wp-color-picker' ],
             SMOOTH_BOOKING_VERSION
         );
 
@@ -573,16 +612,16 @@ class ServicesPage {
         $show_occupancy     = in_array( $providers_preference, [ 'least_occupied_day', 'most_occupied_day' ], true );
 
         ?>
-        <div class="smooth-booking-service-form-card">
+        <div class="smooth-booking-service-form-card smooth-booking-card">
             <div class="smooth-booking-form-header">
                 <h2><?php echo $is_edit ? esc_html__( 'Edit service', 'smooth-booking' ) : esc_html__( 'Add new service', 'smooth-booking' ); ?></h2>
                 <div class="smooth-booking-form-header__actions">
                     <?php if ( $is_edit ) : ?>
-                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="button-link smooth-booking-form-cancel">
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-cancel">
                             <?php esc_html_e( 'Back to list', 'smooth-booking' ); ?>
                         </a>
                     <?php else : ?>
-                        <button type="button" class="button-link smooth-booking-form-dismiss" data-target="service-form">
+                        <button type="button" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-dismiss" data-target="service-form">
                             <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
                         </button>
                     <?php endif; ?>
@@ -617,8 +656,8 @@ class ServicesPage {
                                                 <?php echo $this->get_service_image_html( $service ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                             </div>
                                             <div class='smooth-booking-avatar-actions'>
-                                                <button type='button' class='button smooth-booking-service-avatar-select'><?php esc_html_e( 'Select image', 'smooth-booking' ); ?></button>
-                                                <button type='button' class='button-link smooth-booking-service-avatar-remove' <?php if ( ! $profile_image_id ) : ?>style='display:none'<?php endif; ?>><?php esc_html_e( 'Remove image', 'smooth-booking' ); ?></button>
+                                                <button type='button' class='sba-btn sba-btn__small sba-btn__filled smooth-booking-service-avatar-select'><?php esc_html_e( 'Select image', 'smooth-booking' ); ?></button>
+                                                <button type='button' class='sba-btn sba-btn__small sba-btn__filled-light smooth-booking-service-avatar-remove' <?php if ( ! $profile_image_id ) : ?>style='display:none'<?php endif; ?>><?php esc_html_e( 'Remove image', 'smooth-booking' ); ?></button>
                                             </div>
                                             <input type='hidden' name='service_profile_image_id' value='<?php echo esc_attr( (string) ( $profile_image_id ?? 0 ) ); ?>' />
                                         </div>
@@ -875,7 +914,11 @@ class ServicesPage {
                     </div>
                 </div>
 
-                <?php submit_button( $is_edit ? __( 'Update service', 'smooth-booking' ) : __( 'Add service', 'smooth-booking' ) ); ?>
+                <div class='smooth-booking-form-actions'>
+                    <button type='submit' class='sba-btn sba-btn--primary sba-btn__large smooth-booking-form-submit'>
+                        <?php echo esc_html( $is_edit ? __( 'Update service', 'smooth-booking' ) : __( 'Add service', 'smooth-booking' ) ); ?>
+                    </button>
+                </div>
             </form>
         </div>
         <?php

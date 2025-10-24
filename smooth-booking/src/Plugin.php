@@ -102,6 +102,8 @@ class Plugin {
         $customers_page = $this->container->get( CustomersPage::class );
         /** @var ServicesPage $services_page */
         $services_page = $this->container->get( ServicesPage::class );
+        /** @var SettingsPage $settings_page */
+        $settings_page = $this->container->get( SettingsPage::class );
 
         add_action( 'admin_post_smooth_booking_save_employee', [ $employees_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
@@ -117,6 +119,8 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_delete_service', [ $services_page, 'handle_delete' ] );
         add_action( 'admin_post_smooth_booking_restore_service', [ $services_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $services_page, 'enqueue_assets' ] );
+
+        add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
     }
 
     /**
