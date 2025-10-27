@@ -70,6 +70,7 @@ use function strtotime;
  * Renders and handles the appointments management interface.
  */
 class AppointmentsPage {
+    use AdminStylesTrait;
     /**
      * Capability required to manage appointments.
      */
@@ -335,10 +336,12 @@ class AppointmentsPage {
             return;
         }
 
+        $this->enqueue_admin_styles();
+
         wp_enqueue_style(
-            'smooth-booking-admin',
-            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [],
+            'smooth-booking-admin-appointments',
+            plugins_url( 'assets/css/admin-appointments.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
         );
 

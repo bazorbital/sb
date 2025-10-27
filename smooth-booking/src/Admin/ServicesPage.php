@@ -60,6 +60,7 @@ use function wp_get_attachment_image;
  * Renders and handles the services management interface.
  */
 class ServicesPage {
+    use AdminStylesTrait;
     /**
      * Capability required to manage services.
      */
@@ -483,10 +484,12 @@ class ServicesPage {
 
         wp_enqueue_media();
 
+        $this->enqueue_admin_styles( [ 'wp-color-picker' ] );
+
         wp_enqueue_style(
-            'smooth-booking-admin',
-            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'wp-color-picker' ],
+            'smooth-booking-admin-services',
+            plugins_url( 'assets/css/admin-services.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
         );
 

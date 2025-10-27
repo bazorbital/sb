@@ -54,6 +54,7 @@ use function wp_die;
  * Renders the customers management interface.
  */
 class CustomersPage {
+    use AdminStylesTrait;
     /**
      * Capability required to manage customers.
      */
@@ -454,10 +455,12 @@ class CustomersPage {
 
         wp_enqueue_media();
 
+        $this->enqueue_admin_styles();
+
         wp_enqueue_style(
-            'smooth-booking-admin',
-            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [],
+            'smooth-booking-admin-customers',
+            plugins_url( 'assets/css/admin-customers.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
         );
 
@@ -481,6 +484,7 @@ class CustomersPage {
             ]
         );
     }
+
 
     /**
      * Render the customer form for creating or editing.
