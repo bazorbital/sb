@@ -380,46 +380,9 @@ class EmployeesPage {
         wp_enqueue_media();
 
         wp_enqueue_style(
-            'smooth-booking-admin-variables',
-            plugins_url( 'assets/css/design/smooth-booking-variables.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-components',
-            plugins_url( 'assets/css/design/smooth-booking-admin-components.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-variables' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-base',
-            plugins_url( 'assets/css/design/smooth-booking-admin.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-components' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-shared',
-            plugins_url( 'assets/css/admin-shared.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-base' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        if ( is_rtl() ) {
-            wp_enqueue_style(
-                'smooth-booking-admin-rtl',
-                plugins_url( 'assets/css/design/smooth-booking-admin-rtl.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-                [ 'smooth-booking-admin-base' ],
-                SMOOTH_BOOKING_VERSION
-            );
-        }
-
-        wp_enqueue_style(
-            'smooth-booking-admin-employees',
-            plugins_url( 'assets/css/admin-employees.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-shared', 'wp-color-picker' ],
+            'smooth-booking-admin',
+            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'wp-color-picker' ],
             SMOOTH_BOOKING_VERSION
         );
 
