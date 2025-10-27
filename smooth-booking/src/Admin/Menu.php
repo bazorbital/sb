@@ -27,6 +27,11 @@ class Menu {
     private ServicesPage $services_page;
 
     /**
+     * @var LocationsPage
+     */
+    private LocationsPage $locations_page;
+
+    /**
      * @var AppointmentsPage
      */
     private AppointmentsPage $appointments_page;
@@ -49,8 +54,9 @@ class Menu {
     /**
      * Constructor.
      */
-    public function __construct( ServicesPage $services_page, AppointmentsPage $appointments_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
+    public function __construct( ServicesPage $services_page, LocationsPage $locations_page, AppointmentsPage $appointments_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
         $this->services_page     = $services_page;
+        $this->locations_page    = $locations_page;
         $this->appointments_page = $appointments_page;
         $this->employees_page    = $employees_page;
         $this->customers_page    = $customers_page;
@@ -78,6 +84,15 @@ class Menu {
             ServicesPage::CAPABILITY,
             ServicesPage::MENU_SLUG,
             [ $this->services_page, 'render_page' ]
+        );
+
+        add_submenu_page(
+            ServicesPage::MENU_SLUG,
+            __( 'Locations', 'smooth-booking' ),
+            __( 'Locations', 'smooth-booking' ),
+            LocationsPage::CAPABILITY,
+            LocationsPage::MENU_SLUG,
+            [ $this->locations_page, 'render_page' ]
         );
 
         add_submenu_page(

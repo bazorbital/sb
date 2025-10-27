@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.9.0
+Stable tag: 0.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,11 +14,12 @@ Smooth Booking ensures the booking database environment is ready for custom sche
 Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee/customer/service/appointment management UIs, and WP-CLI tooling for administrators.
 Administrators can also define per-location business hours templates that inform new staff defaults and optional calendar visibility hours.
 Administrators can now configure per-location holidays from a yearly calendar, including date ranges, recurring closures, and color-coded statuses that surface in the admin UI and WP-CLI tooling.
+Administrators gain a dedicated **Locations** workspace to capture physical or virtual venues with media-powered profile images, address/phone/email/website fields, industry selection, event toggles, company details, and soft delete/restore workflows powering business hours, holidays, REST, and CLI automation.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
 2. Activate the plugin through the "Plugins" screen in WordPress.
-3. Visit **Smooth Booking → Appointments** to manage bookings, **Smooth Booking → Services** to configure offerings, **Smooth Booking → Employees** to create staff profiles, **Smooth Booking → Customers** to manage client records, and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
+3. Visit **Smooth Booking → Locations** to register venues, **Smooth Booking → Appointments** to manage bookings, **Smooth Booking → Services** to configure offerings, **Smooth Booking → Employees** to create staff profiles, **Smooth Booking → Customers** to manage client records, and **Smooth Booking → Settings** to review schema health and configure automatic repairs.
 
 == Frequently Asked Questions ==
 = Does the plugin support multisite? =
@@ -29,14 +30,19 @@ Use WP-CLI:
 
 `wp smooth schema status`
 
-= Can I manage employees, customers, services, and appointments programmatically? =
-Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, `/wp-json/smooth-booking/v1/services`, and `/wp-json/smooth-booking/v1/appointments` or the CLI commands `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, and `wp smooth appointments <list|delete|restore>`.
+= Can I manage locations, employees, customers, services, and appointments programmatically? =
+Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, `/wp-json/smooth-booking/v1/services`, and `/wp-json/smooth-booking/v1/appointments` or the CLI commands `wp smooth locations <list|create|update|delete|restore>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, and `wp smooth appointments <list|delete|restore>`.
 
 == Screenshots ==
 1. Settings page summarizing schema health.
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.10.0 =
+* Added Locations administration screen with media-powered profile images, address/phone/email/website capture, industry dropdowns, event toggle, and soft delete/restore workflows.
+* Introduced `LocationService`, REST controller, WP-CLI command suite `wp smooth locations <list|create|update|delete|restore>`, and admin notices with capability/nonce enforcement.
+* Expanded database schema for `smooth_locations` to store contact channels, company metadata, and profile image IDs, and wired repositories with object cache support.
+
 = 0.9.0 =
 * Added Holidays settings tab with a yearly calendar per location, range selection, recurring closures, and color-coded styling.
 * Introduced location holiday service, repository, schema table, caching hooks, and WP-CLI command suite `wp smooth holidays <list|add|delete>`.
@@ -87,6 +93,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smoot
 * Initial release. Creates booking schema on activation and runtime. Provides Settings API integration, REST endpoint, shortcode, Gutenberg block, cron maintenance, and WP-CLI commands for schema management.
 
 == Upgrade Notice ==
+= 0.10.0 =
+Adds a full Locations management workspace with contact metadata, industry selection, REST/CLI automation, and schema upgrades supporting business hours and holidays.
+
 = 0.8.0 =
 Adds a Business Hours settings panel with per-location templates powering staff defaults and calendar visibility. Update to manage weekly schedules centrally.
 

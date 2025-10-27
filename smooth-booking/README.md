@@ -5,14 +5,15 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 ## Features
 - Automatic schema installation and upgrades with `dbDelta()`
 - Schema health overview and configuration page under **Smooth Booking → Settings**
-- Employee, customer, service, and appointment directories with profile images, configurable colors, tag assignment, soft-delete/restore actions, searchable tables, and 2025-ready admin headers with on-demand creation/edit drawers
+- Location, employee, customer, service, and appointment directories with profile images, configurable colors, tag assignment, soft-delete/restore actions, searchable tables, and 2025-ready admin headers with on-demand creation/edit drawers
+- Locations workspace featuring media-powered profile images, address/phone/email/website capture, industry selection with optgroups, event location toggle, company details, soft delete/restore workflow, and WP media integration
 - Rich services form with General/Time/Additional tabs, provider preference logic, color picker, payment method selection, online meeting integration, and customer booking constraints
-- REST API endpoints at `/wp-json/smooth-booking/v1/schema-status`, `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, `/wp-json/smooth-booking/v1/services`, and `/wp-json/smooth-booking/v1/appointments`
+- REST API endpoints at `/wp-json/smooth-booking/v1/schema-status`, `/wp-json/smooth-booking/v1/locations`, `/wp-json/smooth-booking/v1/employees`, `/wp-json/smooth-booking/v1/customers`, `/wp-json/smooth-booking/v1/services`, and `/wp-json/smooth-booking/v1/appointments`
 - REST API endpoint suite at `/wp-json/smooth-booking/v1/services` for listing, creating, updating, deleting, and restoring services
 - Shortcode `[smooth_booking_schema_status]` and Gutenberg block “Smooth Booking Schema Status”
-- Top-level Smooth Booking admin menu with the **Appointments**, **Employees**, **Customers**, and **Services** screens
+- Top-level Smooth Booking admin menu with the **Locations**, **Appointments**, **Employees**, **Customers**, and **Services** screens
 - Daily cron health check
-- WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, `wp smooth appointments <list|delete|restore>`, and `wp smooth holidays <list|add|delete>`
+- WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth locations <list|create|update|delete|restore>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, `wp smooth appointments <list|delete|restore>`, and `wp smooth holidays <list|add|delete>`
 - Multisite-aware activation, deactivation, and uninstall workflows
 - Location-based Business Hours editor under **Smooth Booking → Settings → Business Hours** with 15-minute dropdowns for each weekday powering staff templates and calendar visibility
 - Location-based Holidays planner under **Smooth Booking → Settings → Holidays** with yearly calendars, range selection, recurring closures, and color-coded status indicators
@@ -25,12 +26,17 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 ## Usage
 - Visit **Smooth Booking → Appointments** to create and manage bookings: pick a provider, service, date, and time range; optionally capture customer overrides, internal notes, recurrence flag, and notification preferences. Filter the table by ID, schedule window, creation window, status, employee, service, or customer name, and use soft delete/restore actions.
 - Visit **Smooth Booking → Services** to create offerings with dedicated General/Time/Additional tabs, provider preferences (including occupancy windows and random tie-breaking), color pickers, payment method selections, online meeting providers, customer booking limits, and soft-delete/restore workflows. Use the prominent **Add new** button to open the creation drawer only when you need it.
+- Visit **Smooth Booking → Locations** to capture physical and virtual locations with media-powered profile images, address/phone/email fields, website URLs, industry taxonomy, event toggle, company details, and soft delete/restore controls.
 - Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports media library profile images, WordPress color pickers, visibility options, category assignment, a toggle to review or restore deleted employees, and the same on-demand drawer flow for creation or editing.
 - Visit **Smooth Booking → Customers** to capture client information, upload profile imagery, assign or create tags, connect WordPress users, and manage soft-deleted records via searchable, sortable, and paginated tables.
 - Configure schema repair behaviour under **Smooth Booking → Settings**.
 - Define default open and close times per location under **Smooth Booking → Settings → Business Hours**, then apply the template to inform staff schedules and calendar visibility when “Show only business hours in the calendar” is enabled.
 - Mark company-wide closures per location under **Smooth Booking → Settings → Holidays** by selecting days or ranges, adding notes, and optionally repeating the closure every year. Existing holidays appear beside the calendar for quick removal.
 - Use the REST API for automation:
+  - `GET /wp-json/smooth-booking/v1/locations` — list locations (active by default, supports `include_deleted` and `only_deleted`).
+  - `POST /wp-json/smooth-booking/v1/locations` — create a location with JSON keys `name`, `address`, `phone`, `base_email`, `website`, `industry_id`, `is_event_location`, `profile_image_id`, `company_name`, `company_address`, and `company_phone`.
+  - `GET/PUT/DELETE /wp-json/smooth-booking/v1/locations/<id>` — retrieve, update, or soft-delete a location record using the same payload keys.
+  - `POST /wp-json/smooth-booking/v1/locations/<id>/restore` — restore a soft-deleted location.
   - `GET /wp-json/smooth-booking/v1/employees` — list employees (active by default).
   - `POST /wp-json/smooth-booking/v1/employees` — create an employee with JSON body fields `name`, `email`, `phone`, `specialization`, `available_online`, `profile_image_id`, `default_color`, `visibility`, `category_ids`, and `new_categories`.
   - `GET/PUT/DELETE /wp-json/smooth-booking/v1/employees/<id>` — retrieve, update, or soft-delete a record. Updates accept the same payload keys as creation.
@@ -48,6 +54,11 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
   - `POST /wp-json/smooth-booking/v1/appointments/<id>/restore` — restore a soft-deleted appointment.
 - Run WP-CLI helpers:
   - `wp smooth employees list`
+  - `wp smooth locations list`
+  - `wp smooth locations create --name="Headquarters" --address="Budapest, Example tér 1" --industry=55 --is-event=no`
+  - `wp smooth locations update 2 --phone="+3612345678" --website=https://hq.example`
+  - `wp smooth locations delete 2`
+  - `wp smooth locations restore 2`
   - `wp smooth employees create --name="Jane Doe" --email=jane@example.com --default-color="#3366ff" --visibility=private`
   - `wp smooth employees update 12 --available-online=off --profile-image-id=321`
   - `wp smooth employees delete 12`
@@ -74,6 +85,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Tables are prefixed with the site prefix plus `smooth_` to avoid collisions and include dedicated employee category and relationship tables.
 - Schema definitions live in `src/Infrastructure/Database/SchemaDefinitionBuilder.php`.
 - Employee persistence is handled by `src/Infrastructure/Repository/EmployeeRepository.php` and exposed via `SmoothBooking\Domain\Employees\EmployeeService`.
+- Location persistence is handled by `src/Infrastructure/Repository/LocationRepository.php` and orchestrated through `SmoothBooking\Domain\Locations\LocationService` and `src/Admin/LocationsPage.php`.
 - Customer persistence is handled by `src/Infrastructure/Repository/CustomerRepository.php`, tag repositories, and orchestrated through `SmoothBooking\Domain\Customers\CustomerService`.
 - Service persistence is handled by `src/Infrastructure/Repository/ServiceRepository.php` plus category/tag repositories and orchestrated through `SmoothBooking\Domain\Services\ServiceService`.
 - Appointment persistence is handled by `src/Infrastructure/Repository/AppointmentRepository.php` and orchestrated through `SmoothBooking\Domain\Appointments\AppointmentService`.
@@ -86,6 +98,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 
 ## Hooks
 - `smooth_booking_cleanup_event` — Daily cron event for health checks.
+- `smooth_booking_locations_list` — Filter the location list before rendering in admin, REST, or CLI contexts.
 - `smooth_booking_employees_list` — Filter the employee list before rendering or API responses.
 - `smooth_booking_customers_paginated` — Filter the paginated customer result before rendering or API responses.
 - `smooth_booking_location_holidays_saved` — Fires after one or more holidays have been saved for a location.
