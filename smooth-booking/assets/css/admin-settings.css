@@ -199,6 +199,75 @@
     transform: translateX(20px);
 }
 
+.smooth-booking-business-hours {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.smooth-booking-business-hours__location {
+    display: grid;
+    gap: 12px;
+    max-width: 420px;
+}
+
+.smooth-booking-business-hours__location-select {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.smooth-booking-business-hours__select {
+    min-width: 220px;
+}
+
+.smooth-booking-business-hours__grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.smooth-booking-business-hours__day {
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: var(--sba-radius-12px);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--sba-cl-white);
+}
+
+.smooth-booking-business-hours__day legend {
+    font-weight: 600;
+    color: var(--sba-dt-black-300);
+    margin-bottom: 4px;
+}
+
+.smooth-booking-business-hours__time {
+    display: grid;
+    gap: 12px;
+}
+
+.smooth-booking-business-hours__time label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--sba-dt-black-400);
+}
+
+.smooth-booking-business-hours__time select {
+    width: 100%;
+}
+
+.smooth-booking-business-hours__closed {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--sba-dt-black-300);
+}
+
 .smooth-booking-toggle__input:focus-visible + .smooth-booking-toggle__control {
     box-shadow: 0 0 0 4px rgba(18, 212, 136, 0.2);
 }

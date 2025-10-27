@@ -14,6 +14,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Daily cron health check
 - WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, and `wp smooth appointments <list|delete|restore>`
 - Multisite-aware activation, deactivation, and uninstall workflows
+- Location-based Business Hours editor under **Smooth Booking → Settings → Business Hours** with 15-minute dropdowns for each weekday powering staff templates and calendar visibility
 
 ## Installation
 1. Copy the `smooth-booking` directory into `wp-content/plugins/` or install via Composer.
@@ -26,6 +27,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports media library profile images, WordPress color pickers, visibility options, category assignment, a toggle to review or restore deleted employees, and the same on-demand drawer flow for creation or editing.
 - Visit **Smooth Booking → Customers** to capture client information, upload profile imagery, assign or create tags, connect WordPress users, and manage soft-deleted records via searchable, sortable, and paginated tables.
 - Configure schema repair behaviour under **Smooth Booking → Settings**.
+- Define default open and close times per location under **Smooth Booking → Settings → Business Hours**, then apply the template to inform staff schedules and calendar visibility when “Show only business hours in the calendar” is enabled.
 - Use the REST API for automation:
   - `GET /wp-json/smooth-booking/v1/employees` — list employees (active by default).
   - `POST /wp-json/smooth-booking/v1/employees` — create an employee with JSON body fields `name`, `email`, `phone`, `specialization`, `available_online`, `profile_image_id`, `default_color`, `visibility`, `category_ids`, and `new_categories`.
@@ -70,6 +72,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Customer persistence is handled by `src/Infrastructure/Repository/CustomerRepository.php`, tag repositories, and orchestrated through `SmoothBooking\Domain\Customers\CustomerService`.
 - Service persistence is handled by `src/Infrastructure/Repository/ServiceRepository.php` plus category/tag repositories and orchestrated through `SmoothBooking\Domain\Services\ServiceService`.
 - Appointment persistence is handled by `src/Infrastructure/Repository/AppointmentRepository.php` and orchestrated through `SmoothBooking\Domain\Appointments\AppointmentService`.
+- Business hours templates are handled by `src/Domain/BusinessHours/BusinessHoursService.php` backed by `src/Infrastructure/Repository/BusinessHoursRepository.php` and the location repository in `src/Infrastructure/Repository/LocationRepository.php`.
 - Database versioning is stored in the `smooth_booking_db_version` option.
 - Run coding standards with `vendor/bin/phpcs` (ruleset in `phpcs.xml`).
 - Run unit tests with `composer test` (PHPUnit bootstrap in `tests/bootstrap.php`).

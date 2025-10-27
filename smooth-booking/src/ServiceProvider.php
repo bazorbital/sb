@@ -21,12 +21,15 @@ use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Domain\Appointments\AppointmentRepositoryInterface;
 use SmoothBooking\Domain\Appointments\AppointmentService;
+use SmoothBooking\Domain\BusinessHours\BusinessHoursRepositoryInterface;
+use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
 use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
 use SmoothBooking\Domain\Customers\CustomerService;
 use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeCategoryRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeService;
+use SmoothBooking\Domain\Locations\LocationRepositoryInterface;
 use SmoothBooking\Domain\SchemaStatusService;
 use SmoothBooking\Domain\Services\ServiceCategoryRepositoryInterface;
 use SmoothBooking\Domain\Services\ServiceRepositoryInterface;
@@ -38,10 +41,12 @@ use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Repository\AppointmentRepository;
+use SmoothBooking\Infrastructure\Repository\BusinessHoursRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
+use SmoothBooking\Infrastructure\Repository\LocationRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
@@ -145,6 +150,29 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( LocationRepositoryInterface::class, static function ( ServiceContainer $_container ): LocationRepositoryInterface {
+            global $wpdb;
+
+            return new LocationRepository( $wpdb );
+        } );
+
+        $container->singleton( BusinessHoursRepositoryInterface::class, static function ( ServiceContainer $container ): BusinessHoursRepositoryInterface {
+            global $wpdb;
+
+            return new BusinessHoursRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( BusinessHoursService::class, static function ( ServiceContainer $container ): BusinessHoursService {
+            return new BusinessHoursService(
+                $container->get( BusinessHoursRepositoryInterface::class ),
+                $container->get( LocationRepositoryInterface::class ),
+                $container->get( Logger::class )
+            );
+        } );
+
         $container->singleton( AppointmentService::class, static function ( ServiceContainer $container ): AppointmentService {
             return new AppointmentService(
                 $container->get( AppointmentRepositoryInterface::class ),
@@ -193,7 +221,10 @@ class ServiceProvider {
         } );
 
         $container->singleton( SettingsPage::class, static function ( ServiceContainer $container ): SettingsPage {
-            return new SettingsPage( $container->get( SchemaStatusService::class ) );
+            return new SettingsPage(
+                $container->get( SchemaStatusService::class ),
+                $container->get( BusinessHoursService::class )
+            );
         } );
 
         $container->singleton( ServicesPage::class, static function ( ServiceContainer $container ): ServicesPage {

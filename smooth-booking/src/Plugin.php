@@ -130,6 +130,7 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_restore_service', [ $services_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $services_page, 'enqueue_assets' ] );
 
+        add_action( 'admin_post_smooth_booking_save_business_hours', [ $settings_page, 'handle_business_hours_save' ] );
         add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
     }
 
