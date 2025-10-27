@@ -2,6 +2,15 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.10.0] - 2025-02-01
+### Added
+- Locations administration screen with media-powered profile images, address/phone/email/website capture, industry optgroups, event toggle, company metadata, admin notices, and soft delete/restore workflows.
+- Location domain service, REST controller at `/wp-json/smooth-booking/v1/locations`, WP-CLI command suite `wp smooth locations <list|create|update|delete|restore>`, PHPUnit coverage, and localized admin JavaScript for media selection.
+- Expanded `smooth_locations` schema with profile image, contact channels, and company columns plus repository caching and validation hooks powering business hours and holidays.
+
+### Changed
+- Updated top-level admin menu, README, and readme.txt to surface the Locations workspace and new automation touchpoints.
+
 # [0.9.0] - 2025-01-15
 ### Added
 - Holidays settings tab with a yearly calendar per location, range selection, and support for recurring closures styled via Smooth Booking design tokens.

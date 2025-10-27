@@ -10,6 +10,7 @@ namespace SmoothBooking;
 use SmoothBooking\Admin\AppointmentsPage;
 use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
+use SmoothBooking\Admin\LocationsPage;
 use SmoothBooking\Admin\Menu as AdminMenu;
 use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Admin\SettingsPage;
@@ -19,6 +20,7 @@ use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\HolidaysCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
+use SmoothBooking\Cli\Commands\LocationsCommand;
 use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
@@ -28,6 +30,7 @@ use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
+use SmoothBooking\Rest\LocationsController;
 use SmoothBooking\Support\ServiceContainer;
 use SmoothBooking\ServiceProvider;
 
@@ -100,6 +103,8 @@ class Plugin {
         $schema_manager = $this->container->get( SchemaManager::class );
         $schema_manager->maybe_upgrade();
 
+        /** @var LocationsPage $locations_page */
+        $locations_page = $this->container->get( LocationsPage::class );
         /** @var EmployeesPage $employees_page */
         $employees_page = $this->container->get( EmployeesPage::class );
         /** @var AppointmentsPage $appointments_page */
@@ -110,6 +115,11 @@ class Plugin {
         $services_page = $this->container->get( ServicesPage::class );
         /** @var SettingsPage $settings_page */
         $settings_page = $this->container->get( SettingsPage::class );
+
+        add_action( 'admin_post_smooth_booking_save_location', [ $locations_page, 'handle_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_location', [ $locations_page, 'handle_delete' ] );
+        add_action( 'admin_post_smooth_booking_restore_location', [ $locations_page, 'handle_restore' ] );
+        add_action( 'admin_enqueue_scripts', [ $locations_page, 'enqueue_assets' ] );
 
         add_action( 'admin_post_smooth_booking_save_employee', [ $employees_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_employee', [ $employees_page, 'handle_delete' ] );
@@ -164,6 +174,11 @@ class Plugin {
         $services_command = $this->container->get( ServicesCommand::class );
 
         \WP_CLI::add_command( 'smooth services', $services_command );
+
+        /** @var LocationsCommand $locations_command */
+        $locations_command = $this->container->get( LocationsCommand::class );
+
+        \WP_CLI::add_command( 'smooth locations', $locations_command );
 
         /** @var HolidaysCommand $holidays_command */
         $holidays_command = $this->container->get( HolidaysCommand::class );
@@ -238,6 +253,10 @@ class Plugin {
         /** @var ServicesController $services */
         $services = $this->container->get( ServicesController::class );
         $services->register_routes();
+
+        /** @var LocationsController $locations */
+        $locations = $this->container->get( LocationsController::class );
+        $locations->register_routes();
 
         /** @var AppointmentsController $appointments */
         $appointments = $this->container->get( AppointmentsController::class );
