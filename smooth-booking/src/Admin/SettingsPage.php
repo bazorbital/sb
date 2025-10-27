@@ -129,8 +129,10 @@ class SettingsPage {
             wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'smooth-booking' ) );
         }
 
-        $status   = $this->schema_service->get_status();
-        $is_error = is_wp_error( $status );
+        $status          = $this->schema_service->get_status();
+        $is_error        = is_wp_error( $status );
+        $general_section = 'smooth-booking-settings-general';
+        $schema_section  = 'smooth-booking-settings-schema';
         ?>
         <div class="wrap smooth-booking-admin smooth-booking-settings-wrap">
             <div class="smooth-booking-admin__content">
@@ -141,49 +143,86 @@ class SettingsPage {
                     </div>
                 </div>
 
-                <?php if ( $is_error ) : ?>
-                    <div class="smooth-booking-card smooth-booking-settings-status smooth-booking-settings-status--error">
-                        <div class="smooth-booking-settings-status__header">
-                            <span class="smooth-booking-settings-status__icon dashicons dashicons-warning" aria-hidden="true"></span>
-                            <div class="smooth-booking-settings-status__text">
-                                <h2><?php esc_html_e( 'Schema status', 'smooth-booking' ); ?></h2>
-                                <p class="description"><?php echo esc_html( $status->get_error_message() ); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                <?php else : ?>
-                    <div class="smooth-booking-card smooth-booking-settings-status">
-                        <div class="smooth-booking-settings-status__header">
-                            <span class="smooth-booking-settings-status__icon dashicons <?php echo $this->schema_service->schema_is_healthy() ? 'dashicons-yes-alt' : 'dashicons-info-outline'; ?>" aria-hidden="true"></span>
-                            <div class="smooth-booking-settings-status__text">
-                                <h2><?php esc_html_e( 'Schema status', 'smooth-booking' ); ?></h2>
-                                <p class="description"><?php esc_html_e( 'Overview of the database tables required by Smooth Booking.', 'smooth-booking' ); ?></p>
-                            </div>
-                        </div>
-                        <ul class="smooth-booking-schema-status">
-                            <?php foreach ( $status as $table_name => $exists ) : ?>
-                                <li class="smooth-booking-schema-status__item <?php echo $exists ? 'is-healthy' : 'is-missing'; ?>">
-                                    <span class="smooth-booking-schema-status__name"><code><?php echo esc_html( $table_name ); ?></code></span>
-                                    <span class="smooth-booking-schema-status__state">
-                                        <?php echo $exists ? esc_html__( 'Available', 'smooth-booking' ) : esc_html__( 'Missing', 'smooth-booking' ); ?>
-                                    </span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-
-                <form action="options.php" method="post" class="smooth-booking-settings-form">
-                    <?php settings_fields( self::OPTION_NAME ); ?>
-                    <div class="smooth-booking-card smooth-booking-settings-card">
-                        <?php do_settings_sections( self::MENU_SLUG ); ?>
-                        <div class="smooth-booking-form-actions">
-                            <button type="submit" class="sba-btn sba-btn--primary sba-btn__large">
-                                <?php esc_html_e( 'Save changes', 'smooth-booking' ); ?>
+                <div class="smooth-booking-settings-layout">
+                    <aside class="smooth-booking-settings-sidebar">
+                        <nav class="smooth-booking-settings-nav" aria-label="<?php esc_attr_e( 'Smooth Booking settings sections', 'smooth-booking' ); ?>">
+                            <button
+                                type="button"
+                                class="smooth-booking-settings-nav__button is-active"
+                                data-section="general"
+                                aria-controls="<?php echo esc_attr( $general_section ); ?>"
+                                aria-current="true"
+                            >
+                                <?php esc_html_e( 'General settings', 'smooth-booking' ); ?>
                             </button>
-                        </div>
+                            <button
+                                type="button"
+                                class="smooth-booking-settings-nav__button"
+                                data-section="schema"
+                                aria-controls="<?php echo esc_attr( $schema_section ); ?>"
+                                aria-current="false"
+                            >
+                                <?php esc_html_e( 'Schema status', 'smooth-booking' ); ?>
+                            </button>
+                        </nav>
+                    </aside>
+                    <div class="smooth-booking-settings-main">
+                        <section
+                            class="smooth-booking-settings-section smooth-booking-settings-section--general is-active"
+                            id="<?php echo esc_attr( $general_section ); ?>"
+                            data-section="general"
+                        >
+                            <form action="options.php" method="post" class="smooth-booking-settings-form">
+                                <?php settings_fields( self::OPTION_NAME ); ?>
+                                <div class="smooth-booking-card smooth-booking-settings-card">
+                                    <?php do_settings_sections( self::MENU_SLUG ); ?>
+                                    <div class="smooth-booking-form-actions">
+                                        <button type="submit" class="sba-btn sba-btn--primary sba-btn__large">
+                                            <?php esc_html_e( 'Save changes', 'smooth-booking' ); ?>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </section>
+                        <section
+                            class="smooth-booking-settings-section smooth-booking-settings-section--schema"
+                            id="<?php echo esc_attr( $schema_section ); ?>"
+                            data-section="schema"
+                        >
+                            <?php if ( $is_error ) : ?>
+                                <div class="smooth-booking-card smooth-booking-settings-status smooth-booking-settings-status--error">
+                                    <div class="smooth-booking-settings-status__header">
+                                        <span class="smooth-booking-settings-status__icon dashicons dashicons-warning" aria-hidden="true"></span>
+                                        <div class="smooth-booking-settings-status__text">
+                                            <h2><?php esc_html_e( 'Schema status', 'smooth-booking' ); ?></h2>
+                                            <p class="description"><?php echo esc_html( $status->get_error_message() ); ?></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php else : ?>
+                                <div class="smooth-booking-card smooth-booking-settings-status">
+                                    <div class="smooth-booking-settings-status__header">
+                                        <span class="smooth-booking-settings-status__icon dashicons <?php echo $this->schema_service->schema_is_healthy() ? 'dashicons-yes-alt' : 'dashicons-info-outline'; ?>" aria-hidden="true"></span>
+                                        <div class="smooth-booking-settings-status__text">
+                                            <h2><?php esc_html_e( 'Schema status', 'smooth-booking' ); ?></h2>
+                                            <p class="description"><?php esc_html_e( 'Overview of the database tables required by Smooth Booking.', 'smooth-booking' ); ?></p>
+                                        </div>
+                                    </div>
+                                    <ul class="smooth-booking-schema-status">
+                                        <?php foreach ( $status as $table_name => $exists ) : ?>
+                                            <li class="smooth-booking-schema-status__item <?php echo $exists ? 'is-healthy' : 'is-missing'; ?>">
+                                                <span class="smooth-booking-schema-status__name"><code><?php echo esc_html( $table_name ); ?></code></span>
+                                                <span class="smooth-booking-schema-status__state">
+                                                    <?php echo $exists ? esc_html__( 'Available', 'smooth-booking' ) : esc_html__( 'Missing', 'smooth-booking' ); ?>
+                                                </span>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            <?php endif; ?>
+                        </section>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
         <?php
@@ -204,6 +243,14 @@ class SettingsPage {
             plugins_url( 'assets/css/admin-settings.css', SMOOTH_BOOKING_PLUGIN_FILE ),
             [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
+        );
+
+        wp_enqueue_script(
+            'smooth-booking-admin-settings',
+            plugins_url( 'assets/js/admin-settings.js', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [],
+            SMOOTH_BOOKING_VERSION,
+            true
         );
     }
 
