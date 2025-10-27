@@ -109,6 +109,12 @@ if ( ! function_exists( 'apply_filters' ) ) {
     }
 }
 
+if ( ! function_exists( 'do_action' ) ) {
+    function do_action( string $tag, ...$args ): void { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+        // No-op during tests.
+    }
+}
+
 if ( ! function_exists( 'sanitize_user' ) ) {
     function sanitize_user( string $username ): string {
         return preg_replace( '/[^a-z0-9_\-\.]/i', '', strtolower( $username ) ) ?? '';

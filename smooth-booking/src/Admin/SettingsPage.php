@@ -8,6 +8,8 @@
 namespace SmoothBooking\Admin;
 
 use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
+use SmoothBooking\Domain\Holidays\Holiday;
+use SmoothBooking\Domain\Holidays\HolidayService;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\SchemaStatusService;
 
@@ -31,15 +33,23 @@ use function is_rtl;
 use function is_wp_error;
 use function plugins_url;
 use function register_setting;
+use function sanitize_key;
+use function sanitize_textarea_field;
 use function sanitize_text_field;
 use function settings_fields;
+use function wp_enqueue_script;
 use function wp_die;
 use function wp_enqueue_style;
 use function wp_nonce_field;
+use function wp_localize_script;
 use function wp_safe_redirect;
 use function wp_unslash;
 use function selected;
 use function is_array;
+use function gmdate;
+use function max;
+use function min;
+use function rawurlencode;
 
 /**
  * Registers Settings API integration.
@@ -72,11 +82,17 @@ class SettingsPage {
     private BusinessHoursService $business_hours_service;
 
     /**
+     * @var HolidayService
+     */
+    private HolidayService $holiday_service;
+
+    /**
      * Constructor.
      */
-    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service ) {
-        $this->schema_service          = $schema_service;
-        $this->business_hours_service = $business_hours_service;
+    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service, HolidayService $holiday_service ) {
+        $this->schema_service           = $schema_service;
+        $this->business_hours_service   = $business_hours_service;
+        $this->holiday_service          = $holiday_service;
     }
 
     /**
@@ -152,14 +168,32 @@ class SettingsPage {
         $is_error               = is_wp_error( $status );
         $general_section        = 'smooth-booking-settings-general';
         $business_hours_section = 'smooth-booking-settings-business-hours';
+        $holidays_section       = 'smooth-booking-settings-holidays';
         $schema_section         = 'smooth-booking-settings-schema';
+
+        $sections = [
+            'general'        => $general_section,
+            'business-hours' => $business_hours_section,
+            'holidays'       => $holidays_section,
+            'schema'         => $schema_section,
+        ];
+
+        $active_section = $this->determine_active_section( array_keys( $sections ) );
+        $display_year   = $this->determine_display_year();
 
         $locations            = $this->business_hours_service->list_locations();
         $selected_location_id = $this->determine_selected_location_id( $locations );
+        $holiday_location_id  = $this->determine_selected_location_id( $locations, 'holidays_location' );
         $business_hours_data  = $this->business_hours_service->get_empty_template();
         $business_hours_error = '';
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Displaying admin feedback.
         $business_hours_saved = isset( $_GET['smooth_booking_business_hours_saved'] );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Displaying admin feedback.
+        $holiday_saved   = isset( $_GET['smooth_booking_holiday_saved'] );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Displaying admin feedback.
+        $holiday_deleted = isset( $_GET['smooth_booking_holiday_deleted'] );
+        $holiday_error   = '';
+        $holidays        = [];
 
         if ( $selected_location_id > 0 ) {
             $hours_result = $this->business_hours_service->get_location_hours( $selected_location_id );
@@ -176,8 +210,29 @@ class SettingsPage {
             $business_hours_error = sanitize_text_field( wp_unslash( $_GET['smooth_booking_business_hours_error'] ) );
         }
 
+        if ( $holiday_location_id > 0 ) {
+            $holidays_result = $this->holiday_service->get_location_holidays( $holiday_location_id );
+
+            if ( is_wp_error( $holidays_result ) ) {
+                $holiday_error = $holidays_result->get_error_message();
+            } else {
+                $holidays = $holidays_result;
+            }
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Displaying admin feedback.
+        if ( isset( $_GET['smooth_booking_holiday_error'] ) ) {
+            $holiday_error = sanitize_text_field( wp_unslash( $_GET['smooth_booking_holiday_error'] ) );
+        }
+
         $days         = $this->business_hours_service->get_days();
         $time_options = $this->business_hours_service->get_time_options();
+        $nav_items    = [
+            'general'        => __( 'General settings', 'smooth-booking' ),
+            'business-hours' => __( 'Business Hours', 'smooth-booking' ),
+            'holidays'       => __( 'Holidays', 'smooth-booking' ),
+            'schema'         => __( 'Schema status', 'smooth-booking' ),
+        ];
         ?>
         <div class="wrap smooth-booking-admin smooth-booking-settings-wrap">
             <div class="smooth-booking-admin__content">
@@ -191,38 +246,25 @@ class SettingsPage {
                 <div class="smooth-booking-settings-layout">
                     <aside class="smooth-booking-settings-sidebar">
                         <nav class="smooth-booking-settings-nav" aria-label="<?php esc_attr_e( 'Smooth Booking settings sections', 'smooth-booking' ); ?>">
-                            <button
-                                type="button"
-                                class="smooth-booking-settings-nav__button is-active"
-                                data-section="general"
-                                aria-controls="<?php echo esc_attr( $general_section ); ?>"
-                                aria-current="true"
-                            >
-                                <?php esc_html_e( 'General settings', 'smooth-booking' ); ?>
-                            </button>
-                            <button
-                                type="button"
-                                class="smooth-booking-settings-nav__button"
-                                data-section="business-hours"
-                                aria-controls="<?php echo esc_attr( $business_hours_section ); ?>"
-                                aria-current="false"
-                            >
-                                <?php esc_html_e( 'Business Hours', 'smooth-booking' ); ?>
-                            </button>
-                            <button
-                                type="button"
-                                class="smooth-booking-settings-nav__button"
-                                data-section="schema"
-                                aria-controls="<?php echo esc_attr( $schema_section ); ?>"
-                                aria-current="false"
-                            >
-                                <?php esc_html_e( 'Schema status', 'smooth-booking' ); ?>
-                            </button>
+                            <?php foreach ( $nav_items as $section_key => $label ) :
+                                $section_id = $sections[ $section_key ] ?? '';
+                                $is_active  = $section_key === $active_section;
+                                ?>
+                                <button
+                                    type="button"
+                                    class="smooth-booking-settings-nav__button<?php echo $is_active ? ' is-active' : ''; ?>"
+                                    data-section="<?php echo esc_attr( $section_key ); ?>"
+                                    aria-controls="<?php echo esc_attr( $section_id ); ?>"
+                                    aria-current="<?php echo $is_active ? 'true' : 'false'; ?>"
+                                >
+                                    <?php echo esc_html( $label ); ?>
+                                </button>
+                            <?php endforeach; ?>
                         </nav>
                     </aside>
-                    <div class="smooth-booking-settings-main">
+                    <div class="smooth-booking-settings-main" data-default-section="<?php echo esc_attr( $active_section ); ?>">
                         <section
-                            class="smooth-booking-settings-section smooth-booking-settings-section--general is-active"
+                            class="smooth-booking-settings-section smooth-booking-settings-section--general<?php echo 'general' === $active_section ? ' is-active' : ''; ?>"
                             id="<?php echo esc_attr( $general_section ); ?>"
                             data-section="general"
                         >
@@ -239,7 +281,7 @@ class SettingsPage {
                             </form>
                         </section>
                         <section
-                            class="smooth-booking-settings-section smooth-booking-settings-section--business-hours"
+                            class="smooth-booking-settings-section smooth-booking-settings-section--business-hours<?php echo 'business-hours' === $active_section ? ' is-active' : ''; ?>"
                             id="<?php echo esc_attr( $business_hours_section ); ?>"
                             data-section="business-hours"
                         >
@@ -259,6 +301,7 @@ class SettingsPage {
 
                                     <form method="get" class="smooth-booking-business-hours__location">
                                         <input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>" />
+                                        <input type="hidden" name="smooth_booking_section" value="business-hours" />
                                         <label class="smooth-booking-business-hours__label" for="smooth-booking-business-hours-location">
                                             <?php esc_html_e( 'Location', 'smooth-booking' ); ?>
                                         </label>
@@ -280,6 +323,7 @@ class SettingsPage {
                                         <?php wp_nonce_field( 'smooth_booking_save_business_hours' ); ?>
                                         <input type="hidden" name="action" value="smooth_booking_save_business_hours" />
                                         <input type="hidden" name="location_id" value="<?php echo esc_attr( (string) $selected_location_id ); ?>" />
+                                        <input type="hidden" name="smooth_booking_section" value="business-hours" />
                                         <p class="description">
                                             <?php esc_html_e( "Please note, the business hours below work as a template for all new staff members. To render a list of available time slots the system takes into account only staff members' schedule, not the company business hours. Be sure to check the schedule of your staff members if you have some unexpected behavior of the booking system.", 'smooth-booking' ); ?>
                                         </p>
@@ -331,7 +375,147 @@ class SettingsPage {
                             </div>
                         </section>
                         <section
-                            class="smooth-booking-settings-section smooth-booking-settings-section--schema"
+                            class="smooth-booking-settings-section smooth-booking-settings-section--holidays<?php echo 'holidays' === $active_section ? ' is-active' : ''; ?>"
+                            id="<?php echo esc_attr( $holidays_section ); ?>"
+                            data-section="holidays"
+                        >
+                            <div class="smooth-booking-card smooth-booking-settings-card smooth-booking-holidays">
+                                <?php if ( empty( $locations ) ) : ?>
+                                    <p class="description"><?php esc_html_e( 'Create at least one location to configure holidays.', 'smooth-booking' ); ?></p>
+                                <?php else : ?>
+                                    <?php if ( $holiday_saved ) : ?>
+                                        <div class="notice notice-success is-dismissible">
+                                            <p><?php esc_html_e( 'Holiday saved successfully.', 'smooth-booking' ); ?></p>
+                                        </div>
+                                    <?php elseif ( $holiday_deleted ) : ?>
+                                        <div class="notice notice-success is-dismissible">
+                                            <p><?php esc_html_e( 'Holiday deleted successfully.', 'smooth-booking' ); ?></p>
+                                        </div>
+                                    <?php elseif ( ! empty( $holiday_error ) ) : ?>
+                                        <div class="notice notice-error">
+                                            <p><?php echo esc_html( $holiday_error ); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <form method="get" class="smooth-booking-holidays__location">
+                                        <input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>" />
+                                        <input type="hidden" name="smooth_booking_section" value="holidays" />
+                                        <input type="hidden" name="holidays_year" value="<?php echo esc_attr( (string) $display_year ); ?>" data-year-sync="true" />
+                                        <label class="smooth-booking-holidays__label" for="smooth-booking-holidays-location">
+                                            <?php esc_html_e( 'Location', 'smooth-booking' ); ?>
+                                        </label>
+                                        <div class="smooth-booking-holidays__location-select">
+                                            <select name="holidays_location" id="smooth-booking-holidays-location" class="smooth-booking-holidays__select">
+                                                <?php foreach ( $locations as $location ) : ?>
+                                                    <option value="<?php echo esc_attr( (string) $location->get_id() ); ?>" <?php selected( $holiday_location_id, $location->get_id() ); ?>>
+                                                        <?php echo esc_html( $location->get_name() ); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button type="submit" class="button">
+                                                <?php esc_html_e( 'Change location', 'smooth-booking' ); ?>
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <?php if ( $holiday_location_id > 0 ) : ?>
+                                        <div class="smooth-booking-holidays__content" data-smooth-booking-holidays="true">
+                                            <div class="smooth-booking-holidays__intro">
+                                                <p class="description">
+                                                    <?php esc_html_e( 'Select individual days or a date range in the calendar, then confirm the note and whether the closure repeats every year.', 'smooth-booking' ); ?>
+                                                </p>
+                                            </div>
+                                            <div class="smooth-booking-holidays__calendar-wrapper">
+                                                <div class="smooth-booking-holidays__calendar-header">
+                                                    <button type="button" class="button button-secondary" data-holiday-year-control="previous" aria-label="<?php esc_attr_e( 'Previous year', 'smooth-booking' ); ?>">&lsaquo;</button>
+                                                    <div class="smooth-booking-holidays__calendar-year" data-year-display><?php echo esc_html( (string) $display_year ); ?></div>
+                                                    <button type="button" class="button button-secondary" data-holiday-year-control="next" aria-label="<?php esc_attr_e( 'Next year', 'smooth-booking' ); ?>">&rsaquo;</button>
+                                                </div>
+                                                <div class="smooth-booking-holidays__calendar" data-holiday-calendar></div>
+                                            </div>
+                                            <div class="smooth-booking-holidays__forms">
+                                                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-holidays__form">
+                                                    <?php wp_nonce_field( 'smooth_booking_save_holiday' ); ?>
+                                                    <input type="hidden" name="action" value="smooth_booking_save_holiday" />
+                                                    <input type="hidden" name="location_id" value="<?php echo esc_attr( (string) $holiday_location_id ); ?>" />
+                                                    <input type="hidden" name="display_year" id="smooth-booking-holidays-year" value="<?php echo esc_attr( (string) $display_year ); ?>" data-year-sync="true" />
+                                                    <input type="hidden" name="smooth_booking_section" value="holidays" />
+                                                    <div class="smooth-booking-holidays__fields">
+                                                        <label for="smooth-booking-holiday-start">
+                                                            <span><?php esc_html_e( 'Start date', 'smooth-booking' ); ?></span>
+                                                            <input type="date" id="smooth-booking-holiday-start" name="start_date" required />
+                                                        </label>
+                                                        <label for="smooth-booking-holiday-end">
+                                                            <span><?php esc_html_e( 'End date', 'smooth-booking' ); ?></span>
+                                                            <input type="date" id="smooth-booking-holiday-end" name="end_date" required />
+                                                        </label>
+                                                        <label for="smooth-booking-holiday-note">
+                                                            <span><?php esc_html_e( 'Note', 'smooth-booking' ); ?></span>
+                                                            <input type="text" id="smooth-booking-holiday-note" name="note" maxlength="255" placeholder="<?php echo esc_attr__( 'We are not working on this day', 'smooth-booking' ); ?>" />
+                                                        </label>
+                                                    </div>
+                                                    <div class="smooth-booking-holidays__controls">
+                                                        <label class="smooth-booking-holidays__repeat">
+                                                            <input type="checkbox" name="is_recurring" value="1" />
+                                                            <span><?php esc_html_e( 'Repeat every year', 'smooth-booking' ); ?></span>
+                                                        </label>
+                                                        <button type="button" class="button button-link smooth-booking-holidays__clear" data-holiday-clear>
+                                                            <?php esc_html_e( 'Clear selection', 'smooth-booking' ); ?>
+                                                        </button>
+                                                    </div>
+                                                    <div class="smooth-booking-form-actions">
+                                                        <button type="submit" class="sba-btn sba-btn--primary sba-btn__large">
+                                                            <?php esc_html_e( 'Save holiday', 'smooth-booking' ); ?>
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                <div class="smooth-booking-holidays__list-wrapper">
+                                                    <h3><?php esc_html_e( 'Configured holidays', 'smooth-booking' ); ?></h3>
+                                                    <?php if ( empty( $holidays ) ) : ?>
+                                                        <p class="description"><?php esc_html_e( 'No holidays have been configured for this location yet.', 'smooth-booking' ); ?></p>
+                                                    <?php else : ?>
+                                                        <ul class="smooth-booking-holidays__list">
+                                                            <?php foreach ( $holidays as $holiday ) : ?>
+                                                                <?php
+                                                                if ( ! $holiday instanceof Holiday ) {
+                                                                    continue;
+                                                                }
+
+                                                                ?>
+                                                                <li class="smooth-booking-holidays__list-item">
+                                                                    <div class="smooth-booking-holidays__list-text">
+                                                                        <span class="smooth-booking-holidays__list-date"><?php echo esc_html( $holiday->get_date() ); ?></span>
+                                                                        <span class="smooth-booking-holidays__list-type">
+                                                                            <?php echo $holiday->is_recurring() ? esc_html__( 'Repeats annually', 'smooth-booking' ) : esc_html__( 'One-time', 'smooth-booking' ); ?>
+                                                                        </span>
+                                                                        <?php if ( '' !== $holiday->get_note() ) : ?>
+                                                                            <span class="smooth-booking-holidays__list-note"><?php echo esc_html( $holiday->get_note() ); ?></span>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-holidays__delete-form">
+                                                                        <?php wp_nonce_field( 'smooth_booking_delete_holiday_' . $holiday->get_id() ); ?>
+                                                                        <input type="hidden" name="action" value="smooth_booking_delete_holiday" />
+                                                                        <input type="hidden" name="location_id" value="<?php echo esc_attr( (string) $holiday_location_id ); ?>" />
+                                                                        <input type="hidden" name="holiday_id" value="<?php echo esc_attr( (string) $holiday->get_id() ); ?>" />
+                                                                        <input type="hidden" name="display_year" value="<?php echo esc_attr( (string) $display_year ); ?>" />
+                                                                        <input type="hidden" name="smooth_booking_section" value="holidays" />
+                                                                        <button type="submit" class="button-link-delete">
+                                                                            <?php esc_html_e( 'Delete', 'smooth-booking' ); ?>
+                                                                        </button>
+                                                                    </form>
+                                                                </li>
+                                                            <?php endforeach; ?>
+                                                        </ul>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </section>
+                        <section
+                            class="smooth-booking-settings-section smooth-booking-settings-section--schema<?php echo 'schema' === $active_section ? ' is-active' : ''; ?>"
                             id="<?php echo esc_attr( $schema_section ); ?>"
                             data-section="schema"
                         >
@@ -379,7 +563,7 @@ class SettingsPage {
      *
      * @param Location[] $locations Locations list.
      */
-    private function determine_selected_location_id( array $locations ): int {
+    private function determine_selected_location_id( array $locations, string $query_var = 'business_hours_location' ): int {
         $default = 0;
 
         if ( ! empty( $locations ) ) {
@@ -387,9 +571,11 @@ class SettingsPage {
             $default = $first instanceof Location ? $first->get_id() : 0;
         }
 
+        $query_var = sanitize_key( $query_var );
+
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading selection for display only.
-        if ( isset( $_GET['business_hours_location'] ) ) {
-            $requested = absint( wp_unslash( $_GET['business_hours_location'] ) );
+        if ( isset( $_GET[ $query_var ] ) ) {
+            $requested = absint( wp_unslash( $_GET[ $query_var ] ) );
 
             foreach ( $locations as $location ) {
                 if ( $location instanceof Location && $location->get_id() === $requested ) {
@@ -399,6 +585,108 @@ class SettingsPage {
         }
 
         return $default;
+    }
+
+    /**
+     * Determine the active settings section.
+     *
+     * @param string[] $allowed Allowed section slugs.
+     */
+    private function determine_active_section( array $allowed ): string {
+        $default = 'general';
+
+        if ( empty( $allowed ) ) {
+            return $default;
+        }
+
+        if ( ! in_array( $default, $allowed, true ) ) {
+            $first = reset( $allowed );
+            $default = is_string( $first ) ? $first : 'general';
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display purposes only.
+        if ( isset( $_GET['smooth_booking_section'] ) ) {
+            $requested = sanitize_key( wp_unslash( $_GET['smooth_booking_section'] ) );
+
+            if ( in_array( $requested, $allowed, true ) ) {
+                return $requested;
+            }
+        }
+
+        return $default;
+    }
+
+    /**
+     * Determine which year should be displayed in the holidays calendar.
+     */
+    private function determine_display_year(): int {
+        $current = (int) gmdate( 'Y' );
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display purposes only.
+        if ( isset( $_GET['holidays_year'] ) ) {
+            $year = absint( wp_unslash( $_GET['holidays_year'] ) );
+
+            if ( $year > 0 ) {
+                return $this->sanitize_year( $year );
+            }
+        }
+
+        return $this->sanitize_year( $current );
+    }
+
+    /**
+     * Normalise year values for holiday navigation.
+     */
+    private function sanitize_year( int $year ): int {
+        return max( 1970, min( 2100, $year ) );
+    }
+
+    /**
+     * Build redirect URL for holiday operations.
+     */
+    private function build_holidays_redirect( int $location_id, int $year ): string {
+        $redirect = add_query_arg(
+            [
+                'page'                   => self::MENU_SLUG,
+                'smooth_booking_section' => 'holidays',
+            ],
+            admin_url( 'admin.php' )
+        );
+
+        if ( $location_id > 0 ) {
+            $redirect = add_query_arg( 'holidays_location', absint( $location_id ), $redirect );
+        }
+
+        $redirect = add_query_arg( 'holidays_year', $year, $redirect );
+
+        return $redirect;
+    }
+
+    /**
+     * Convert holiday objects into serialisable arrays for scripts.
+     *
+     * @param Holiday[] $holidays Holidays collection.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function prepare_holidays_for_script( array $holidays ): array {
+        $prepared = [];
+
+        foreach ( $holidays as $holiday ) {
+            if ( ! $holiday instanceof Holiday ) {
+                continue;
+            }
+
+            $prepared[] = [
+                'id'           => $holiday->get_id(),
+                'location_id'  => $holiday->get_location_id(),
+                'date'         => $holiday->get_date(),
+                'note'         => $holiday->get_note(),
+                'is_recurring' => $holiday->is_recurring(),
+            ];
+        }
+
+        return $prepared;
     }
 
     /**
@@ -432,6 +720,8 @@ class SettingsPage {
             admin_url( 'admin.php' )
         );
 
+        $redirect = add_query_arg( 'smooth_booking_section', 'business-hours', $redirect );
+
         if ( $location_id > 0 ) {
             $redirect = add_query_arg( 'business_hours_location', $location_id, $redirect );
         }
@@ -444,6 +734,83 @@ class SettingsPage {
             );
         } else {
             $redirect = add_query_arg( 'smooth_booking_business_hours_saved', '1', $redirect );
+        }
+
+        wp_safe_redirect( $redirect );
+        exit;
+    }
+
+    /**
+     * Handle saving holiday submissions.
+     */
+    public function handle_holiday_save(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth_booking_save_holiday' );
+
+        $location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+        $start_date  = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';
+        $end_date    = isset( $_POST['end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['end_date'] ) ) : '';
+        $note        = isset( $_POST['note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['note'] ) ) : '';
+        $is_recurring = ! empty( $_POST['is_recurring'] );
+        $year         = isset( $_POST['display_year'] ) ? absint( wp_unslash( $_POST['display_year'] ) ) : (int) gmdate( 'Y' );
+        $year         = $this->sanitize_year( $year );
+
+        $payload = [
+            'start_date'   => $start_date,
+            'end_date'     => $end_date,
+            'note'         => $note,
+            'is_recurring' => $is_recurring,
+        ];
+
+        $result = $this->holiday_service->save_location_holiday( $location_id, $payload );
+
+        $redirect = $this->build_holidays_redirect( $location_id, $year );
+
+        if ( is_wp_error( $result ) ) {
+            $redirect = add_query_arg(
+                'smooth_booking_holiday_error',
+                rawurlencode( $result->get_error_message() ),
+                $redirect
+            );
+        } else {
+            $redirect = add_query_arg( 'smooth_booking_holiday_saved', '1', $redirect );
+        }
+
+        wp_safe_redirect( $redirect );
+        exit;
+    }
+
+    /**
+     * Handle deleting a holiday.
+     */
+    public function handle_holiday_delete(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'smooth-booking' ) );
+        }
+
+        $holiday_id  = isset( $_POST['holiday_id'] ) ? absint( wp_unslash( $_POST['holiday_id'] ) ) : 0;
+        $location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+
+        check_admin_referer( 'smooth_booking_delete_holiday_' . $holiday_id );
+
+        $year = isset( $_POST['display_year'] ) ? absint( wp_unslash( $_POST['display_year'] ) ) : (int) gmdate( 'Y' );
+        $year = $this->sanitize_year( $year );
+
+        $result = $this->holiday_service->delete_location_holiday( $location_id, $holiday_id );
+
+        $redirect = $this->build_holidays_redirect( $location_id, $year );
+
+        if ( is_wp_error( $result ) ) {
+            $redirect = add_query_arg(
+                'smooth_booking_holiday_error',
+                rawurlencode( $result->get_error_message() ),
+                $redirect
+            );
+        } else {
+            $redirect = add_query_arg( 'smooth_booking_holiday_deleted', '1', $redirect );
         }
 
         wp_safe_redirect( $redirect );
@@ -474,6 +841,41 @@ class SettingsPage {
             SMOOTH_BOOKING_VERSION,
             true
         );
+
+        wp_enqueue_script(
+            'smooth-booking-admin-holidays',
+            plugins_url( 'assets/js/admin-holidays.js', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-settings' ],
+            SMOOTH_BOOKING_VERSION,
+            true
+        );
+
+        $locations           = $this->business_hours_service->list_locations();
+        $holiday_location_id = $this->determine_selected_location_id( $locations, 'holidays_location' );
+        $display_year        = $this->determine_display_year();
+        $holidays_data       = [];
+
+        if ( $holiday_location_id > 0 ) {
+            $holidays_result = $this->holiday_service->get_location_holidays( $holiday_location_id );
+
+            if ( ! is_wp_error( $holidays_result ) ) {
+                $holidays_data = $this->prepare_holidays_for_script( $holidays_result );
+            }
+        }
+
+        $localization = [
+            'holidays'         => $holidays_data,
+            'currentYear'      => $display_year,
+            'selectedLocation' => $holiday_location_id,
+            'l10n'             => [
+                'defaultNote'     => __( 'We are not working on this day', 'smooth-booking' ),
+                'recurringLabel'  => __( 'Repeats annually', 'smooth-booking' ),
+                'singleLabel'     => __( 'One-time', 'smooth-booking' ),
+                'selectionCleared'=> __( 'Selection cleared.', 'smooth-booking' ),
+            ],
+        ];
+
+        wp_localize_script( 'smooth-booking-admin-holidays', 'smoothBookingHolidays', $localization );
     }
 
     /**

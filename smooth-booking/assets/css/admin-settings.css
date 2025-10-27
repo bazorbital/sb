@@ -268,6 +268,239 @@
     color: var(--sba-dt-black-300);
 }
 
+.smooth-booking-holidays {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.smooth-booking-holidays__location {
+    display: grid;
+    gap: 12px;
+    max-width: 420px;
+}
+
+.smooth-booking-holidays__location-select {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.smooth-booking-holidays__select {
+    min-width: 220px;
+}
+
+.smooth-booking-holidays__content {
+    display: grid;
+    gap: 24px;
+}
+
+.smooth-booking-holidays__calendar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.smooth-booking-holidays__calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.smooth-booking-holidays__calendar-year {
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--sba-dt-black-300);
+}
+
+.smooth-booking-holidays__calendar {
+    overflow-x: auto;
+}
+
+.smooth-booking-holidays__months {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.smooth-booking-holidays__month {
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: var(--sba-radius-12px);
+    padding: 16px;
+    background: var(--sba-cl-white);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.smooth-booking-holidays__month-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sba-dt-black-300);
+    text-transform: capitalize;
+}
+
+.smooth-booking-holidays__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(32px, 1fr));
+    gap: 6px;
+    font-size: 13px;
+}
+
+.smooth-booking-holidays__weekday {
+    text-align: center;
+    font-weight: 600;
+    color: var(--sba-dt-black-200);
+    padding-bottom: 4px;
+}
+
+.smooth-booking-holidays__cell {
+    min-height: 32px;
+    border-radius: var(--sba-radius-8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+}
+
+.smooth-booking-holidays__cell.is-empty {
+    border: none;
+}
+
+.smooth-booking-holidays__day {
+    background: var(--sba-cl-white);
+    border: 1px solid var(--sba-gt-gray-200);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    color: var(--sba-dt-black-400);
+}
+
+.smooth-booking-holidays__day:hover {
+    border-color: var(--sba-pt-main-green);
+}
+
+.smooth-booking-holidays__day:focus-visible {
+    outline: 2px solid var(--sba-pt-main-green);
+    outline-offset: 2px;
+}
+
+.smooth-booking-holidays__day.is-holiday-single {
+    background: var(--sba-sc-danger-alpha-08);
+    border-color: var(--sba-sc-danger-alpha-08);
+}
+
+.smooth-booking-holidays__day.is-holiday-recurring {
+    background: var(--sba-pt-secondary-orange-alpha-12);
+    border-color: var(--sba-pt-secondary-orange-alpha-12);
+}
+
+.smooth-booking-holidays__day.is-selected-range {
+    border-color: var(--sba-pt-main-green);
+    background: var(--sba-pt-main-green-alpha-08);
+    color: var(--sba-pt-main-green);
+    box-shadow: 0 0 0 2px var(--sba-pt-main-green-alpha-08);
+}
+
+.smooth-booking-holidays__forms {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.smooth-booking-holidays__form {
+    display: grid;
+    gap: 16px;
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: var(--sba-radius-12px);
+    padding: 16px;
+    background: var(--sba-cl-white);
+}
+
+.smooth-booking-holidays__fields {
+    display: grid;
+    gap: 12px;
+}
+
+.smooth-booking-holidays__fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--sba-dt-black-400);
+}
+
+.smooth-booking-holidays__fields input[type="date"],
+.smooth-booking-holidays__fields input[type="text"] {
+    width: 100%;
+}
+
+.smooth-booking-holidays__controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.smooth-booking-holidays__repeat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--sba-dt-black-300);
+}
+
+.smooth-booking-holidays__list-wrapper {
+    display: grid;
+    gap: 16px;
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: var(--sba-radius-12px);
+    padding: 16px;
+    background: var(--sba-cl-white);
+}
+
+.smooth-booking-holidays__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.smooth-booking-holidays__list-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.smooth-booking-holidays__list-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.smooth-booking-holidays__list-date {
+    font-weight: 600;
+    color: var(--sba-dt-black-300);
+}
+
+.smooth-booking-holidays__list-type {
+    font-size: 12px;
+    color: var(--sba-dt-black-200);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.smooth-booking-holidays__list-note {
+    font-size: 13px;
+    color: var(--sba-dt-black-300);
+}
+
+.smooth-booking-holidays__delete-form {
+    display: inline-flex;
+}
+
 .smooth-booking-toggle__input:focus-visible + .smooth-booking-toggle__control {
     box-shadow: 0 0 0 4px rgba(18, 212, 136, 0.2);
 }
@@ -336,5 +569,19 @@
     .smooth-booking-toggle {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .smooth-booking-holidays__months {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .smooth-booking-holidays__forms {
+        grid-template-columns: 1fr;
+    }
+
+    .smooth-booking-holidays__controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 }

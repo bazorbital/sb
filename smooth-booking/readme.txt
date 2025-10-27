@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.8.0
+Stable tag: 0.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,6 +13,7 @@ Smooth Booking ensures the booking database environment is ready for custom sche
 == Description ==
 Smooth Booking validates and creates required database tables on activation and at runtime to guarantee a healthy environment for booking features. It ships with a schema status dashboard, REST API endpoints, shortcode, Gutenberg block, employee/customer/service/appointment management UIs, and WP-CLI tooling for administrators.
 Administrators can also define per-location business hours templates that inform new staff defaults and optional calendar visibility hours.
+Administrators can now configure per-location holidays from a yearly calendar, including date ranges, recurring closures, and color-coded statuses that surface in the admin UI and WP-CLI tooling.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
@@ -36,6 +37,11 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/employees`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.9.0 =
+* Added Holidays settings tab with a yearly calendar per location, range selection, recurring closures, and color-coded styling.
+* Introduced location holiday service, repository, schema table, caching hooks, and WP-CLI command suite `wp smooth holidays <list|add|delete>`.
+* Updated settings navigation and enqueue logic to remember the active section and share responsive styling between business hours and holidays.
+
 = 0.8.0 =
 * Added a Business Hours configuration section under Settings allowing administrators to select a location and define opening/closing times for each day of the week with 15-minute intervals.
 * Persisted location-specific business hours templates using nonces, capability checks, and WordPress Settings styling so calendar visibility and new staff defaults stay aligned.

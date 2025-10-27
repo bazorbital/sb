@@ -16,6 +16,7 @@ use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Cli\Commands\AppointmentsCommand;
 use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
+use SmoothBooking\Cli\Commands\HolidaysCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
@@ -131,6 +132,8 @@ class Plugin {
         add_action( 'admin_enqueue_scripts', [ $services_page, 'enqueue_assets' ] );
 
         add_action( 'admin_post_smooth_booking_save_business_hours', [ $settings_page, 'handle_business_hours_save' ] );
+        add_action( 'admin_post_smooth_booking_save_holiday', [ $settings_page, 'handle_holiday_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_holiday', [ $settings_page, 'handle_holiday_delete' ] );
         add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
     }
 
@@ -161,6 +164,11 @@ class Plugin {
         $services_command = $this->container->get( ServicesCommand::class );
 
         \WP_CLI::add_command( 'smooth services', $services_command );
+
+        /** @var HolidaysCommand $holidays_command */
+        $holidays_command = $this->container->get( HolidaysCommand::class );
+
+        \WP_CLI::add_command( 'smooth holidays', $holidays_command );
 
         /** @var AppointmentsCommand $appointments_command */
         $appointments_command = $this->container->get( AppointmentsCommand::class );

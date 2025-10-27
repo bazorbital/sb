@@ -273,6 +273,23 @@ class SchemaDefinitionBuilder {
             $options
         );
 
+        $tables['location_holidays'] = sprintf(
+            'CREATE TABLE %1$ssmooth_location_holidays (
+                holiday_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                location_id BIGINT UNSIGNED NOT NULL,
+                holiday_date DATE NOT NULL,
+                note VARCHAR(255) NOT NULL,
+                is_recurring TINYINT(1) NOT NULL DEFAULT 0,
+                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (holiday_id),
+                UNIQUE KEY location_date_unique (location_id, holiday_date, is_recurring)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
         $tables['employee_working_hours'] = sprintf(
             'CREATE TABLE %1$ssmooth_employee_working_hours (
                 working_hour_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
