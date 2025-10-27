@@ -554,6 +554,15 @@ class EmployeesPage {
                 </table>
 
                 <div class="smooth-booking-form-actions">
+                    <?php if ( $is_edit ) : ?>
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-cancel">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button type="button" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-dismiss" data-target="employee-form">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </button>
+                    <?php endif; ?>
                     <button type="submit" class="sba-btn sba-btn--primary sba-btn__large smooth-booking-form-submit">
                         <?php echo esc_html( $is_edit ? __( 'Update employee', 'smooth-booking' ) : __( 'Add employee', 'smooth-booking' ) ); ?>
                     </button>
