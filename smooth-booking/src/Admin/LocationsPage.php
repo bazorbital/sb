@@ -453,10 +453,6 @@ class LocationsPage {
                         <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-cancel">
                             <?php esc_html_e( 'Back to list', 'smooth-booking' ); ?>
                         </a>
-                    <?php else : ?>
-                        <button type="button" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-dismiss" data-target="location-form">
-                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
-                        </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -467,92 +463,110 @@ class LocationsPage {
                     <input type="hidden" name="location_id" value="<?php echo esc_attr( $location->get_id() ); ?>" />
                 <?php endif; ?>
 
-                <div class="smooth-booking-form-field">
-                    <label class="smooth-booking-form-label" for="smooth-booking-location-name"><?php esc_html_e( 'Location name', 'smooth-booking' ); ?><span class="required">*</span></label>
-                    <input type="text" id="smooth-booking-location-name" name="location_name" class="regular-text" value="<?php echo esc_attr( $name ); ?>" required />
-                </div>
-
-                <div class="smooth-booking-form-field smooth-booking-avatar-field">
-                    <label class="smooth-booking-form-label"><?php esc_html_e( 'Location image', 'smooth-booking' ); ?></label>
-                    <div class="smooth-booking-avatar-preview">
-                        <?php echo $this->get_location_avatar_html( $location, $name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-                    </div>
-                    <div class="smooth-booking-avatar-actions">
-                        <button type="button" class="button smooth-booking-avatar-select"><?php esc_html_e( 'Choose image', 'smooth-booking' ); ?></button>
-                        <button type="button" class="button-link smooth-booking-avatar-remove"<?php echo $profile_image_id ? '' : ' style="display:none"'; ?>><?php esc_html_e( 'Remove', 'smooth-booking' ); ?></button>
-                    </div>
-                    <input type="hidden" name="location_profile_image_id" value="<?php echo esc_attr( $profile_image_id ); ?>" />
-                </div>
-
-                <div class="smooth-booking-form-field">
-                    <label class="smooth-booking-form-label" for="smooth-booking-location-address"><?php esc_html_e( 'Address', 'smooth-booking' ); ?></label>
-                    <textarea id="smooth-booking-location-address" name="location_address" rows="3" class="large-text"><?php echo esc_html( $address ); ?></textarea>
-                </div>
-
-                <div class="smooth-booking-form-grid">
-                    <div class="smooth-booking-form-field">
-                        <label class="smooth-booking-form-label" for="smooth-booking-location-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label>
-                        <input type="text" id="smooth-booking-location-phone" name="location_phone" class="regular-text" value="<?php echo esc_attr( $phone ); ?>" />
-                    </div>
-                    <div class="smooth-booking-form-field">
-                        <label class="smooth-booking-form-label" for="smooth-booking-location-email"><?php esc_html_e( 'Base email address', 'smooth-booking' ); ?></label>
-                        <input type="email" id="smooth-booking-location-email" name="location_email" class="regular-text" value="<?php echo esc_attr( $base_email ); ?>" />
-                    </div>
-                </div>
-
-                <div class="smooth-booking-form-field">
-                    <label class="smooth-booking-form-label" for="smooth-booking-location-website"><?php esc_html_e( 'Website', 'smooth-booking' ); ?></label>
-                    <input type="url" id="smooth-booking-location-website" name="location_website" class="regular-text" value="<?php echo esc_attr( $website ); ?>" />
-                </div>
-
-                <div class="smooth-booking-form-field">
-                    <label class="smooth-booking-form-label" for="smooth-booking-location-industry"><?php esc_html_e( 'Industry', 'smooth-booking' ); ?></label>
-                    <select id="smooth-booking-location-industry" class="form-control custom-select" name="location_industry">
-                        <option value="0"<?php selected( 0, $industry_id ); ?>><?php esc_html_e( 'Select industry', 'smooth-booking' ); ?></option>
-                        <?php foreach ( $industry_groups as $group ) : ?>
-                            <optgroup label="<?php echo esc_attr( $group['label'] ); ?>">
-                                <?php foreach ( $group['options'] as $option ) : ?>
-                                    <option value="<?php echo esc_attr( (string) $option['value'] ); ?>"<?php selected( (int) $option['value'], $industry_id ); ?>><?php echo esc_html( $option['label'] ); ?></option>
-                                <?php endforeach; ?>
-                            </optgroup>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="smooth-booking-form-field">
-                    <label class="smooth-booking-form-checkbox">
-                        <input type="checkbox" name="location_is_event" value="1"<?php checked( $is_event ); ?> />
-                        <span><?php esc_html_e( 'Is event location?', 'smooth-booking' ); ?></span>
-                    </label>
-                </div>
-
-                <fieldset class="smooth-booking-form-fieldset">
-                    <legend><?php esc_html_e( 'Company details', 'smooth-booking' ); ?></legend>
-                    <div class="smooth-booking-form-field">
-                        <label class="smooth-booking-form-label" for="smooth-booking-company-name"><?php esc_html_e( 'Company name', 'smooth-booking' ); ?></label>
-                        <input type="text" id="smooth-booking-company-name" name="location_company_name" class="regular-text" value="<?php echo esc_attr( $company_name ); ?>" />
-                    </div>
-                    <div class="smooth-booking-form-field">
-                        <label class="smooth-booking-form-label" for="smooth-booking-company-address"><?php esc_html_e( 'Company address', 'smooth-booking' ); ?></label>
-                        <textarea id="smooth-booking-company-address" name="location_company_address" rows="3" class="large-text"><?php echo esc_html( $company_address ); ?></textarea>
-                    </div>
-                    <div class="smooth-booking-form-field">
-                        <label class="smooth-booking-form-label" for="smooth-booking-company-phone"><?php esc_html_e( 'Company phone', 'smooth-booking' ); ?></label>
-                        <input type="text" id="smooth-booking-company-phone" name="location_company_phone" class="regular-text" value="<?php echo esc_attr( $company_phone ); ?>" />
-                    </div>
-                </fieldset>
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-name"><?php esc_html_e( 'Location name', 'smooth-booking' ); ?><span class="required">*</span></label></th>
+                            <td>
+                                <input type="text" id="smooth-booking-location-name" name="location_name" class="regular-text" value="<?php echo esc_attr( $name ); ?>" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Location image', 'smooth-booking' ); ?></th>
+                            <td>
+                                <div class="smooth-booking-avatar-field">
+                                    <div class="smooth-booking-avatar-preview">
+                                        <?php echo $this->get_location_avatar_html( $location, $name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    </div>
+                                    <input type="hidden" name="location_profile_image_id" value="<?php echo esc_attr( $profile_image_id ); ?>" />
+                                    <button type="button" class="sba-btn sba-btn__small sba-btn__filled smooth-booking-avatar-select"><?php esc_html_e( 'Select image', 'smooth-booking' ); ?></button>
+                                    <button type="button" class="sba-btn sba-btn__small sba-btn__filled-light smooth-booking-avatar-remove"<?php if ( ! $profile_image_id ) : ?> style="display:none"<?php endif; ?>><?php esc_html_e( 'Remove image', 'smooth-booking' ); ?></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-address"><?php esc_html_e( 'Address', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <textarea id="smooth-booking-location-address" name="location_address" rows="3" class="large-text"><?php echo esc_textarea( $address ); ?></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" id="smooth-booking-location-phone" name="location_phone" class="regular-text" value="<?php echo esc_attr( $phone ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-email"><?php esc_html_e( 'Base email address', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="email" id="smooth-booking-location-email" name="location_email" class="regular-text" value="<?php echo esc_attr( $base_email ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-website"><?php esc_html_e( 'Website', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="url" id="smooth-booking-location-website" name="location_website" class="regular-text" value="<?php echo esc_attr( $website ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-industry"><?php esc_html_e( 'Industry', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <select id="smooth-booking-location-industry" class="form-control custom-select" name="location_industry">
+                                    <option value="0"<?php selected( 0, $industry_id ); ?>><?php esc_html_e( 'Select industry', 'smooth-booking' ); ?></option>
+                                    <?php foreach ( $industry_groups as $group ) : ?>
+                                        <optgroup label="<?php echo esc_attr( $group['label'] ); ?>">
+                                            <?php foreach ( $group['options'] as $option ) : ?>
+                                                <option value="<?php echo esc_attr( (string) $option['value'] ); ?>"<?php selected( (int) $option['value'], $industry_id ); ?>><?php echo esc_html( $option['label'] ); ?></option>
+                                            <?php endforeach; ?>
+                                        </optgroup>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e( 'Is event location?', 'smooth-booking' ); ?></th>
+                            <td>
+                                <label for="smooth-booking-location-is-event">
+                                    <input type="checkbox" id="smooth-booking-location-is-event" name="location_is_event" value="1"<?php checked( $is_event ); ?> />
+                                    <?php esc_html_e( 'Enable if this location is used for events.', 'smooth-booking' ); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="smooth-booking-form-section-heading">
+                            <th colspan="2"><?php esc_html_e( 'Company details', 'smooth-booking' ); ?></th>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-company-name"><?php esc_html_e( 'Company name', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" id="smooth-booking-company-name" name="location_company_name" class="regular-text" value="<?php echo esc_attr( $company_name ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-company-address"><?php esc_html_e( 'Company address', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <textarea id="smooth-booking-company-address" name="location_company_address" rows="3" class="large-text"><?php echo esc_textarea( $company_address ); ?></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-company-phone"><?php esc_html_e( 'Company phone', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <input type="text" id="smooth-booking-company-phone" name="location_company_phone" class="regular-text" value="<?php echo esc_attr( $company_phone ); ?>" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
                 <div class="smooth-booking-form-actions">
                     <?php if ( $is_edit ) : ?>
-                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-cancel">
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-cancel">
                             <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
                         </a>
                     <?php else : ?>
-                        <button type="button" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-dismiss" data-target="location-form">
+                        <button type="button" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-dismiss" data-target="location-form">
                             <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
                         </button>
                     <?php endif; ?>
-                    <button type="submit" class="sba-btn sba-btn--primary sba-btn__large smooth-booking-form-submit">
+                    <button type="submit" class="sba-btn sba-btn--primary sba-btn__medium smooth-booking-form-submit">
                         <?php echo $is_edit ? esc_html__( 'Update location', 'smooth-booking' ) : esc_html__( 'Create location', 'smooth-booking' ); ?>
                     </button>
                 </div>
