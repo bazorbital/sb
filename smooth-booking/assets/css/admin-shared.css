@@ -92,6 +92,8 @@
     margin-top: 32px;
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .smooth-booking-toolbar {

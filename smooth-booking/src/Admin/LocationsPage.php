@@ -448,9 +448,17 @@ class LocationsPage {
         <div class="smooth-booking-card smooth-booking-location-form-card">
             <div class="smooth-booking-form-header">
                 <h2><?php echo $is_edit ? esc_html__( 'Edit location', 'smooth-booking' ) : esc_html__( 'Add new location', 'smooth-booking' ); ?></h2>
-                <button type="button" class="button-link smooth-booking-form-dismiss" data-target="location-form">
-                    <?php esc_html_e( 'Close', 'smooth-booking' ); ?>
-                </button>
+                <div class="smooth-booking-form-header__actions">
+                    <?php if ( $is_edit ) : ?>
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-cancel">
+                            <?php esc_html_e( 'Back to list', 'smooth-booking' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button type="button" class="sba-btn sba-btn__medium sba-btn__filled-light smooth-booking-form-dismiss" data-target="location-form">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-location-form">
                 <?php wp_nonce_field( 'smooth_booking_save_location' ); ?>
@@ -535,11 +543,17 @@ class LocationsPage {
                 </fieldset>
 
                 <div class="smooth-booking-form-actions">
-                    <button type="submit" class="button button-primary">
+                    <?php if ( $is_edit ) : ?>
+                        <a href="<?php echo esc_url( $this->get_base_page() ); ?>" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-cancel">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button type="button" class="sba-btn sba-btn__large sba-btn__filled-light smooth-booking-form-dismiss" data-target="location-form">
+                            <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
+                        </button>
+                    <?php endif; ?>
+                    <button type="submit" class="sba-btn sba-btn--primary sba-btn__large smooth-booking-form-submit">
                         <?php echo $is_edit ? esc_html__( 'Update location', 'smooth-booking' ) : esc_html__( 'Create location', 'smooth-booking' ); ?>
-                    </button>
-                    <button type="button" class="button-link smooth-booking-form-dismiss" data-target="location-form">
-                        <?php esc_html_e( 'Cancel', 'smooth-booking' ); ?>
                     </button>
                 </div>
             </form>
