@@ -197,46 +197,9 @@ class SettingsPage {
         }
 
         wp_enqueue_style(
-            'smooth-booking-admin-variables',
-            plugins_url( 'assets/css/design/smooth-booking-variables.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            'smooth-booking-admin',
+            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
             [],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-components',
-            plugins_url( 'assets/css/design/smooth-booking-admin-components.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-variables' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-base',
-            plugins_url( 'assets/css/design/smooth-booking-admin.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-components' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        wp_enqueue_style(
-            'smooth-booking-admin-shared',
-            plugins_url( 'assets/css/admin-shared.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-base' ],
-            SMOOTH_BOOKING_VERSION
-        );
-
-        if ( is_rtl() ) {
-            wp_enqueue_style(
-                'smooth-booking-admin-rtl',
-                plugins_url( 'assets/css/design/smooth-booking-admin-rtl.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-                [ 'smooth-booking-admin-base' ],
-                SMOOTH_BOOKING_VERSION
-            );
-        }
-
-        wp_enqueue_style(
-            'smooth-booking-admin-settings',
-            plugins_url( 'assets/css/admin-settings.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
         );
     }
