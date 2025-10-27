@@ -32,6 +32,7 @@ use function wp_enqueue_style;
  * Registers Settings API integration.
  */
 class SettingsPage {
+    use AdminStylesTrait;
     /**
      * Option name for general plugin settings.
      */
@@ -196,10 +197,12 @@ class SettingsPage {
             return;
         }
 
+        $this->enqueue_admin_styles();
+
         wp_enqueue_style(
-            'smooth-booking-admin',
-            plugins_url( 'assets/css/design/smooth-booking-adm.css', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [],
+            'smooth-booking-admin-settings',
+            plugins_url( 'assets/css/admin-settings.css', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [ 'smooth-booking-admin-shared' ],
             SMOOTH_BOOKING_VERSION
         );
     }
