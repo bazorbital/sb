@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.8.0] - 2024-12-01
+### Added
+- Business Hours settings panel with per-location dropdowns for opening and closing times, success/error notices, and nonce-protected submissions that persist templates to `smooth_opening_hours`.
+- Location and business hours domain layers with repositories, validation, and PHPUnit coverage ensuring close times cannot precede open times.
+
 # [0.7.0] - 2024-11-01
 ### Added
 - Appointments administration screen with filterable list, soft-delete workflow, and form drawer for creating bookings, including provider, service, customer selection, schedule period, and notification controls.
