@@ -16,6 +16,7 @@ use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Cli\Commands\AppointmentsCommand;
 use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
+use SmoothBooking\Cli\Commands\HolidaysCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
 use SmoothBooking\Cron\CleanupScheduler;
@@ -26,6 +27,8 @@ use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
 use SmoothBooking\Domain\Customers\CustomerRepositoryInterface;
 use SmoothBooking\Domain\Customers\CustomerService;
 use SmoothBooking\Domain\Customers\CustomerTagRepositoryInterface;
+use SmoothBooking\Domain\Holidays\HolidayRepositoryInterface;
+use SmoothBooking\Domain\Holidays\HolidayService;
 use SmoothBooking\Domain\Employees\EmployeeCategoryRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeService;
@@ -44,6 +47,7 @@ use SmoothBooking\Infrastructure\Repository\AppointmentRepository;
 use SmoothBooking\Infrastructure\Repository\BusinessHoursRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
+use SmoothBooking\Infrastructure\Repository\HolidayRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
 use SmoothBooking\Infrastructure\Repository\LocationRepository;
@@ -173,6 +177,23 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( HolidayRepositoryInterface::class, static function ( ServiceContainer $container ): HolidayRepositoryInterface {
+            global $wpdb;
+
+            return new HolidayRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( HolidayService::class, static function ( ServiceContainer $container ): HolidayService {
+            return new HolidayService(
+                $container->get( HolidayRepositoryInterface::class ),
+                $container->get( LocationRepositoryInterface::class ),
+                $container->get( Logger::class )
+            );
+        } );
+
         $container->singleton( AppointmentService::class, static function ( ServiceContainer $container ): AppointmentService {
             return new AppointmentService(
                 $container->get( AppointmentRepositoryInterface::class ),
@@ -223,7 +244,8 @@ class ServiceProvider {
         $container->singleton( SettingsPage::class, static function ( ServiceContainer $container ): SettingsPage {
             return new SettingsPage(
                 $container->get( SchemaStatusService::class ),
-                $container->get( BusinessHoursService::class )
+                $container->get( BusinessHoursService::class ),
+                $container->get( HolidayService::class )
             );
         } );
 

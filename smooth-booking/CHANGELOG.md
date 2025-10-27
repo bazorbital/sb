@@ -2,6 +2,16 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.9.0] - 2025-01-15
+### Added
+- Holidays settings tab with a yearly calendar per location, range selection, and support for recurring closures styled via Smooth Booking design tokens.
+- Location holiday domain service, repository, schema table, and caching hooks with REST-safe validation and public actions for integrators.
+- WP-CLI command suite `wp smooth holidays <list|add|delete>` for headless maintenance plus admin JavaScript and CSS powering the calendar experience.
+
+### Changed
+- Settings navigation now remembers the active section when saving business hours or holidays and shares responsive styling between panels.
+- Holidays calendar buttons respond to keyboard activation and display a visible focus outline for improved accessibility.
+
 # [0.8.0] - 2024-12-01
 ### Added
 - Business Hours settings panel with per-location dropdowns for opening and closing times, success/error notices, and nonce-protected submissions that persist templates to `smooth_opening_hours`.
