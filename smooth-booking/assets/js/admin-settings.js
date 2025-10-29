@@ -38,9 +38,33 @@
         });
     }
 
+    function initEmailGatewayToggle() {
+        const gatewaySelect = document.querySelector('.smooth-booking-email-gateway');
+        const smtpSettings = document.querySelector('.smooth-booking-email-smtp-settings');
+
+        if ( ! gatewaySelect || ! smtpSettings ) {
+            return;
+        }
+
+        function updateVisibility() {
+            if ( gatewaySelect.value === 'smtp' ) {
+                smtpSettings.classList.add('is-visible');
+            } else {
+                smtpSettings.classList.remove('is-visible');
+            }
+        }
+
+        gatewaySelect.addEventListener('change', updateVisibility);
+        updateVisibility();
+    }
+
     if ( document.readyState === 'loading' ) {
-        document.addEventListener('DOMContentLoaded', initSettingsNavigation);
+        document.addEventListener('DOMContentLoaded', function () {
+            initSettingsNavigation();
+            initEmailGatewayToggle();
+        });
     } else {
         initSettingsNavigation();
+        initEmailGatewayToggle();
     }
 })();

@@ -12,8 +12,10 @@ use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\LocationsPage;
 use SmoothBooking\Admin\Menu as AdminMenu;
+use SmoothBooking\Admin\NotificationsPage;
 use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Admin\SettingsPage;
+use SmoothBooking\Domain\Notifications\EmailSettingsService;
 use SmoothBooking\Cli\Commands\AppointmentsCommand;
 use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
@@ -115,6 +117,11 @@ class Plugin {
         $services_page = $this->container->get( ServicesPage::class );
         /** @var SettingsPage $settings_page */
         $settings_page = $this->container->get( SettingsPage::class );
+        /** @var EmailSettingsService $email_settings_service */
+        $email_settings_service = $this->container->get( EmailSettingsService::class );
+        $email_settings_service->register_hooks();
+        /** @var NotificationsPage $notifications_page */
+        $notifications_page = $this->container->get( NotificationsPage::class );
 
         add_action( 'admin_post_smooth_booking_save_location', [ $locations_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_location', [ $locations_page, 'handle_delete' ] );
@@ -141,9 +148,15 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_restore_service', [ $services_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $services_page, 'enqueue_assets' ] );
 
+        add_action( 'admin_post_smooth_booking_save_notification', [ $notifications_page, 'handle_save' ] );
+        add_action( 'admin_post_smooth_booking_delete_notification', [ $notifications_page, 'handle_delete' ] );
+        add_action( 'admin_enqueue_scripts', [ $notifications_page, 'enqueue_assets' ] );
+
         add_action( 'admin_post_smooth_booking_save_business_hours', [ $settings_page, 'handle_business_hours_save' ] );
         add_action( 'admin_post_smooth_booking_save_holiday', [ $settings_page, 'handle_holiday_save' ] );
         add_action( 'admin_post_smooth_booking_delete_holiday', [ $settings_page, 'handle_holiday_delete' ] );
+        add_action( 'admin_post_smooth_booking_save_email_settings', [ $settings_page, 'handle_email_settings_save' ] );
+        add_action( 'admin_post_smooth_booking_send_test_email', [ $settings_page, 'handle_send_test_email' ] );
         add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
     }
 

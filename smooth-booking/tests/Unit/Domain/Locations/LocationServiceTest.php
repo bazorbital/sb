@@ -46,6 +46,7 @@ class LocationServiceTest extends TestCase {
                 'phone'            => '+36123456',
                 'base_email'       => 'info@example.com',
                 'website'          => 'https://example.com',
+                'timezone'         => 'America/New_York',
                 'industry_id'      => 11,
                 'is_event_location'=> true,
                 'company_name'     => 'Studio LLC',
@@ -60,6 +61,7 @@ class LocationServiceTest extends TestCase {
         $this->assertSame( '+36123456', $result->get_phone() );
         $this->assertSame( 'info@example.com', $result->get_base_email() );
         $this->assertSame( 'https://example.com', $result->get_website() );
+        $this->assertSame( 'America/New_York', $result->get_timezone() );
         $this->assertSame( 11, $result->get_industry_id() );
         $this->assertTrue( $result->is_event_location() );
         $this->assertSame( 'Studio LLC', $result->get_company_name() );
@@ -198,6 +200,7 @@ class InMemoryLocationRepository implements LocationRepositoryInterface {
             $row['base_email'] ?? null,
             $row['website'] ?? null,
             (int) ( $row['industry_id'] ?? 0 ),
+            $row['timezone'] ?? 'Europe/Budapest',
             (int) ( $row['is_event_location'] ?? 0 ) === 1,
             (int) ( $row['is_deleted'] ?? 0 ) === 1,
             $row['company_name'] ?? null,

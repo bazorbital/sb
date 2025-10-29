@@ -3,6 +3,18 @@
  * Minimal WordPress stubs for PHPUnit without WP core.
  */
 
+if ( ! defined( 'ARRAY_A' ) ) {
+    define( 'ARRAY_A', 'ARRAY_A' );
+}
+
+if ( ! isset( $GLOBALS['smooth_booking_test_options'] ) ) {
+    $GLOBALS['smooth_booking_test_options'] = [];
+}
+
+if ( ! isset( $GLOBALS['smooth_booking_wp_mail_should_fail'] ) ) {
+    $GLOBALS['smooth_booking_wp_mail_should_fail'] = false;
+}
+
 if ( ! function_exists( 'esc_html__' ) ) {
     function esc_html__( string $text, string $domain = 'default' ): string {
         return $text;
@@ -91,6 +103,18 @@ if ( ! function_exists( 'is_email' ) ) {
     }
 }
 
+if ( ! function_exists( 'get_bloginfo' ) ) {
+    function get_bloginfo( string $show = '', string $filter = 'raw' ): string {
+        unset( $filter );
+
+        return match ( $show ) {
+            'name'        => 'Smooth Booking',
+            'admin_email' => 'admin@example.com',
+            default       => 'Smooth Booking',
+        };
+    }
+}
+
 if ( ! function_exists( 'wp_unslash' ) ) {
     function wp_unslash( $value ) {
         return $value;
@@ -112,6 +136,18 @@ if ( ! function_exists( 'apply_filters' ) ) {
 if ( ! function_exists( 'do_action' ) ) {
     function do_action( string $tag, ...$args ): void { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
         // No-op during tests.
+    }
+}
+
+if ( ! function_exists( 'add_filter' ) ) {
+    function add_filter( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): bool { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+        return true;
+    }
+}
+
+if ( ! function_exists( 'add_action' ) ) {
+    function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): bool { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+        return true;
     }
 }
 
@@ -147,13 +183,71 @@ if ( ! function_exists( 'get_user_by' ) ) {
 
 if ( ! function_exists( 'get_option' ) ) {
     function get_option( string $option, $default = false ) {
-        return $default ?: 'HUF';
+        return $GLOBALS['smooth_booking_test_options'][ $option ] ?? $default;
+    }
+}
+
+if ( ! function_exists( 'update_option' ) ) {
+    function update_option( string $option, $value ): bool {
+        $GLOBALS['smooth_booking_test_options'][ $option ] = $value;
+
+        return true;
     }
 }
 
 if ( ! function_exists( 'wp_timezone' ) ) {
     function wp_timezone(): \DateTimeZone {
         return new \DateTimeZone( 'UTC' );
+    }
+}
+
+if ( ! function_exists( 'wpautop' ) ) {
+    function wpautop( string $text ): string {
+        return '<p>' . $text . '</p>';
+    }
+}
+
+if ( ! function_exists( 'wp_strip_all_tags' ) ) {
+    function wp_strip_all_tags( string $text, bool $remove_breaks = false ): string {
+        $stripped = strip_tags( $text );
+
+        if ( $remove_breaks ) {
+            $stripped = preg_replace( '/[\r\n\t]+/', ' ', $stripped ) ?? '';
+        }
+
+        return trim( $stripped );
+    }
+}
+
+if ( ! function_exists( 'wp_json_encode' ) ) {
+    function wp_json_encode( $data, int $options = 0, int $depth = 512 ) {
+        return json_encode( $data, $options | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES, $depth );
+    }
+}
+
+if ( ! function_exists( 'wp_mail' ) ) {
+    function wp_mail( string $to, string $subject, string $message ) {
+        unset( $subject, $message );
+
+        if ( $GLOBALS['smooth_booking_wp_mail_should_fail'] ) {
+            return false;
+        }
+
+        return is_email( $to );
+    }
+}
+
+if ( ! function_exists( '_n' ) ) {
+    function _n( string $single, string $plural, int $number, string $domain = 'default' ): string { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+        return 1 === $number ? $single : $plural;
+    }
+}
+
+if ( ! function_exists( 'current_time' ) ) {
+    function current_time( string $type ) {
+        unset( $type );
+
+        return gmdate( 'Y-m-d H:i:s' );
     }
 }
 
@@ -180,5 +274,50 @@ if ( ! class_exists( 'WP_Error' ) ) {
 if ( ! function_exists( 'is_wp_error' ) ) {
     function is_wp_error( $thing ): bool {
         return $thing instanceof WP_Error;
+    }
+}
+
+if ( ! class_exists( 'wpdb' ) ) {
+    class wpdb {
+        public string $prefix = 'wp_';
+        public string $last_error = '';
+        public int $insert_id = 0;
+
+        public function prepare( $query, $args = null ) {
+            if ( null === $args ) {
+                $args = array_slice( func_get_args(), 1 );
+            }
+
+            return [
+                'query' => $query,
+                'args'  => is_array( $args ) ? $args : [ $args ],
+            ];
+        }
+
+        public function get_var( $query ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            return null;
+        }
+
+        public function insert( $table, $data, $format = null ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            return false;
+        }
+
+        public function update( $table, $data, $where, $format = null, $where_format = null ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            return false;
+        }
+
+        public function delete( $table, $where, $where_format = null ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            return false;
+        }
+
+        public function get_results( $query, $output = ARRAY_A ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            return [];
+        }
+
+        public function get_row( $query, $output = ARRAY_A, $y = 0 ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            $results = $this->get_results( $query, $output );
+
+            return $results[0] ?? null;
+        }
     }
 }

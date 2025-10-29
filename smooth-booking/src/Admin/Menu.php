@@ -52,15 +52,21 @@ class Menu {
     private SettingsPage $settings_page;
 
     /**
+     * @var NotificationsPage
+     */
+    private NotificationsPage $notifications_page;
+
+    /**
      * Constructor.
      */
-    public function __construct( ServicesPage $services_page, LocationsPage $locations_page, AppointmentsPage $appointments_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page ) {
+    public function __construct( ServicesPage $services_page, LocationsPage $locations_page, AppointmentsPage $appointments_page, EmployeesPage $employees_page, CustomersPage $customers_page, SettingsPage $settings_page, NotificationsPage $notifications_page ) {
         $this->services_page     = $services_page;
         $this->locations_page    = $locations_page;
         $this->appointments_page = $appointments_page;
         $this->employees_page    = $employees_page;
         $this->customers_page    = $customers_page;
         $this->settings_page     = $settings_page;
+        $this->notifications_page = $notifications_page;
     }
 
     /**
@@ -120,6 +126,15 @@ class Menu {
             CustomersPage::CAPABILITY,
             CustomersPage::MENU_SLUG,
             [ $this->customers_page, 'render_page' ]
+        );
+
+        add_submenu_page(
+            ServicesPage::MENU_SLUG,
+            __( 'Email notifications', 'smooth-booking' ),
+            __( 'Email notifications', 'smooth-booking' ),
+            NotificationsPage::CAPABILITY,
+            NotificationsPage::MENU_SLUG,
+            [ $this->notifications_page, 'render_page' ]
         );
 
         $this->settings_page->register_submenu( ServicesPage::MENU_SLUG );

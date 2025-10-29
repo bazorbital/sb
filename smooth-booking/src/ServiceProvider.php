@@ -11,6 +11,7 @@ use SmoothBooking\Admin\AppointmentsPage;
 use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu;
+use SmoothBooking\Admin\NotificationsPage;
 use SmoothBooking\Admin\LocationsPage;
 use SmoothBooking\Admin\SettingsPage;
 use SmoothBooking\Admin\ServicesPage;
@@ -36,6 +37,9 @@ use SmoothBooking\Domain\Employees\EmployeeRepositoryInterface;
 use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Locations\LocationRepositoryInterface;
 use SmoothBooking\Domain\Locations\LocationService;
+use SmoothBooking\Domain\Notifications\EmailNotificationRepositoryInterface;
+use SmoothBooking\Domain\Notifications\EmailNotificationService;
+use SmoothBooking\Domain\Notifications\EmailSettingsService;
 use SmoothBooking\Domain\SchemaStatusService;
 use SmoothBooking\Domain\Services\ServiceCategoryRepositoryInterface;
 use SmoothBooking\Domain\Services\ServiceRepositoryInterface;
@@ -51,6 +55,7 @@ use SmoothBooking\Infrastructure\Repository\BusinessHoursRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerTagRepository;
 use SmoothBooking\Infrastructure\Repository\HolidayRepository;
+use SmoothBooking\Infrastructure\Repository\EmailNotificationRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\EmployeeRepository;
 use SmoothBooking\Infrastructure\Repository\LocationRepository;
@@ -255,11 +260,33 @@ class ServiceProvider {
             );
         } );
 
+        $container->singleton( EmailNotificationRepositoryInterface::class, static function ( ServiceContainer $container ): EmailNotificationRepositoryInterface {
+            global $wpdb;
+
+            return new EmailNotificationRepository(
+                $wpdb,
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( EmailNotificationService::class, static function ( ServiceContainer $container ): EmailNotificationService {
+            return new EmailNotificationService(
+                $container->get( EmailNotificationRepositoryInterface::class ),
+                $container->get( ServiceService::class ),
+                $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( EmailSettingsService::class, static function ( ServiceContainer $container ): EmailSettingsService {
+            return new EmailSettingsService( $container->get( Logger::class ) );
+        } );
+
         $container->singleton( SettingsPage::class, static function ( ServiceContainer $container ): SettingsPage {
             return new SettingsPage(
                 $container->get( SchemaStatusService::class ),
                 $container->get( BusinessHoursService::class ),
-                $container->get( HolidayService::class )
+                $container->get( HolidayService::class ),
+                $container->get( EmailSettingsService::class )
             );
         } );
 
@@ -298,8 +325,13 @@ class ServiceProvider {
                 $container->get( AppointmentsPage::class ),
                 $container->get( EmployeesPage::class ),
                 $container->get( CustomersPage::class ),
-                $container->get( SettingsPage::class )
+                $container->get( SettingsPage::class ),
+                $container->get( NotificationsPage::class )
             );
+        } );
+
+        $container->singleton( NotificationsPage::class, static function ( ServiceContainer $container ): NotificationsPage {
+            return new NotificationsPage( $container->get( EmailNotificationService::class ) );
         } );
 
         $container->singleton( SchemaStatusShortcode::class, static function ( ServiceContainer $container ): SchemaStatusShortcode {

@@ -2,6 +2,13 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.11.0] - 2025-03-01
+### Added
+- Email notifications admin workspace with drawer-based creation/editing, recipient scoping (client, employee, administrators, custom), Select2-powered service filters, placeholder reference table, ICS attachment toggle, and soft delete/disable actions with notices.
+- Notification domain layer (entity, service, repository interface) plus wpdb-backed repository and schema tables covering channels, recipients, templates, rules, send jobs, attempts, suppression list, and delivery events.
+- Email settings tab with sender identity, HTML/Text format toggle, reply-to behaviour, retry period dropdown, SMTP gateway credentials with conditional visibility, and test email submission backed by `EmailSettingsService` hooks.
+- Location timezone field defaulting to `Europe/Budapest`, dropdown selection in the admin UI, validation in the domain service, repository persistence, and PHPUnit coverage for timezone handling.
+
 # [0.10.0] - 2025-02-01
 ### Added
 - Locations administration screen with media-powered profile images, address/phone/email/website capture, industry optgroups, event toggle, company metadata, admin notices, and soft delete/restore workflows.

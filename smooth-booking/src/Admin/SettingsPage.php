@@ -12,6 +12,7 @@ use SmoothBooking\Domain\Holidays\Holiday;
 use SmoothBooking\Domain\Holidays\HolidayService;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\SchemaStatusService;
+use SmoothBooking\Domain\Notifications\EmailSettingsService;
 
 use function __;
 use function absint;
@@ -28,6 +29,8 @@ use function esc_html;
 use function esc_html__;
 use function esc_html_e;
 use function esc_attr_e;
+use function sanitize_email;
+use function is_email;
 use function get_option;
 use function is_rtl;
 use function is_wp_error;
@@ -87,12 +90,18 @@ class SettingsPage {
     private HolidayService $holiday_service;
 
     /**
+     * @var EmailSettingsService
+     */
+    private EmailSettingsService $email_settings;
+
+    /**
      * Constructor.
      */
-    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service, HolidayService $holiday_service ) {
+    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service, HolidayService $holiday_service, EmailSettingsService $email_settings ) {
         $this->schema_service           = $schema_service;
         $this->business_hours_service   = $business_hours_service;
         $this->holiday_service          = $holiday_service;
+        $this->email_settings           = $email_settings;
     }
 
     /**
@@ -171,8 +180,11 @@ class SettingsPage {
         $holidays_section       = 'smooth-booking-settings-holidays';
         $schema_section         = 'smooth-booking-settings-schema';
 
+        $email_section = 'smooth-booking-settings-email';
+
         $sections = [
             'general'        => $general_section,
+            'email'          => $email_section,
             'business-hours' => $business_hours_section,
             'holidays'       => $holidays_section,
             'schema'         => $schema_section,
@@ -227,8 +239,18 @@ class SettingsPage {
 
         $days         = $this->business_hours_service->get_days();
         $time_options = $this->business_hours_service->get_time_options();
+        $email_settings   = $this->email_settings->get_settings();
+        $email_saved      = isset( $_GET['smooth_booking_email_saved'] );
+        $email_error      = '';
+        $email_tested     = isset( $_GET['smooth_booking_email_test'] );
+
+        if ( isset( $_GET['smooth_booking_email_error'] ) ) {
+            $email_error = sanitize_text_field( wp_unslash( (string) $_GET['smooth_booking_email_error'] ) );
+        }
+
         $nav_items    = [
             'general'        => __( 'General settings', 'smooth-booking' ),
+            'email'          => __( 'Email', 'smooth-booking' ),
             'business-hours' => __( 'Business Hours', 'smooth-booking' ),
             'holidays'       => __( 'Holidays', 'smooth-booking' ),
             'schema'         => __( 'Schema status', 'smooth-booking' ),
@@ -279,6 +301,108 @@ class SettingsPage {
                                     </div>
                                 </div>
                             </form>
+                        </section>
+                        <section
+                            class="smooth-booking-settings-section smooth-booking-settings-section--email<?php echo 'email' === $active_section ? ' is-active' : ''; ?>"
+                            id="<?php echo esc_attr( $email_section ); ?>"
+                            data-section="email"
+                        >
+                            <div class="smooth-booking-card smooth-booking-settings-card smooth-booking-email-settings">
+                                <?php if ( $email_saved ) : ?>
+                                    <div class="notice notice-success is-dismissible">
+                                        <p><?php esc_html_e( 'Email settings updated successfully.', 'smooth-booking' ); ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ( $email_tested ) : ?>
+                                    <div class="notice notice-success is-dismissible">
+                                        <p><?php esc_html_e( 'Test email sent. Please check your inbox.', 'smooth-booking' ); ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ( ! empty( $email_error ) ) : ?>
+                                    <div class="notice notice-error">
+                                        <p><?php echo esc_html( $email_error ); ?></p>
+                                    </div>
+                                <?php endif; ?>
+
+                                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-email-settings__form">
+                                    <?php wp_nonce_field( 'smooth_booking_save_email_settings' ); ?>
+                                    <input type="hidden" name="action" value="smooth_booking_save_email_settings" />
+                                    <table class="form-table" role="presentation">
+                                        <tbody>
+                                            <tr>
+                                                <th scope="row"><label for="smooth-booking-email-sender-name"><?php esc_html_e( 'Sender name', 'smooth-booking' ); ?></label></th>
+                                                <td>
+                                                    <input type="text" id="smooth-booking-email-sender-name" name="email_settings[sender_name]" class="regular-text" value="<?php echo esc_attr( $email_settings['sender_name'] ?? '' ); ?>" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><label for="smooth-booking-email-sender-email"><?php esc_html_e( 'Sender email', 'smooth-booking' ); ?></label></th>
+                                                <td>
+                                                    <input type="email" id="smooth-booking-email-sender-email" name="email_settings[sender_email]" class="regular-text" value="<?php echo esc_attr( $email_settings['sender_email'] ?? '' ); ?>" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><?php esc_html_e( 'Send emails as', 'smooth-booking' ); ?></th>
+                                                <td>
+                                                    <label class="smooth-booking-radio-inline"><input type="radio" name="email_settings[send_format]" value="html" <?php checked( ( $email_settings['send_format'] ?? 'html' ), 'html' ); ?> /> <?php esc_html_e( 'HTML', 'smooth-booking' ); ?></label>
+                                                    <label class="smooth-booking-radio-inline"><input type="radio" name="email_settings[send_format]" value="text" <?php checked( ( $email_settings['send_format'] ?? 'html' ), 'text' ); ?> /> <?php esc_html_e( 'Text', 'smooth-booking' ); ?></label>
+                                                    <p class="description"><?php esc_html_e( 'HTML allows formatting, colors, fonts, positioning, etc. With Text you must use Text mode of rich-text editors below. On some servers only text emails are sent successfully.', 'smooth-booking' ); ?></p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><?php esc_html_e( 'Reply directly to customers', 'smooth-booking' ); ?></th>
+                                                <td>
+                                                    <label class="smooth-booking-radio-inline"><input type="radio" name="email_settings[reply_to_customer]" value="1" <?php checked( ! empty( $email_settings['reply_to_customer'] ) ); ?> /> <?php esc_html_e( 'Enabled', 'smooth-booking' ); ?></label>
+                                                    <label class="smooth-booking-radio-inline"><input type="radio" name="email_settings[reply_to_customer]" value="0" <?php checked( empty( $email_settings['reply_to_customer'] ) ); ?> /> <?php esc_html_e( 'Disabled', 'smooth-booking' ); ?></label>
+                                                    <p class="description"><?php esc_html_e( 'If this option is enabled then the email address of the customer is used as a sender email address for notifications sent to staff members and administrators.', 'smooth-booking' ); ?></p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><label for="smooth-booking-email-retry"><?php esc_html_e( 'Scheduled notifications retry period', 'smooth-booking' ); ?></label></th>
+                                                <td>
+                                                    <select id="smooth-booking-email-retry" name="email_settings[retry_period_hours]" class="regular-text">
+                                                        <?php foreach ( $this->email_settings->get_retry_period_options() as $value => $label ) : ?>
+                                                            <option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( (int) ( $email_settings['retry_period_hours'] ?? 1 ), $value ); ?>><?php echo esc_html( $label ); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                    <p class="description"><?php esc_html_e( 'Set period of time when system will attempt to deliver notification to user. Notification will be discarded after period expiration.', 'smooth-booking' ); ?></p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row"><label for="smooth-booking-email-gateway"><?php esc_html_e( 'Mail gateway', 'smooth-booking' ); ?></label></th>
+                                                <td>
+                                                    <select id="smooth-booking-email-gateway" name="email_settings[mail_gateway]" class="regular-text smooth-booking-email-gateway">
+                                                        <option value="wordpress" <?php selected( ( $email_settings['mail_gateway'] ?? 'wordpress' ), 'wordpress' ); ?>><?php esc_html_e( 'WordPress mail', 'smooth-booking' ); ?></option>
+                                                        <option value="smtp" <?php selected( ( $email_settings['mail_gateway'] ?? 'wordpress' ), 'smtp' ); ?>><?php esc_html_e( 'SMTP', 'smooth-booking' ); ?></option>
+                                                    </select>
+                                                    <div class="smooth-booking-email-smtp-settings<?php echo ( ( $email_settings['mail_gateway'] ?? 'wordpress' ) === 'smtp' ) ? ' is-visible' : ''; ?>">
+                                                        <label for="smooth-booking-email-smtp-host" class="screen-reader-text"><?php esc_html_e( 'SMTP hostname', 'smooth-booking' ); ?></label>
+                                                        <input type="text" id="smooth-booking-email-smtp-host" name="email_settings[smtp][host]" class="regular-text" placeholder="<?php esc_attr_e( 'Hostname', 'smooth-booking' ); ?>" value="<?php echo esc_attr( $email_settings['smtp']['host'] ?? '' ); ?>" />
+                                                        <input type="text" id="smooth-booking-email-smtp-port" name="email_settings[smtp][port]" class="small-text" placeholder="<?php esc_attr_e( 'Port', 'smooth-booking' ); ?>" value="<?php echo esc_attr( $email_settings['smtp']['port'] ?? '' ); ?>" />
+                                                        <input type="text" id="smooth-booking-email-smtp-username" name="email_settings[smtp][username]" class="regular-text" placeholder="<?php esc_attr_e( 'Username', 'smooth-booking' ); ?>" value="<?php echo esc_attr( $email_settings['smtp']['username'] ?? '' ); ?>" />
+                                                        <input type="password" id="smooth-booking-email-smtp-password" name="email_settings[smtp][password]" class="regular-text" placeholder="<?php esc_attr_e( 'Password', 'smooth-booking' ); ?>" value="" autocomplete="new-password" />
+                                                        <select id="smooth-booking-email-smtp-secure" name="email_settings[smtp][secure]" class="regular-text">
+                                                            <option value="disabled" <?php selected( ( $email_settings['smtp']['secure'] ?? 'disabled' ), 'disabled' ); ?>><?php esc_html_e( 'Disabled', 'smooth-booking' ); ?></option>
+                                                            <option value="ssl" <?php selected( ( $email_settings['smtp']['secure'] ?? 'disabled' ), 'ssl' ); ?>><?php esc_html_e( 'SSL', 'smooth-booking' ); ?></option>
+                                                            <option value="tls" <?php selected( ( $email_settings['smtp']['secure'] ?? 'disabled' ), 'tls' ); ?>><?php esc_html_e( 'TLS', 'smooth-booking' ); ?></option>
+                                                        </select>
+                                                    </div>
+                                                    <p class="description"><?php esc_html_e( 'Select a mail gateway that will be used to send email notifications. For more information, see the documentation page.', 'smooth-booking' ); ?></p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="smooth-booking-form-actions">
+                                        <button type="submit" class="sba-btn sba-btn--primary sba-btn__large"><?php esc_html_e( 'Save email settings', 'smooth-booking' ); ?></button>
+                                    </div>
+                                </form>
+                                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-email-settings__test">
+                                    <?php wp_nonce_field( 'smooth_booking_send_test_email' ); ?>
+                                    <input type="hidden" name="action" value="smooth_booking_send_test_email" />
+                                    <input type="email" name="test_email" class="regular-text" value="<?php echo esc_attr( $email_settings['sender_email'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Recipient email address', 'smooth-booking' ); ?>" />
+                                    <button type="submit" class="sba-btn sba-btn__medium sba-btn__filled"><?php esc_html_e( 'Send test email', 'smooth-booking' ); ?></button>
+                                </form>
+                            </div>
                         </section>
                         <section
                             class="smooth-booking-settings-section smooth-booking-settings-section--business-hours<?php echo 'business-hours' === $active_section ? ' is-active' : ''; ?>"
@@ -687,6 +811,89 @@ class SettingsPage {
         }
 
         return $prepared;
+    }
+
+    /**
+     * Handle saving email settings submissions.
+     */
+    public function handle_email_settings_save(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth_booking_save_email_settings' );
+
+        $input = [];
+
+        if ( isset( $_POST['email_settings'] ) && is_array( $_POST['email_settings'] ) ) {
+            $input = wp_unslash( $_POST['email_settings'] );
+        }
+
+        if ( ! is_array( $input ) ) {
+            $input = [];
+        }
+
+        $sanitized = $this->email_settings->sanitize_settings( $input );
+        $redirect  = add_query_arg(
+            [
+                'page'                   => self::MENU_SLUG,
+                'smooth_booking_section' => 'email',
+            ],
+            admin_url( 'admin.php' )
+        );
+
+        $error_message = '';
+
+        if ( empty( $sanitized['sender_email'] ) || ! is_email( (string) $sanitized['sender_email'] ) ) {
+            $error_message = __( 'Please provide a valid sender email address.', 'smooth-booking' );
+        } elseif ( 'smtp' === ( $sanitized['mail_gateway'] ?? 'wordpress' ) ) {
+            $host = isset( $sanitized['smtp']['host'] ) ? trim( (string) $sanitized['smtp']['host'] ) : '';
+
+            if ( '' === $host ) {
+                $error_message = __( 'Please provide an SMTP hostname when using the SMTP gateway.', 'smooth-booking' );
+            }
+        }
+
+        if ( '' === $error_message ) {
+            $this->email_settings->save_settings( $input );
+            $redirect = add_query_arg( 'smooth_booking_email_saved', '1', $redirect );
+        } else {
+            $redirect = add_query_arg( 'smooth_booking_email_error', $error_message, $redirect );
+        }
+
+        wp_safe_redirect( $redirect );
+        exit;
+    }
+
+    /**
+     * Handle sending a test email.
+     */
+    public function handle_send_test_email(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth_booking_send_test_email' );
+
+        $recipient = isset( $_POST['test_email'] ) ? sanitize_email( wp_unslash( (string) $_POST['test_email'] ) ) : '';
+        $redirect  = add_query_arg(
+            [
+                'page'                   => self::MENU_SLUG,
+                'smooth_booking_section' => 'email',
+            ],
+            admin_url( 'admin.php' )
+        );
+
+        $result = $this->email_settings->send_test_email( $recipient );
+
+        if ( is_wp_error( $result ) ) {
+            $redirect = add_query_arg( 'smooth_booking_email_error', $result->get_error_message(), $redirect );
+        } else {
+            $redirect = add_query_arg( 'smooth_booking_email_test', '1', $redirect );
+        }
+
+        wp_safe_redirect( $redirect );
+        exit;
     }
 
     /**

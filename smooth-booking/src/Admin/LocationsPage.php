@@ -29,6 +29,7 @@ use function plugins_url;
 use function sanitize_key;
 use function selected;
 use function checked;
+use function wp_timezone_choice;
 use function set_transient;
 use function wp_die;
 use function wp_enqueue_media;
@@ -164,6 +165,7 @@ class LocationsPage {
                                 <th scope="col"><?php esc_html_e( 'Address', 'smooth-booking' ); ?></th>
                                 <th scope="col"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></th>
                                 <th scope="col"><?php esc_html_e( 'Base email', 'smooth-booking' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Time zone', 'smooth-booking' ); ?></th>
                                 <th scope="col"><?php esc_html_e( 'Website', 'smooth-booking' ); ?></th>
                                 <th scope="col"><?php esc_html_e( 'Industry', 'smooth-booking' ); ?></th>
                                 <th scope="col"><?php esc_html_e( 'Event location', 'smooth-booking' ); ?></th>
@@ -175,7 +177,7 @@ class LocationsPage {
                         <tbody>
                         <?php if ( empty( $locations ) ) : ?>
                             <tr>
-                                <td colspan="10"><?php esc_html_e( 'No locations have been added yet.', 'smooth-booking' ); ?></td>
+                                <td colspan="11"><?php esc_html_e( 'No locations have been added yet.', 'smooth-booking' ); ?></td>
                             </tr>
                         <?php else : ?>
                             <?php foreach ( $locations as $location ) : ?>
@@ -189,6 +191,7 @@ class LocationsPage {
                                     <td><?php echo $location->get_address() ? esc_html( $location->get_address() ) : esc_html( '—' ); ?></td>
                                     <td><?php echo $location->get_phone() ? esc_html( $location->get_phone() ) : esc_html( '—' ); ?></td>
                                     <td><?php echo $location->get_base_email() ? esc_html( $location->get_base_email() ) : esc_html( '—' ); ?></td>
+                                    <td><?php echo esc_html( $location->get_timezone() ); ?></td>
                                     <td>
                                         <?php if ( $location->get_website() ) : ?>
                                             <a href="<?php echo esc_url( $location->get_website() ); ?>" target="_blank" rel="noopener noreferrer">
@@ -289,6 +292,7 @@ class LocationsPage {
             'phone'            => $_POST['location_phone'] ?? '',
             'base_email'       => $_POST['location_email'] ?? '',
             'website'          => $_POST['location_website'] ?? '',
+            'timezone'         => $_POST['location_timezone'] ?? '',
             'industry_id'      => $_POST['location_industry'] ?? 0,
             'is_event_location'=> isset( $_POST['location_is_event'] ) ? $_POST['location_is_event'] : false,
             'company_name'     => $_POST['location_company_name'] ?? '',
@@ -437,6 +441,7 @@ class LocationsPage {
         $phone            = $is_edit ? ( $location->get_phone() ?? '' ) : '';
         $base_email       = $is_edit ? ( $location->get_base_email() ?? '' ) : '';
         $website          = $is_edit ? ( $location->get_website() ?? '' ) : '';
+        $timezone         = $is_edit ? $location->get_timezone() : ( get_option( 'timezone_string' ) ?: 'Europe/Budapest' );
         $industry_id      = $is_edit ? $location->get_industry_id() : 0;
         $is_event         = $is_edit ? $location->is_event_location() : false;
         $company_name     = $is_edit ? ( $location->get_company_name() ?? '' ) : '';
@@ -506,6 +511,15 @@ class LocationsPage {
                             <th scope="row"><label for="smooth-booking-location-website"><?php esc_html_e( 'Website', 'smooth-booking' ); ?></label></th>
                             <td>
                                 <input type="url" id="smooth-booking-location-website" name="location_website" class="regular-text" value="<?php echo esc_attr( $website ); ?>" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="smooth-booking-location-timezone"><?php esc_html_e( 'Time zone', 'smooth-booking' ); ?></label></th>
+                            <td>
+                                <select id="smooth-booking-location-timezone" name="location_timezone" class="regular-text">
+                                    <?php echo wp_timezone_choice( $timezone ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                </select>
+                                <p class="description"><?php esc_html_e( 'Select the local time zone used for scheduling at this location.', 'smooth-booking' ); ?></p>
                             </td>
                         </tr>
                         <tr>

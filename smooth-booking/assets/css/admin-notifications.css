@@ -1,0 +1,48 @@
+.smooth-booking-notification-form-card .smooth-booking-select2 {
+    width: 100%;
+}
+
+.smooth-booking-notification-services-select {
+    display: none;
+    margin-top: 8px;
+}
+
+.smooth-booking-notification-services-select.is-visible {
+    display: block;
+}
+
+.smooth-booking-notification-custom-emails {
+    display: none;
+    margin-top: 12px;
+}
+
+.smooth-booking-notification-custom-emails.is-visible {
+    display: block;
+}
+
+.smooth-booking-notification-codes {
+    margin-top: 12px;
+}
+
+.smooth-booking-notification-body-text {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.smooth-booking-notification-form-card .smooth-booking-radio-inline {
+    margin-right: 1em;
+}
+
+.smooth-booking-notification-form-card .smooth-booking-checkbox-inline {
+    display: inline-block;
+    margin-right: 1em;
+    margin-bottom: 6px;
+}
+
+.smooth-booking-notification--deleted {
+    opacity: 0.6;
+}
+
+.smooth-booking-notification-form-card .smooth-booking-toggle-codes {
+    margin-top: 6px;
+}
