@@ -143,25 +143,36 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
             );
         }
 
-        $rules_table = $this->get_rules_table();
+        $rules_table  = $this->get_rules_table();
+        $location_id  = $data['location_id'] ?? null;
+        $rule_data    = [
+            'display_name'        => $data['display_name'],
+            'template_code'       => $code,
+            'location_id'         => $location_id,
+            'trigger_event'       => $data['trigger_event'],
+            'schedule_offset_sec' => $data['schedule_offset_sec'],
+            'channel_order'       => $data['channel_order'],
+            'conditions_json'     => $data['conditions_json'],
+            'settings_json'       => $data['settings_json'],
+            'is_enabled'          => $data['is_enabled'],
+            'priority'            => $data['priority'],
+            'is_deleted'          => 0,
+            'created_at'          => current_time( 'mysql' ),
+            'updated_at'          => current_time( 'mysql' ),
+        ];
+        $rule_formats = [ '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' ];
+
+        if ( null === $location_id ) {
+            unset( $rule_data['location_id'] );
+            array_splice( $rule_formats, 2, 1 );
+        } else {
+            $rule_data['location_id'] = (int) $location_id;
+        }
+
         $rule_insert = $this->wpdb->insert(
             $rules_table,
-            [
-                'display_name'        => $data['display_name'],
-                'template_code'       => $code,
-                'location_id'         => $data['location_id'],
-                'trigger_event'       => $data['trigger_event'],
-                'schedule_offset_sec' => $data['schedule_offset_sec'],
-                'channel_order'       => $data['channel_order'],
-                'conditions_json'     => $data['conditions_json'],
-                'settings_json'       => $data['settings_json'],
-                'is_enabled'          => $data['is_enabled'],
-                'priority'            => $data['priority'],
-                'is_deleted'          => 0,
-                'created_at'          => current_time( 'mysql' ),
-                'updated_at'          => current_time( 'mysql' ),
-            ],
-            [ '%s', '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' ]
+            $rule_data,
+            $rule_formats
         );
 
         if ( false === $rule_insert ) {
@@ -200,22 +211,36 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
         }
 
         $rules_table = $this->get_rules_table();
+        $location_in_request = array_key_exists( 'location_id', $data );
+        $location_id         = $data['location_id'] ?? null;
+        $set_location_null   = $location_in_request && null === $location_id;
+
+        $rule_data = [
+            'display_name'        => $data['display_name'],
+            'trigger_event'       => $data['trigger_event'],
+            'schedule_offset_sec' => $data['schedule_offset_sec'],
+            'channel_order'       => $data['channel_order'],
+            'conditions_json'     => $data['conditions_json'],
+            'settings_json'       => $data['settings_json'],
+            'is_enabled'          => $data['is_enabled'],
+            'priority'            => $data['priority'],
+            'location_id'         => $location_id,
+            'updated_at'          => current_time( 'mysql' ),
+        ];
+        $rule_formats = [ '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s' ];
+
+        if ( $set_location_null || ! $location_in_request ) {
+            unset( $rule_data['location_id'] );
+            array_splice( $rule_formats, 8, 1 );
+        } else {
+            $rule_data['location_id'] = (int) $location_id;
+        }
+
         $updated     = $this->wpdb->update(
             $rules_table,
-            [
-                'display_name'        => $data['display_name'],
-                'trigger_event'       => $data['trigger_event'],
-                'schedule_offset_sec' => $data['schedule_offset_sec'],
-                'channel_order'       => $data['channel_order'],
-                'conditions_json'     => $data['conditions_json'],
-                'settings_json'       => $data['settings_json'],
-                'is_enabled'          => $data['is_enabled'],
-                'priority'            => $data['priority'],
-                'location_id'         => $data['location_id'],
-                'updated_at'          => current_time( 'mysql' ),
-            ],
+            $rule_data,
             [ 'rule_id' => $notification_id ],
-            [ '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s' ],
+            $rule_formats,
             [ '%d' ]
         );
 
@@ -226,6 +251,24 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
                 'smooth_booking_notification_update_failed',
                 __( 'Unable to update the notification rule. Please try again.', 'smooth-booking' )
             );
+        }
+
+        if ( $set_location_null ) {
+            $null_update = $this->wpdb->query(
+                $this->wpdb->prepare(
+                    "UPDATE {$rules_table} SET location_id = NULL WHERE rule_id = %d",
+                    $notification_id
+                )
+            );
+
+            if ( false === $null_update ) {
+                $this->logger->error( 'Failed clearing notification location: ' . $this->wpdb->last_error );
+
+                return new WP_Error(
+                    'smooth_booking_notification_location_update_failed',
+                    __( 'Unable to update the notification rule location. Please try again.', 'smooth-booking' )
+                );
+            }
         }
 
         $template_data = $data['template'] ?? [];
