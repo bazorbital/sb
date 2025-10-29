@@ -23,6 +23,7 @@ use function rest_sanitize_boolean;
 use function sanitize_email;
 use function sanitize_text_field;
 use function sanitize_textarea_field;
+use function timezone_identifiers_list;
 use function trim;
 use function wp_unslash;
 
@@ -314,6 +315,16 @@ class LocationService {
             );
         }
 
+        $timezone = isset( $data['timezone'] ) ? sanitize_text_field( wp_unslash( (string) $data['timezone'] ) ) : '';
+        $timezone = '' !== $timezone ? $timezone : 'Europe/Budapest';
+
+        if ( ! in_array( $timezone, timezone_identifiers_list(), true ) ) {
+            return new WP_Error(
+                'smooth_booking_location_invalid_timezone',
+                __( 'Please select a valid time zone.', 'smooth-booking' )
+            );
+        }
+
         $is_event_location = rest_sanitize_boolean( $data['is_event_location'] ?? false ) ? 1 : 0;
 
         return [
@@ -323,12 +334,32 @@ class LocationService {
             'phone'             => '' !== trim( $phone ) ? $phone : null,
             'base_email'        => '' !== trim( (string) $base_email ) ? $base_email : null,
             'website'           => '' !== trim( $website ) ? $website : null,
+            'timezone'          => $timezone,
             'industry_id'       => $industry_id,
             'is_event_location' => $is_event_location,
             'company_name'      => '' !== trim( $company_name ) ? $company_name : null,
             'company_address'   => '' !== trim( $company_address ) ? $company_address : null,
             'company_phone'     => '' !== trim( $company_phone ) ? $company_phone : null,
         ];
+    }
+
+    /**
+     * Retrieve available timezone options.
+     *
+     * @return array<int, array{value:string,label:string}>
+     */
+    public function get_timezone_options(): array {
+        $identifiers = timezone_identifiers_list();
+
+        return array_map(
+            static function ( string $timezone ): array {
+                return [
+                    'value' => $timezone,
+                    'label' => $timezone,
+                ];
+            },
+            $identifiers
+        );
     }
 
     /**

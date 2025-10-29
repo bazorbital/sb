@@ -20,6 +20,6 @@
         }
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "@php vendor/bin/phpunit"
     }
 }

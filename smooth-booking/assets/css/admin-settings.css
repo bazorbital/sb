@@ -199,6 +199,44 @@
     transform: translateX(20px);
 }
 
+.smooth-booking-email-settings__form {
+    margin-bottom: 24px;
+}
+
+.smooth-booking-email-settings__test {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.smooth-booking-email-settings__test .regular-text {
+    flex: 1 1 260px;
+    min-width: 220px;
+}
+
+.smooth-booking-email-smtp-settings {
+    display: none;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.smooth-booking-email-smtp-settings.is-visible {
+    display: flex;
+}
+
+.smooth-booking-email-smtp-settings input,
+.smooth-booking-email-smtp-settings select {
+    flex: 1 1 200px;
+    min-width: 160px;
+}
+
+.smooth-booking-email-smtp-settings .small-text {
+    flex: 0 0 100px;
+}
+
 .smooth-booking-business-hours {
     display: flex;
     flex-direction: column;

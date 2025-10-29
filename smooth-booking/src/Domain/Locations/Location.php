@@ -29,6 +29,8 @@ class Location {
 
     private int $industry_id;
 
+    private string $timezone;
+
     private bool $is_event_location;
 
     private bool $is_deleted;
@@ -52,6 +54,7 @@ class Location {
         ?string $base_email,
         ?string $website,
         int $industry_id,
+        string $timezone,
         bool $is_event_location,
         bool $is_deleted,
         ?string $company_name,
@@ -68,6 +71,7 @@ class Location {
         $this->base_email        = $base_email;
         $this->website           = $website;
         $this->industry_id       = $industry_id;
+        $this->timezone          = $timezone;
         $this->is_event_location = $is_event_location;
         $this->is_deleted        = $is_deleted;
         $this->company_name      = $company_name;
@@ -92,6 +96,7 @@ class Location {
             isset( $row['base_email'] ) ? (string) $row['base_email'] : null,
             isset( $row['website'] ) ? (string) $row['website'] : null,
             (int) ( $row['industry_id'] ?? 0 ),
+            isset( $row['timezone'] ) ? (string) $row['timezone'] : 'Europe/Budapest',
             (int) ( $row['is_event_location'] ?? 0 ) === 1,
             (int) ( $row['is_deleted'] ?? 0 ) === 1,
             isset( $row['company_name'] ) ? (string) $row['company_name'] : null,
@@ -132,6 +137,10 @@ class Location {
 
     public function get_industry_id(): int {
         return $this->industry_id;
+    }
+
+    public function get_timezone(): string {
+        return $this->timezone;
     }
 
     public function is_event_location(): bool {
@@ -176,6 +185,7 @@ class Location {
             'phone'             => $this->get_phone(),
             'base_email'        => $this->get_base_email(),
             'website'           => $this->get_website(),
+            'timezone'          => $this->get_timezone(),
             'industry_id'       => $this->get_industry_id(),
             'is_event_location' => $this->is_event_location(),
             'is_deleted'        => $this->is_deleted(),

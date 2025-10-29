@@ -240,6 +240,7 @@ class SchemaDefinitionBuilder {
                 phone VARCHAR(50) NULL,
                 base_email VARCHAR(150) NULL,
                 website VARCHAR(255) NULL,
+                timezone VARCHAR(64) NOT NULL DEFAULT \'Europe/Budapest\',
                 industry_id INT NOT NULL DEFAULT 0,
                 is_event_location TINYINT(1) NOT NULL DEFAULT 0,
                 company_name VARCHAR(150) NULL,
@@ -542,68 +543,163 @@ class SchemaDefinitionBuilder {
             $options
         );
 
+        $tables['notification_channels'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_channels (
+                channel_id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                code VARCHAR(32) NOT NULL,
+                description VARCHAR(255) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (channel_id),
+                UNIQUE KEY channel_code (code)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['notification_recipients'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_recipients (
+                recipient_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                wp_user_id BIGINT UNSIGNED NULL,
+                email VARCHAR(320) NULL,
+                phone_e164 VARCHAR(20) NULL,
+                push_token VARCHAR(255) NULL,
+                locale VARCHAR(16) NULL,
+                timezone VARCHAR(64) NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (recipient_id),
+                UNIQUE KEY uq_wp_user (wp_user_id),
+                KEY idx_email (email),
+                KEY idx_phone (phone_e164)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
         $tables['notification_templates'] = sprintf(
             'CREATE TABLE %1$ssmooth_notification_templates (
                 template_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                event_type ENUM(\'BookingCreated\',\'BookingCanceled\',\'BookingReminder\',\'BookingUpdated\') NOT NULL,
-                recipient_type ENUM(\'customer\',\'employee\') NOT NULL,
-                channel ENUM(\'email\',\'sms\',\'push\') NOT NULL,
-                subject VARCHAR(200) NULL,
-                body TEXT NOT NULL,
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                code VARCHAR(64) NOT NULL,
+                channel_id TINYINT UNSIGNED NOT NULL,
+                locale VARCHAR(16) NOT NULL,
+                subject VARCHAR(191) NULL,
+                body_text MEDIUMTEXT NULL,
+                body_html MEDIUMTEXT NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY  (template_id),
-                UNIQUE KEY template_lookup (event_type, recipient_type, channel)
+                UNIQUE KEY uq_tpl (code, channel_id, locale),
+                KEY tpl_channel (channel_id),
+                CONSTRAINT fk_tpl_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
             ) %2$s;',
             $prefix,
             $options
         );
 
-        $tables['notification_settings'] = sprintf(
-            'CREATE TABLE %1$ssmooth_notification_settings (
-                setting_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                user_type ENUM(\'customer\',\'employee\') NOT NULL,
-                user_id BIGINT UNSIGNED NOT NULL,
-                enable_email TINYINT(1) NOT NULL DEFAULT 1,
-                enable_sms TINYINT(1) NOT NULL DEFAULT 0,
-                enable_push TINYINT(1) NOT NULL DEFAULT 0,
+        $tables['notification_rules'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_rules (
+                rule_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                display_name VARCHAR(191) NOT NULL,
+                template_code VARCHAR(64) NOT NULL,
+                location_id BIGINT UNSIGNED NULL,
+                trigger_event VARCHAR(64) NOT NULL,
+                schedule_offset_sec INT NOT NULL DEFAULT 0,
+                channel_order VARCHAR(128) NOT NULL DEFAULT \'push>email>sms\',
+                conditions_json LONGTEXT NULL,
+                settings_json LONGTEXT NULL,
+                is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+                priority SMALLINT NOT NULL DEFAULT 100,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-                PRIMARY KEY  (setting_id),
-                UNIQUE KEY user_pref (user_type, user_id)
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY  (rule_id),
+                KEY idx_rule_trigger (trigger_event, is_enabled, priority),
+                KEY idx_rule_template (template_code),
+                KEY idx_rule_location (location_id),
+                CONSTRAINT fk_rule_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
             ) %2$s;',
             $prefix,
             $options
         );
 
-        $tables['notification_queue'] = sprintf(
-            'CREATE TABLE %1$ssmooth_notification_queue (
-                notification_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                booking_id BIGINT UNSIGNED NULL,
-                recipient_type ENUM(\'customer\',\'employee\') NOT NULL,
+        $tables['notification_send_jobs'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_send_jobs (
+                send_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                rule_id BIGINT UNSIGNED NULL,
                 recipient_id BIGINT UNSIGNED NOT NULL,
-                channel ENUM(\'email\',\'sms\',\'push\') NOT NULL,
-                subject VARCHAR(200) NULL,
-                body TEXT NOT NULL,
+                channel_id TINYINT UNSIGNED NOT NULL,
+                location_id BIGINT UNSIGNED NULL,
+                address VARCHAR(320) NULL,
+                subject VARCHAR(191) NULL,
+                body_text MEDIUMTEXT NULL,
+                body_html MEDIUMTEXT NULL,
+                merge_vars_json LONGTEXT NULL,
                 scheduled_at DATETIME NOT NULL,
-                sent_at DATETIME NULL,
-                status ENUM(\'pending\',\'sent\',\'failed\',\'canceled\') NOT NULL DEFAULT \'pending\',
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-                PRIMARY KEY  (notification_id),
-                KEY queue_status (status, scheduled_at)
+                queued_at DATETIME NULL,
+                status ENUM(\'scheduled\',\'queued\',\'sending\',\'sent\',\'failed\',\'canceled\',\'suppressed\') NOT NULL DEFAULT \'scheduled\',
+                dedupe_key VARCHAR(64) NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (send_id),
+                UNIQUE KEY uq_send_dedupe (dedupe_key),
+                KEY idx_send_status_time (status, scheduled_at),
+                KEY idx_send_recipient (recipient_id, scheduled_at),
+                KEY idx_send_rule (rule_id),
+                CONSTRAINT fk_send_rule FOREIGN KEY (rule_id) REFERENCES %1$ssmooth_notification_rules (rule_id),
+                CONSTRAINT fk_send_recipient FOREIGN KEY (recipient_id) REFERENCES %1$ssmooth_notification_recipients (recipient_id),
+                CONSTRAINT fk_send_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id),
+                CONSTRAINT fk_send_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
             ) %2$s;',
             $prefix,
             $options
         );
 
-        $tables['event_log'] = sprintf(
-            'CREATE TABLE %1$ssmooth_event_log (
+        $tables['notification_send_attempts'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_send_attempts (
+                attempt_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                send_id BIGINT UNSIGNED NOT NULL,
+                attempt_no SMALLINT UNSIGNED NOT NULL,
+                provider_code VARCHAR(64) NULL,
+                provider_message_id VARCHAR(191) NULL,
+                requested_at DATETIME NOT NULL,
+                status ENUM(\'pending\',\'accepted\',\'delivered\',\'soft_bounce\',\'hard_bounce\',\'failed\') NOT NULL DEFAULT \'pending\',
+                response_code VARCHAR(64) NULL,
+                response_body TEXT NULL,
+                PRIMARY KEY  (attempt_id),
+                UNIQUE KEY uq_attempt_per_send (send_id, attempt_no),
+                KEY idx_attempt_provider (provider_message_id),
+                CONSTRAINT fk_attempt_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['notification_suppressions'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_suppressions (
+                suppression_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                channel_id TINYINT UNSIGNED NOT NULL,
+                address_hash BINARY(16) NOT NULL,
+                reason VARCHAR(64) NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY  (suppression_id),
+                UNIQUE KEY uq_suppression (channel_id, address_hash),
+                CONSTRAINT fk_supp_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['notification_events'] = sprintf(
+            'CREATE TABLE %1$ssmooth_notification_events (
                 event_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                event_type ENUM(\'BookingCreated\',\'BookingCanceled\',\'BookingReminder\',\'BookingUpdated\') NOT NULL,
-                booking_id BIGINT UNSIGNED NULL,
+                send_id BIGINT UNSIGNED NULL,
+                channel_id TINYINT UNSIGNED NOT NULL,
+                event_type VARCHAR(64) NOT NULL,
                 occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                payload_json JSON NULL,
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                payload LONGTEXT NULL,
                 PRIMARY KEY  (event_id),
-                KEY event_lookup (event_type, occurred_at)
+                KEY idx_event_lookup (channel_id, event_type, occurred_at),
+                CONSTRAINT fk_event_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
             ) %2$s;',
             $prefix,
             $options

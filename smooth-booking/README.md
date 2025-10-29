@@ -12,6 +12,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - REST API endpoint suite at `/wp-json/smooth-booking/v1/services` for listing, creating, updating, deleting, and restoring services
 - Shortcode `[smooth_booking_schema_status]` and Gutenberg block “Smooth Booking Schema Status”
 - Top-level Smooth Booking admin menu with the **Locations**, **Appointments**, **Employees**, **Customers**, and **Services** screens
+- Email notifications workspace with list view, drawer-based creation/editing, recipient scoping, placeholder reference table, and soft delete/disable flows plus SMTP-aware delivery settings
 - Daily cron health check
 - WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth locations <list|create|update|delete|restore>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, `wp smooth appointments <list|delete|restore>`, and `wp smooth holidays <list|add|delete>`
 - Multisite-aware activation, deactivation, and uninstall workflows
@@ -29,7 +30,9 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Visit **Smooth Booking → Locations** to capture physical and virtual locations with media-powered profile images, address/phone/email fields, website URLs, industry taxonomy, event toggle, company details, and soft delete/restore controls.
 - Visit **Smooth Booking → Employees** to manage staff members, add new employees, edit existing profiles, or soft-delete entries. The page supports media library profile images, WordPress color pickers, visibility options, category assignment, a toggle to review or restore deleted employees, and the same on-demand drawer flow for creation or editing.
 - Visit **Smooth Booking → Customers** to capture client information, upload profile imagery, assign or create tags, connect WordPress users, and manage soft-deleted records via searchable, sortable, and paginated tables.
+- Visit **Smooth Booking → Email notifications** to configure automated emails for booking events, choose recipients (client, employee, administrators, custom), limit by appointment status or services, attach ICS files, and compose HTML/Text bodies with placeholder codes.
 - Configure schema repair behaviour under **Smooth Booking → Settings**.
+- Configure sender identity, format, reply-to handling, retry periods, and SMTP credentials under **Smooth Booking → Settings → Email**, and send a test message to confirm delivery.
 - Define default open and close times per location under **Smooth Booking → Settings → Business Hours**, then apply the template to inform staff schedules and calendar visibility when “Show only business hours in the calendar” is enabled.
 - Mark company-wide closures per location under **Smooth Booking → Settings → Holidays** by selecting days or ranges, adding notes, and optionally repeating the closure every year. Existing holidays appear beside the calendar for quick removal.
 - Use the REST API for automation:
@@ -89,6 +92,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Customer persistence is handled by `src/Infrastructure/Repository/CustomerRepository.php`, tag repositories, and orchestrated through `SmoothBooking\Domain\Customers\CustomerService`.
 - Service persistence is handled by `src/Infrastructure/Repository/ServiceRepository.php` plus category/tag repositories and orchestrated through `SmoothBooking\Domain\Services\ServiceService`.
 - Appointment persistence is handled by `src/Infrastructure/Repository/AppointmentRepository.php` and orchestrated through `SmoothBooking\Domain\Appointments\AppointmentService`.
+- Email notification rules/templates are handled by `src/Infrastructure/Repository/EmailNotificationRepository.php` and orchestrated through `SmoothBooking\Domain\Notifications\EmailNotificationService` and `EmailSettingsService`.
 - Business hours templates are handled by `src/Domain/BusinessHours/BusinessHoursService.php` backed by `src/Infrastructure/Repository/BusinessHoursRepository.php` and the location repository in `src/Infrastructure/Repository/LocationRepository.php`.
 - Location holidays are handled by `src/Domain/Holidays/HolidayService.php` backed by `src/Infrastructure/Repository/HolidayRepository.php`, cached via the object cache when available, and exposed through Settings, WP-CLI, and public hooks.
 - Database versioning is stored in the `smooth_booking_db_version` option.

@@ -167,6 +167,7 @@ class LocationRepository implements LocationRepositoryInterface {
                 'phone'             => $data['phone'],
                 'base_email'        => $data['base_email'],
                 'website'           => $data['website'],
+                'timezone'          => $data['timezone'],
                 'industry_id'       => $data['industry_id'],
                 'is_event_location' => $data['is_event_location'],
                 'company_name'      => $data['company_name'],
@@ -177,7 +178,7 @@ class LocationRepository implements LocationRepositoryInterface {
                 'updated_at'        => current_time( 'mysql' ),
             ],
             [
-                '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s',
+                '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s',
             ]
         );
 
@@ -212,6 +213,7 @@ class LocationRepository implements LocationRepositoryInterface {
                 'phone'             => $data['phone'],
                 'base_email'        => $data['base_email'],
                 'website'           => $data['website'],
+                'timezone'          => $data['timezone'],
                 'industry_id'       => $data['industry_id'],
                 'is_event_location' => $data['is_event_location'],
                 'company_name'      => $data['company_name'],
@@ -220,7 +222,7 @@ class LocationRepository implements LocationRepositoryInterface {
                 'updated_at'        => current_time( 'mysql' ),
             ],
             [ 'location_id' => $location_id ],
-            [ '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s' ],
+            [ '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s' ],
             [ '%d' ]
         );
 
