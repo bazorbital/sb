@@ -2,6 +2,75 @@
     'use strict';
 
     const settings = window.SmoothBookingNotifications || {};
+    let editorPrepared = false;
+
+    function getEditorId() {
+        if (settings.editorId) {
+            return settings.editorId;
+        }
+
+        return 'smooth-booking-notification-body-html';
+    }
+
+    function prepareEditor() {
+        const editorId = getEditorId();
+
+        if (!editorId) {
+            return;
+        }
+
+        const textarea = document.getElementById(editorId);
+
+        if (!textarea) {
+            return;
+        }
+
+        const hasTinymce = typeof window.tinymce !== 'undefined';
+        const editor = hasTinymce ? window.tinymce.get(editorId) : null;
+
+        if (editor) {
+            window.setTimeout(function () {
+                try {
+                    if (typeof editor.show === 'function') {
+                        editor.show();
+                    }
+
+                    editor.fire('show');
+                    editor.execCommand('mceRepaint');
+                    editor.focus();
+                } catch (error) {
+                    // Ignore TinyMCE repaint issues; editor will still render.
+                }
+            }, 0);
+
+            editorPrepared = true;
+            return;
+        }
+
+        if (editorPrepared) {
+            return;
+        }
+
+        if (!window.wp || !window.wp.editor || typeof window.wp.editor.initialize !== 'function') {
+            return;
+        }
+
+        let defaults = {};
+
+        if (typeof window.wp.editor.getDefaultSettings === 'function') {
+            defaults = window.wp.editor.getDefaultSettings();
+        }
+
+        const custom = settings.editorSettings || {};
+        const config = $.extend(true, {}, defaults, custom);
+
+        try {
+            window.wp.editor.initialize(editorId, config);
+            editorPrepared = true;
+        } catch (error) {
+            // Swallow initialisation errors to avoid breaking the form drawer.
+        }
+    }
 
     function syncTriggerState($trigger, isOpen) {
         if (!$trigger || !$trigger.length) {
@@ -47,6 +116,7 @@
         if (shouldOpen) {
             $drawer.removeAttr('hidden').addClass('is-open');
             syncTriggerState($trigger, true);
+            prepareEditor();
 
             const focusSelector = $drawer.data('focusSelector');
             if (focusSelector) {
@@ -144,6 +214,12 @@
             const target = $(this).data('context');
             toggleDrawer(target, true);
         });
+
+        const $openDrawer = $('.smooth-booking-form-drawer.is-open[data-context="notification-form"]');
+
+        if ($openDrawer.length) {
+            prepareEditor();
+        }
     });
 
     $(document).on('click', '.smooth-booking-open-form', function (event) {

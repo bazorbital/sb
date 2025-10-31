@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.13.0
+Stable tag: 0.13.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.13.1 =
+* Fix: Reinitialised the notification drawer editor on open so TinyMCE no longer triggers asynchronous listener errors when adding a new email notification. Editor scripts are now enqueued explicitly and refreshed whenever the drawer becomes visible.
+
 = 0.13.0 =
 * Added a Calendar workspace that renders location-specific employee columns, configurable time slots, colour-coded appointments, and inline creation/edit/delete actions surfaced through the shared appointment modal.
 * Introduced General settings for time-slot length that drive both the appointment forms and calendar grid, alongside repository support for retrieving employee appointments within a daily range.

@@ -35,6 +35,7 @@ use function selected;
 use function set_transient;
 use function wp_die;
 use function wp_editor;
+use function wp_enqueue_editor;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
 use function wp_nonce_field;
@@ -318,6 +319,8 @@ class NotificationsPage {
 
         $this->enqueue_admin_styles();
 
+        wp_enqueue_editor();
+
         wp_enqueue_style(
             'smooth-booking-admin-notifications',
             plugins_url( 'assets/css/admin-notifications.css', SMOOTH_BOOKING_PLUGIN_FILE ),
@@ -342,6 +345,15 @@ class NotificationsPage {
             [
                 'showCodes' => __( 'Show available placeholders', 'smooth-booking' ),
                 'hideCodes' => __( 'Hide available placeholders', 'smooth-booking' ),
+                'editorId'  => 'smooth-booking-notification-body-html',
+                'editorSettings' => [
+                    'mediaButtons' => false,
+                    'quicktags'    => true,
+                    'tinymce'      => [
+                        'wpautop' => true,
+                        'height'  => 240,
+                    ],
+                ],
             ]
         );
     }

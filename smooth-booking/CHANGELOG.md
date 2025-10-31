@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.13.1] - 2025-05-15
+### Fixed
+- Ensure the email notification drawer re-prepares the TinyMCE editor when opened so the "Add new notification" action no longer triggers asynchronous listener errors. Editor assets are now enqueued explicitly and the instance is refreshed after the drawer becomes visible.
+
 # [0.13.0] - 2025-05-01
 ### Added
 - Calendar admin workspace presenting per-location employee columns, configurable slot length, colour-coded appointments, and inline booking modal with edit/delete affordances.
