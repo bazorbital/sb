@@ -68,7 +68,6 @@ use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
-use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
 use SmoothBooking\Rest\LocationsController;
@@ -324,7 +323,6 @@ class ServiceProvider {
             return new CalendarService(
                 $container->get( AppointmentService::class ),
                 $container->get( EmployeeService::class ),
-                $container->get( ServiceService::class ),
                 $container->get( BusinessHoursService::class ),
                 $container->get( LocationService::class ),
                 $container->get( GeneralSettings::class )
