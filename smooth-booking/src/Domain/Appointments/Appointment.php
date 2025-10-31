@@ -33,6 +33,11 @@ class Appointment {
     private ?string $service_name = null;
 
     /**
+     * Service color hex code.
+     */
+    private ?string $service_color = null;
+
+    /**
      * Provider (employee) identifier.
      */
     private ?int $employee_id = null;
@@ -147,6 +152,7 @@ class Appointment {
         $self->id                   = (int) $row['booking_id'];
         $self->service_id           = isset( $row['service_id'] ) ? (int) $row['service_id'] : null;
         $self->service_name         = isset( $row['service_name'] ) ? (string) $row['service_name'] : null;
+        $self->service_color        = isset( $row['service_color'] ) && '' !== $row['service_color'] ? (string) $row['service_color'] : null;
         $self->employee_id          = isset( $row['employee_id'] ) ? (int) $row['employee_id'] : null;
         $self->employee_name        = isset( $row['employee_name'] ) ? (string) $row['employee_name'] : null;
         $self->customer_id          = isset( $row['customer_id'] ) && '' !== $row['customer_id'] ? (int) $row['customer_id'] : null;
@@ -182,6 +188,7 @@ class Appointment {
             'id'                     => $this->id,
             'service_id'             => $this->service_id,
             'service_name'           => $this->service_name,
+            'service_color'          => $this->service_color,
             'employee_id'            => $this->employee_id,
             'employee_name'          => $this->employee_name,
             'customer_id'            => $this->customer_id,
@@ -226,6 +233,10 @@ class Appointment {
      */
     public function get_service_name(): ?string {
         return $this->service_name;
+    }
+
+    public function get_service_color(): ?string {
+        return $this->service_color;
     }
 
     /**

@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.12.0
+Stable tag: 0.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,7 @@ Administrators can now configure per-location holidays from a yearly calendar, i
 Administrators gain a dedicated **Locations** workspace to capture physical or virtual venues with media-powered profile images, address/phone/email/website fields, industry selection, event toggles, company details, and soft delete/restore workflows powering business hours, holidays, REST, and CLI automation.
 Administrators can assign employees to one or more locations, toggle service availability with custom price overrides, and configure per-day working hours with optional breaks directly inside the Employees drawer.
 Administrators can manage booking-related email notifications, choose recipients, restrict by services, attach ICS files, and design HTML/Text content with placeholder codes. Email delivery preferences are configurable under **Smooth Booking → Settings → Email**, including SMTP credentials, retry periods, and test-sending.
+Administrators gain a dedicated **Calendar** view under **Smooth Booking → Calendar** to inspect each location's day-at-a-glance schedule with employee columns, configurable time-slot granularity, appointment colour-coding from service palettes, inline creation via modal, and quick edit/delete affordances.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
@@ -40,6 +41,11 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.13.0 =
+* Added a Calendar workspace that renders location-specific employee columns, configurable time slots, colour-coded appointments, and inline creation/edit/delete actions surfaced through the shared appointment modal.
+* Introduced General settings for time-slot length that drive both the appointment forms and calendar grid, alongside repository support for retrieving employee appointments within a daily range.
+* Extended appointment entities with service colour metadata, delivered dedicated calendar JavaScript/CSS assets, and shipped PHPUnit coverage for the new settings sanitisation and calendar aggregation logic.
+
 = 0.12.0 =
 * Revamped the Employees drawer with tabbed General, Location, Services, and Schedule sections so administrators can manage locations, visibility, service availability, and working hours from a single panel.
 * Added per-employee service price overrides with validation to prevent negative or non-numeric entries and persisted overrides in the repository layer.

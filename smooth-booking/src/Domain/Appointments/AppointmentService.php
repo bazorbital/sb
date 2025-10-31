@@ -239,6 +239,27 @@ class AppointmentService {
     }
 
     /**
+     * Retrieve appointments for a set of employees within a range.
+     *
+     * @param int[]             $employee_ids Employee identifiers.
+     * @param DateTimeImmutable $from         Start datetime.
+     * @param DateTimeImmutable $to           End datetime.
+     *
+     * @return Appointment[]
+     */
+    public function get_appointments_for_employees( array $employee_ids, DateTimeImmutable $from, DateTimeImmutable $to ): array {
+        if ( empty( $employee_ids ) ) {
+            return [];
+        }
+
+        return $this->repository->get_for_employees_in_range(
+            $employee_ids,
+            $from->format( 'Y-m-d H:i:s' ),
+            $to->format( 'Y-m-d H:i:s' )
+        );
+    }
+
+    /**
      * Validate incoming payload and normalize data for persistence.
      *
      * @param array<string, mixed> $data     Submitted data.

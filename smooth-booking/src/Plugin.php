@@ -8,6 +8,7 @@
 namespace SmoothBooking;
 
 use SmoothBooking\Admin\AppointmentsPage;
+use SmoothBooking\Admin\CalendarPage;
 use SmoothBooking\Admin\CustomersPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\LocationsPage;
@@ -28,6 +29,7 @@ use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Rest\AppointmentsController;
+use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
@@ -111,6 +113,8 @@ class Plugin {
         $employees_page = $this->container->get( EmployeesPage::class );
         /** @var AppointmentsPage $appointments_page */
         $appointments_page = $this->container->get( AppointmentsPage::class );
+        /** @var CalendarPage $calendar_page */
+        $calendar_page = $this->container->get( CalendarPage::class );
         /** @var CustomersPage $customers_page */
         $customers_page = $this->container->get( CustomersPage::class );
         /** @var ServicesPage $services_page */
@@ -137,6 +141,8 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_delete_appointment', [ $appointments_page, 'handle_delete' ] );
         add_action( 'admin_post_smooth_booking_restore_appointment', [ $appointments_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $appointments_page, 'enqueue_assets' ] );
+
+        add_action( 'admin_enqueue_scripts', [ $calendar_page, 'enqueue_assets' ] );
 
         add_action( 'admin_post_smooth_booking_save_customer', [ $customers_page, 'handle_save' ] );
         add_action( 'admin_post_smooth_booking_delete_customer', [ $customers_page, 'handle_delete' ] );
@@ -274,6 +280,10 @@ class Plugin {
         /** @var AppointmentsController $appointments */
         $appointments = $this->container->get( AppointmentsController::class );
         $appointments->register_routes();
+
+        /** @var CalendarController $calendar */
+        $calendar = $this->container->get( CalendarController::class );
+        $calendar->register_routes();
     }
 
     /**
