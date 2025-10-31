@@ -385,7 +385,7 @@ class Service {
     /**
      * Get providers.
      *
-     * @return array<int, array{employee_id:int, order:int}>
+     * @return array<int, array{employee_id:int, order:int, price:float|null}>
      */
     public function get_providers(): array {
         return $this->providers;
@@ -413,6 +413,8 @@ class Service {
 
     /**
      * Attach providers.
+     *
+     * @param array<int, array{employee_id:int, order:int, price:float|null}> $providers Providers to attach.
      */
     public function with_providers( array $providers ): self {
         $clone            = clone $this;

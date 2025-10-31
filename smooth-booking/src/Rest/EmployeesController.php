@@ -191,6 +191,9 @@ class EmployeesController {
             'visibility'       => $params['visibility'] ?? 'public',
             'category_ids'     => $params['category_ids'] ?? [],
             'new_categories'   => $params['new_categories'] ?? '',
+            'locations'        => $params['locations'] ?? [],
+            'services'         => $params['services'] ?? [],
+            'schedule'         => $params['schedule'] ?? [],
         ];
     }
 }

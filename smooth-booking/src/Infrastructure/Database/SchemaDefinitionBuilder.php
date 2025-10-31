@@ -222,6 +222,7 @@ class SchemaDefinitionBuilder {
                 service_id BIGINT UNSIGNED NOT NULL,
                 employee_id BIGINT UNSIGNED NOT NULL,
                 provider_order INT NOT NULL DEFAULT 0,
+                price_override DECIMAL(10,2) NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY  (service_id, employee_id),
@@ -309,6 +310,21 @@ class SchemaDefinitionBuilder {
                 is_off_day TINYINT(1) NOT NULL DEFAULT 0,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 PRIMARY KEY  (working_hour_id),
+                KEY employee_day (employee_id, day_of_week)
+            ) %2$s;',
+            $prefix,
+            $options
+        );
+
+        $tables['employee_breaks'] = sprintf(
+            'CREATE TABLE %1$ssmooth_employee_breaks (
+                break_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                employee_id BIGINT UNSIGNED NOT NULL,
+                day_of_week TINYINT NOT NULL,
+                start_time TIME NOT NULL,
+                end_time TIME NOT NULL,
+                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                PRIMARY KEY  (break_id),
                 KEY employee_day (employee_id, day_of_week)
             ) %2$s;',
             $prefix,

@@ -73,4 +73,61 @@ interface EmployeeRepositoryInterface {
      * @return Employee|WP_Error
      */
     public function restore( int $employee_id );
+
+    /**
+     * Retrieve location assignments for an employee.
+     *
+     * @param int $employee_id Employee identifier.
+     *
+     * @return int[]
+     */
+    public function get_employee_locations( int $employee_id ): array;
+
+    /**
+     * Synchronize location assignments for an employee.
+     *
+     * @param int   $employee_id  Employee identifier.
+     * @param int[] $location_ids Location identifiers to assign.
+     *
+     * @return true|WP_Error
+     */
+    public function sync_employee_locations( int $employee_id, array $location_ids );
+
+    /**
+     * Retrieve service assignments for an employee.
+     *
+     * @param int $employee_id Employee identifier.
+     *
+     * @return array<int, array{service_id:int, order:int, price:float|null}>
+     */
+    public function get_employee_services( int $employee_id ): array;
+
+    /**
+     * Synchronize service assignments for an employee.
+     *
+     * @param int   $employee_id Employee identifier.
+     * @param array<int, array{service_id:int, order:int, price:float|null}> $services Services to assign.
+     *
+     * @return true|WP_Error
+     */
+    public function sync_employee_services( int $employee_id, array $services );
+
+    /**
+     * Retrieve stored working schedule for an employee.
+     *
+     * @param int $employee_id Employee identifier.
+     *
+     * @return array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>
+     */
+    public function get_employee_schedule( int $employee_id ): array;
+
+    /**
+     * Persist working schedule for an employee.
+     *
+     * @param int   $employee_id Employee identifier.
+     * @param array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}> $schedule Schedule to store.
+     *
+     * @return true|WP_Error
+     */
+    public function save_employee_schedule( int $employee_id, array $schedule );
 }

@@ -8,10 +8,36 @@
 namespace SmoothBooking\Admin;
 
 use SmoothBooking\Domain\Employees\Employee;
+use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
 use SmoothBooking\Domain\Employees\EmployeeCategory;
 use SmoothBooking\Domain\Employees\EmployeeService;
-use function is_rtl;
+use SmoothBooking\Domain\Locations\Location;
+use SmoothBooking\Domain\Locations\LocationService;
+use SmoothBooking\Domain\Services\Service;
+use SmoothBooking\Domain\Services\ServiceCategory;
+use SmoothBooking\Domain\Services\ServiceService;
+use WP_Error;
+use function abs;
+use function absint;
+use function array_filter;
+use function array_map;
+use function esc_attr;
+use function esc_attr_e;
+use function esc_html;
+use function esc_html__;
+use function esc_html_e;
+use function is_array;
+use function is_wp_error;
+use function number_format_i18n;
 use function plugins_url;
+use function preg_match;
+use function round;
+use function sanitize_key;
+use function substr;
+use function trim;
+use function wp_localize_script;
+use function wp_safe_redirect;
+use function wp_unslash;
 
 /**
  * Renders and handles the employees management interface.
@@ -39,10 +65,28 @@ class EmployeesPage {
     private EmployeeService $service;
 
     /**
+     * @var LocationService
+     */
+    private LocationService $location_service;
+
+    /**
+     * @var ServiceService
+     */
+    private ServiceService $service_service;
+
+    /**
+     * @var BusinessHoursService
+     */
+    private BusinessHoursService $business_hours_service;
+
+    /**
      * Constructor.
      */
-    public function __construct( EmployeeService $service ) {
-        $this->service = $service;
+    public function __construct( EmployeeService $service, LocationService $location_service, ServiceService $service_service, BusinessHoursService $business_hours_service ) {
+        $this->service                 = $service;
+        $this->location_service        = $location_service;
+        $this->service_service         = $service_service;
+        $this->business_hours_service  = $business_hours_service;
     }
 
     /**
@@ -78,6 +122,31 @@ class EmployeesPage {
             ]
         );
         $categories = $this->service->list_categories();
+        $locations  = $this->location_service->list_locations();
+        $service_categories = $this->service_service->list_categories();
+        $services          = $this->service_service->list_services();
+        $service_groups    = $this->group_services_by_category( $service_categories, $services );
+        $days              = $this->business_hours_service->get_days();
+        $location_schedules = $this->build_location_schedule_map( $locations );
+
+        wp_localize_script(
+            'smooth-booking-admin-employees',
+            'SmoothBookingEmployees',
+            [
+                'confirmDelete'    => __( 'Are you sure you want to delete this employee?', 'smooth-booking' ),
+                'chooseImage'      => __( 'Select profile image', 'smooth-booking' ),
+                'useImage'         => __( 'Use image', 'smooth-booking' ),
+                'removeImage'      => __( 'Remove image', 'smooth-booking' ),
+                'placeholderHtml'  => $this->get_avatar_html( null, esc_html__( 'Employee avatar', 'smooth-booking' ) ),
+                'locationSchedules'=> $this->prepare_location_schedule_for_js( $location_schedules ),
+                'scheduleDays'     => $this->prepare_schedule_days_for_js( $days ),
+                'strings'          => [
+                    'removeBreak'  => __( 'Remove this break?', 'smooth-booking' ),
+                    'copySchedule' => __( 'Copy this schedule to all following days?', 'smooth-booking' ),
+                    'applyLocation'=> __( 'Replace the schedule with the selected location hours?', 'smooth-booking' ),
+                ],
+            ]
+        );
 
         $should_open_form  = $editing_employee instanceof Employee;
         $form_container_id = 'smooth-booking-employee-form-panel';
@@ -113,7 +182,7 @@ class EmployeesPage {
             <?php endif; ?>
 
             <div id="<?php echo esc_attr( $form_container_id ); ?>" class="smooth-booking-form-drawer smooth-booking-employee-form-drawer<?php echo $should_open_form ? ' is-open' : ''; ?>" data-context="employee-form" data-focus-selector="#smooth-booking-employee-name">
-                <?php $this->render_employee_form( $editing_employee, $categories ); ?>
+                <?php $this->render_employee_form( $editing_employee, $categories, $locations, $service_groups, $days, $location_schedules ); ?>
             </div>
 
             <h2><?php echo esc_html__( 'Employee list', 'smooth-booking' ); ?></h2>
@@ -275,6 +344,9 @@ class EmployeesPage {
             'visibility'       => isset( $_POST['employee_visibility'] ) ? wp_unslash( (string) $_POST['employee_visibility'] ) : 'public',
             'category_ids'     => isset( $_POST['employee_categories'] ) ? array_map( 'wp_unslash', (array) $_POST['employee_categories'] ) : [],
             'new_categories'   => isset( $_POST['employee_new_categories'] ) ? wp_unslash( (string) $_POST['employee_new_categories'] ) : '',
+            'locations'        => isset( $_POST['employee_locations'] ) ? array_map( 'wp_unslash', (array) $_POST['employee_locations'] ) : [],
+            'services'         => isset( $_POST['employee_services'] ) ? wp_unslash( (array) $_POST['employee_services'] ) : [],
+            'schedule'         => isset( $_POST['employee_schedule'] ) ? wp_unslash( (array) $_POST['employee_schedule'] ) : [],
         ];
 
         $result = $employee_id > 0
@@ -397,17 +469,6 @@ class EmployeesPage {
             true
         );
 
-        wp_localize_script(
-            'smooth-booking-admin-employees',
-            'SmoothBookingEmployees',
-            [
-                'confirmDelete'   => __( 'Are you sure you want to delete this employee?', 'smooth-booking' ),
-                'chooseImage'     => __( 'Select profile image', 'smooth-booking' ),
-                'useImage'        => __( 'Use image', 'smooth-booking' ),
-                'removeImage'     => __( 'Remove image', 'smooth-booking' ),
-                'placeholderHtml' => $this->get_avatar_html( null, esc_html__( 'Employee avatar', 'smooth-booking' ) ),
-            ]
-        );
     }
 
     /**
@@ -415,7 +476,7 @@ class EmployeesPage {
      *
      * @param Employee|null $employee Employee being edited or null for creation.
      */
-    private function render_employee_form( ?Employee $employee, array $all_categories ): void {
+    private function render_employee_form( ?Employee $employee, array $all_categories, array $locations, array $service_groups, array $days, array $location_schedules ): void {
         $is_edit = null !== $employee;
 
         $name               = $is_edit ? $employee->get_name() : '';
@@ -434,6 +495,31 @@ class EmployeesPage {
                 $employee->get_categories()
             )
             : [];
+
+        $selected_locations = $is_edit ? $employee->get_location_ids() : [];
+        $assigned_services  = [];
+
+        if ( $is_edit ) {
+            foreach ( $employee->get_services() as $assignment ) {
+                if ( isset( $assignment['service_id'] ) ) {
+                    $assigned_services[ (int) $assignment['service_id'] ] = $assignment;
+                }
+            }
+        }
+
+        $schedule = $this->normalize_schedule_for_view( $is_edit ? $employee->get_schedule() : [] );
+
+        if ( $this->schedule_is_empty( $schedule ) ) {
+            $default_location_id = ! empty( $selected_locations )
+                ? (int) $selected_locations[0]
+                : (int) array_key_first( $location_schedules );
+
+            if ( $default_location_id && isset( $location_schedules[ $default_location_id ] ) ) {
+                $schedule = $this->normalize_schedule_for_view( $location_schedules[ $default_location_id ] );
+            }
+        }
+
+        $schedule = $this->normalize_schedule_for_view( $schedule );
         ?>
         <div class="smooth-booking-employee-form-card smooth-booking-card">
             <div class="smooth-booking-form-header">
@@ -457,101 +543,273 @@ class EmployeesPage {
                     <input type="hidden" name="employee_id" value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" />
                 <?php endif; ?>
 
-                <table class="form-table" role="presentation">
-                    <tbody>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-name"><?php esc_html_e( 'Name', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="text" class="regular-text" id="smooth-booking-employee-name" name="employee_name" value="<?php echo esc_attr( $name ); ?>" required />
-                                <p class="description"><?php esc_html_e( 'Full name as visible to customers.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php esc_html_e( 'Profile image', 'smooth-booking' ); ?></th>
-                            <td>
-                                <div class="smooth-booking-avatar-field" data-placeholder="<?php echo esc_attr( $this->get_avatar_html( null, $name ?: esc_html__( 'Employee avatar', 'smooth-booking' ) ) ); ?>">
-                                    <div class="smooth-booking-avatar-preview">
-                                        <?php echo $this->get_avatar_html( $profile_image_id ? $profile_image_id : null, $name ?: esc_html__( 'Employee avatar', 'smooth-booking' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <div class="smooth-booking-form-sections">
+                    <div class="smooth-booking-form-tabs" role="tablist">
+                        <button type="button" class="smooth-booking-form-tab is-active" id="smooth-booking-employee-tab-general" data-target="smooth-booking-employee-section-general" role="tab" aria-controls="smooth-booking-employee-section-general" aria-selected="true">
+                            <?php esc_html_e( 'General', 'smooth-booking' ); ?>
+                        </button>
+                        <button type="button" class="smooth-booking-form-tab" id="smooth-booking-employee-tab-locations" data-target="smooth-booking-employee-section-locations" role="tab" aria-controls="smooth-booking-employee-section-locations" aria-selected="false">
+                            <?php esc_html_e( 'Location', 'smooth-booking' ); ?>
+                        </button>
+                        <button type="button" class="smooth-booking-form-tab" id="smooth-booking-employee-tab-services" data-target="smooth-booking-employee-section-services" role="tab" aria-controls="smooth-booking-employee-section-services" aria-selected="false">
+                            <?php esc_html_e( 'Services', 'smooth-booking' ); ?>
+                        </button>
+                        <button type="button" class="smooth-booking-form-tab" id="smooth-booking-employee-tab-schedule" data-target="smooth-booking-employee-section-schedule" role="tab" aria-controls="smooth-booking-employee-section-schedule" aria-selected="false">
+                            <?php esc_html_e( 'Schedule', 'smooth-booking' ); ?>
+                        </button>
+                    </div>
+                    <div class="smooth-booking-form-panels">
+                        <section id="smooth-booking-employee-section-general" class="smooth-booking-form-panel is-active" role="tabpanel" aria-labelledby="smooth-booking-employee-tab-general">
+                            <table class="form-table" role="presentation">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-name"><?php esc_html_e( 'Name', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="text" class="regular-text" id="smooth-booking-employee-name" name="employee_name" value="<?php echo esc_attr( $name ); ?>" required />
+                                            <p class="description"><?php esc_html_e( 'Full name as visible to customers.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><?php esc_html_e( 'Profile image', 'smooth-booking' ); ?></th>
+                                        <td>
+                                            <div class="smooth-booking-avatar-field" data-placeholder="<?php echo esc_attr( $this->get_avatar_html( null, $name ?: esc_html__( 'Employee avatar', 'smooth-booking' ) ) ); ?>">
+                                                <div class="smooth-booking-avatar-preview">
+                                                    <?php echo $this->get_avatar_html( $profile_image_id ? $profile_image_id : null, $name ?: esc_html__( 'Employee avatar', 'smooth-booking' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                                </div>
+                                                <input type="hidden" name="employee_profile_image_id" id="smooth-booking-employee-profile-image" value="<?php echo esc_attr( (string) $profile_image_id ); ?>" />
+                                                <button type="button" class="sba-btn sba-btn__small sba-btn__filled smooth-booking-avatar-select"><?php esc_html_e( 'Select image', 'smooth-booking' ); ?></button>
+                                                <button type="button" class="sba-btn sba-btn__small sba-btn__filled-light smooth-booking-avatar-remove" <?php if ( ! $profile_image_id ) : ?>style="display:none"<?php endif; ?>><?php esc_html_e( 'Remove image', 'smooth-booking' ); ?></button>
+                                            </div>
+                                            <p class="description"><?php esc_html_e( 'Choose a profile picture to display alongside the employee.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-email"><?php esc_html_e( 'Email', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="email" class="regular-text" id="smooth-booking-employee-email" name="employee_email" value="<?php echo esc_attr( $email ); ?>" />
+                                            <p class="description"><?php esc_html_e( 'Notifications will be sent to this address.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="text" class="regular-text" id="smooth-booking-employee-phone" name="employee_phone" value="<?php echo esc_attr( $phone ); ?>" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-specialization"><?php esc_html_e( 'Specialization', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="text" class="regular-text" id="smooth-booking-employee-specialization" name="employee_specialization" value="<?php echo esc_attr( $specialization ); ?>" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-visibility"><?php esc_html_e( 'Visibility', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <select id="smooth-booking-employee-visibility" name="employee_visibility">
+                                                <option value="public" <?php selected( $visibility, 'public' ); ?>><?php esc_html_e( 'Public', 'smooth-booking' ); ?></option>
+                                                <option value="private" <?php selected( $visibility, 'private' ); ?>><?php esc_html_e( 'Private', 'smooth-booking' ); ?></option>
+                                                <option value="archived" <?php selected( $visibility, 'archived' ); ?>><?php esc_html_e( 'Archived', 'smooth-booking' ); ?></option>
+                                            </select>
+                                            <p class="description"><?php esc_html_e( 'Archived employees remain hidden from booking interfaces but stay in the directory.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-default-color"><?php esc_html_e( 'Default color', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="text" class="smooth-booking-color-field" id="smooth-booking-employee-default-color" name="employee_default_color" value="<?php echo esc_attr( $default_color ); ?>" data-default-color="#2271b1" />
+                                            <p class="description"><?php esc_html_e( 'Used for calendars and highlighting the employee in widgets.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><?php esc_html_e( 'Online booking availability', 'smooth-booking' ); ?></th>
+                                        <td>
+                                            <label for="smooth-booking-employee-available-online">
+                                                <input type="checkbox" id="smooth-booking-employee-available-online" name="employee_available_online" value="1" <?php checked( $available ); ?> />
+                                                <?php esc_html_e( 'Employee can be booked online by customers.', 'smooth-booking' ); ?>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-categories"><?php esc_html_e( 'Categories', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <select id="smooth-booking-employee-categories" name="employee_categories[]" multiple size="5" class="smooth-booking-category-select">
+                                                <?php if ( empty( $all_categories ) ) : ?>
+                                                    <option value="" disabled><?php esc_html_e( 'No categories available yet.', 'smooth-booking' ); ?></option>
+                                                <?php else : ?>
+                                                    <?php foreach ( $all_categories as $category ) : ?>
+                                                        <option value="<?php echo esc_attr( (string) $category->get_id() ); ?>" <?php selected( in_array( $category->get_id(), $selected_categories, true ) ); ?>>
+                                                            <?php echo esc_html( $category->get_name() ); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
+                                            </select>
+                                            <p class="description"><?php esc_html_e( 'Hold Control (Windows) or Command (macOS) to select multiple categories.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="smooth-booking-employee-new-categories"><?php esc_html_e( 'Add new categories', 'smooth-booking' ); ?></label></th>
+                                        <td>
+                                            <input type="text" class="regular-text" id="smooth-booking-employee-new-categories" name="employee_new_categories" value="" placeholder="<?php esc_attr_e( 'e.g. General; Orthodontist', 'smooth-booking' ); ?>" />
+                                            <p class="description"><?php esc_html_e( 'Separate multiple categories with commas, semicolons or new lines.', 'smooth-booking' ); ?></p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
+                        <section id="smooth-booking-employee-section-locations" class="smooth-booking-form-panel" role="tabpanel" aria-labelledby="smooth-booking-employee-tab-locations" hidden>
+                            <?php if ( empty( $locations ) ) : ?>
+                                <p class="description"><?php esc_html_e( 'Create a location first to assign employees.', 'smooth-booking' ); ?></p>
+                            <?php else : ?>
+                                <p class="description"><?php esc_html_e( 'Select the locations where this employee is available.', 'smooth-booking' ); ?></p>
+                                <ul class="smooth-booking-location-list">
+                                    <?php foreach ( $locations as $location ) : ?>
+                                        <?php if ( ! $location instanceof Location ) { continue; } ?>
+                                        <li class="smooth-booking-location-option">
+                                            <label>
+                                                <input type="checkbox" name="employee_locations[]" value="<?php echo esc_attr( (string) $location->get_id() ); ?>" <?php checked( in_array( $location->get_id(), $selected_locations, true ) ); ?> />
+                                                <span><?php echo esc_html( $location->get_name() ); ?></span>
+                                            </label>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </section>
+                        <section id="smooth-booking-employee-section-services" class="smooth-booking-form-panel" role="tabpanel" aria-labelledby="smooth-booking-employee-tab-services" hidden>
+                            <p class="description"><?php esc_html_e( 'Choose which services this employee can perform and override pricing if needed.', 'smooth-booking' ); ?></p>
+                            <div class="smooth-booking-services">
+                                <?php foreach ( $service_groups as $group_key => $group ) : ?>
+                                    <?php
+                                    $category      = $group['category'];
+                                    $category_id   = $category instanceof ServiceCategory ? (string) $category->get_id() : 'uncategorized';
+                                    $category_name = $category instanceof ServiceCategory ? $category->get_name() : esc_html__( 'Uncategorized services', 'smooth-booking' );
+                                    $all_selected  = $this->is_service_group_selected( $group['services'], $assigned_services );
+                                    ?>
+                                    <div class="smooth-booking-services-group" data-category="<?php echo esc_attr( $category_id ); ?>">
+                                        <div class="smooth-booking-services-group__header">
+                                            <label>
+                                                <input type="checkbox" class="smooth-booking-services-group-toggle" data-category="<?php echo esc_attr( $category_id ); ?>" <?php checked( $all_selected ); ?> />
+                                                <span><?php echo esc_html( $category_name ); ?></span>
+                                            </label>
+                                        </div>
+                                        <div class="smooth-booking-services-group__items">
+                                            <?php if ( empty( $group['services'] ) ) : ?>
+                                                <p class="description"><?php esc_html_e( 'No services available in this category yet.', 'smooth-booking' ); ?></p>
+                                            <?php else : ?>
+                                                <?php foreach ( $group['services'] as $service ) : ?>
+                                                    <?php if ( ! $service instanceof Service ) { continue; } ?>
+                                                    <?php
+                                                    $service_id   = $service->get_id();
+                                                    $is_selected  = isset( $assigned_services[ $service_id ] );
+                                                    $override     = $is_selected ? $assigned_services[ $service_id ]['price'] : null;
+                                                    ?>
+                                                    <div class="smooth-booking-service-item" data-category="<?php echo esc_attr( $category_id ); ?>">
+                                                        <label class="smooth-booking-service-item__name">
+                                                            <input type="checkbox" name="employee_services[<?php echo esc_attr( (string) $service_id ); ?>][selected]" value="1" class="smooth-booking-service-toggle" data-category="<?php echo esc_attr( $category_id ); ?>" <?php checked( $is_selected ); ?> />
+                                                            <span><?php echo esc_html( $service->get_name() ); ?></span>
+                                                        </label>
+                                                        <div class="smooth-booking-service-item__pricing">
+                                                            <span class="smooth-booking-service-item__base"><?php echo esc_html( sprintf( /* translators: %s: base service price. */ __( 'Base: %s', 'smooth-booking' ), $this->format_service_price( $service->get_price() ) ) ); ?></span>
+                                                            <label class="screen-reader-text" for="smooth-booking-service-price-<?php echo esc_attr( (string) $service_id ); ?>"><?php esc_html_e( 'Custom price', 'smooth-booking' ); ?></label>
+                                                            <input type="number" id="smooth-booking-service-price-<?php echo esc_attr( (string) $service_id ); ?>" name="employee_services[<?php echo esc_attr( (string) $service_id ); ?>][price]" class="small-text smooth-booking-service-price" value="<?php echo null !== $override ? esc_attr( (string) $override ) : ''; ?>" step="0.01" min="0" placeholder="<?php esc_attr_e( 'Override', 'smooth-booking' ); ?>" <?php disabled( ! $is_selected ); ?> />
+                                                        </div>
+                                                        <input type="hidden" name="employee_services[<?php echo esc_attr( (string) $service_id ); ?>][service_id]" value="<?php echo esc_attr( (string) $service_id ); ?>" />
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    <input type="hidden" name="employee_profile_image_id" id="smooth-booking-employee-profile-image" value="<?php echo esc_attr( (string) $profile_image_id ); ?>" />
-                                    <button type="button" class="sba-btn sba-btn__small sba-btn__filled smooth-booking-avatar-select"><?php esc_html_e( 'Select image', 'smooth-booking' ); ?></button>
-                                    <button type="button" class="sba-btn sba-btn__small sba-btn__filled-light smooth-booking-avatar-remove" <?php if ( ! $profile_image_id ) : ?>style="display:none"<?php endif; ?>><?php esc_html_e( 'Remove image', 'smooth-booking' ); ?></button>
-                                </div>
-                                <p class="description"><?php esc_html_e( 'Choose a profile picture to display alongside the employee.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-email"><?php esc_html_e( 'Email', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="email" class="regular-text" id="smooth-booking-employee-email" name="employee_email" value="<?php echo esc_attr( $email ); ?>" />
-                                <p class="description"><?php esc_html_e( 'Notifications will be sent to this address.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="text" class="regular-text" id="smooth-booking-employee-phone" name="employee_phone" value="<?php echo esc_attr( $phone ); ?>" />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-specialization"><?php esc_html_e( 'Specialization', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="text" class="regular-text" id="smooth-booking-employee-specialization" name="employee_specialization" value="<?php echo esc_attr( $specialization ); ?>" />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-visibility"><?php esc_html_e( 'Visibility', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <select id="smooth-booking-employee-visibility" name="employee_visibility">
-                                    <option value="public" <?php selected( $visibility, 'public' ); ?>><?php esc_html_e( 'Public', 'smooth-booking' ); ?></option>
-                                    <option value="private" <?php selected( $visibility, 'private' ); ?>><?php esc_html_e( 'Private', 'smooth-booking' ); ?></option>
-                                    <option value="archived" <?php selected( $visibility, 'archived' ); ?>><?php esc_html_e( 'Archived', 'smooth-booking' ); ?></option>
-                                </select>
-                                <p class="description"><?php esc_html_e( 'Archived employees remain hidden from booking interfaces but stay in the directory.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-default-color"><?php esc_html_e( 'Default color', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="text" class="smooth-booking-color-field" id="smooth-booking-employee-default-color" name="employee_default_color" value="<?php echo esc_attr( $default_color ); ?>" data-default-color="#2271b1" />
-                                <p class="description"><?php esc_html_e( 'Used for calendars and highlighting the employee in widgets.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php esc_html_e( 'Online booking availability', 'smooth-booking' ); ?></th>
-                            <td>
-                                <label for="smooth-booking-employee-available-online">
-                                    <input type="checkbox" id="smooth-booking-employee-available-online" name="employee_available_online" value="1" <?php checked( $available ); ?> />
-                                    <?php esc_html_e( 'Employee can be booked online by customers.', 'smooth-booking' ); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-categories"><?php esc_html_e( 'Categories', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <select id="smooth-booking-employee-categories" name="employee_categories[]" multiple size="5" class="smooth-booking-category-select">
-                                    <?php if ( empty( $all_categories ) ) : ?>
-                                        <option value="" disabled><?php esc_html_e( 'No categories available yet.', 'smooth-booking' ); ?></option>
-                                    <?php else : ?>
-                                        <?php foreach ( $all_categories as $category ) : ?>
-                                            <option value="<?php echo esc_attr( (string) $category->get_id() ); ?>" <?php selected( in_array( $category->get_id(), $selected_categories, true ) ); ?>>
-                                                <?php echo esc_html( $category->get_name() ); ?>
-                                            </option>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
+                        <section id="smooth-booking-employee-section-schedule" class="smooth-booking-form-panel" role="tabpanel" aria-labelledby="smooth-booking-employee-tab-schedule" hidden>
+                            <p class="description"><?php esc_html_e( 'Define the working hours and breaks for each day of the week.', 'smooth-booking' ); ?></p>
+                            <?php if ( ! empty( $locations ) ) : ?>
+                                <div class="smooth-booking-schedule-toolbar">
+                                    <label for="smooth-booking-schedule-location"><?php esc_html_e( 'Apply hours from location', 'smooth-booking' ); ?></label>
+                                    <select id="smooth-booking-schedule-location" class="smooth-booking-schedule-location">
+                                        <?php foreach ( $locations as $location ) : ?>
+                                            <?php if ( ! $location instanceof Location ) { continue; } ?>
+                                            <option value="<?php echo esc_attr( (string) $location->get_id() ); ?>"><?php echo esc_html( $location->get_name() ); ?></option>
                                         <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </select>
-                                <p class="description"><?php esc_html_e( 'Hold Control (Windows) or Command (macOS) to select multiple categories.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="smooth-booking-employee-new-categories"><?php esc_html_e( 'Add new categories', 'smooth-booking' ); ?></label></th>
-                            <td>
-                                <input type="text" class="regular-text" id="smooth-booking-employee-new-categories" name="employee_new_categories" value="" placeholder="<?php esc_attr_e( 'e.g. General; Orthodontist', 'smooth-booking' ); ?>" />
-                                <p class="description"><?php esc_html_e( 'Separate multiple categories with commas, semicolons or new lines.', 'smooth-booking' ); ?></p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                    </select>
+                                    <button type="button" class="button smooth-booking-schedule-apply"><?php esc_html_e( 'Apply', 'smooth-booking' ); ?></button>
+                                </div>
+                            <?php endif; ?>
+                            <div class="smooth-booking-schedule" data-break-template-target="smooth-booking-schedule-break-template">
+                                <?php foreach ( $days as $day_index => $day_info ) : ?>
+                                    <?php
+                                    if ( ! is_array( $day_info ) || ! isset( $day_info['label'] ) ) {
+                                        continue;
+                                    }
+                                    $day_id       = (int) $day_index;
+                                    $day_label    = (string) $day_info['label'];
+                                    $day_schedule = $schedule[ $day_id ] ?? [ 'start_time' => null, 'end_time' => null, 'is_off_day' => true, 'breaks' => [] ];
+                                    $is_off_day   = ! empty( $day_schedule['is_off_day'] );
+                                    $start_value  = $day_schedule['start_time'] ?? '';
+                                    $end_value    = $day_schedule['end_time'] ?? '';
+                                    $breaks       = is_array( $day_schedule['breaks'] ?? null ) ? $day_schedule['breaks'] : [];
+                                    ?>
+                                    <div class="smooth-booking-schedule-row" data-day="<?php echo esc_attr( (string) $day_id ); ?>">
+                                        <div class="smooth-booking-schedule-day"><?php echo esc_html( $day_label ); ?></div>
+                                        <div class="smooth-booking-schedule-hours">
+                                            <label>
+                                                <span class="screen-reader-text"><?php esc_html_e( 'Start time', 'smooth-booking' ); ?></span>
+                                                <input type="time" name="employee_schedule[<?php echo esc_attr( (string) $day_id ); ?>][start]" class="smooth-booking-schedule-start" value="<?php echo esc_attr( (string) $start_value ); ?>" step="300" <?php disabled( $is_off_day ); ?> />
+                                            </label>
+                                            <span class="smooth-booking-schedule-separator"><?php esc_html_e( 'to', 'smooth-booking' ); ?></span>
+                                            <label>
+                                                <span class="screen-reader-text"><?php esc_html_e( 'End time', 'smooth-booking' ); ?></span>
+                                                <input type="time" name="employee_schedule[<?php echo esc_attr( (string) $day_id ); ?>][end]" class="smooth-booking-schedule-end" value="<?php echo esc_attr( (string) $end_value ); ?>" step="300" <?php disabled( $is_off_day ); ?> />
+                                            </label>
+                                            <button type="button" class="button button-secondary smooth-booking-schedule-copy" data-day="<?php echo esc_attr( (string) $day_id ); ?>" aria-label="<?php esc_attr_e( 'Copy hours to following days', 'smooth-booking' ); ?>">
+                                                <span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
+                                            </button>
+                                        </div>
+                                        <div class="smooth-booking-schedule-actions">
+                                            <label class="smooth-booking-schedule-off">
+                                                <input type="checkbox" name="employee_schedule[<?php echo esc_attr( (string) $day_id ); ?>][is_off]" value="1" class="smooth-booking-schedule-off-toggle" <?php checked( $is_off_day ); ?> />
+                                                <span><?php esc_html_e( 'Off', 'smooth-booking' ); ?></span>
+                                            </label>
+                                            <button type="button" class="button smooth-booking-schedule-add-break" data-day="<?php echo esc_attr( (string) $day_id ); ?>" <?php if ( $is_off_day ) : ?>disabled<?php endif; ?>><?php esc_html_e( 'Add break', 'smooth-booking' ); ?></button>
+                                        </div>
+                                        <div class="smooth-booking-schedule-breaks" data-day="<?php echo esc_attr( (string) $day_id ); ?>">
+                                            <?php foreach ( $breaks as $break_index => $break ) : ?>
+                                                <?php
+                                                $break_start = isset( $break['start_time'] ) ? (string) $break['start_time'] : '';
+                                                $break_end   = isset( $break['end_time'] ) ? (string) $break['end_time'] : '';
+                                                ?>
+                                                <div class="smooth-booking-schedule-break">
+                                                    <label>
+                                                        <span class="screen-reader-text"><?php esc_html_e( 'Break start', 'smooth-booking' ); ?></span>
+                                                        <input type="time" name="employee_schedule[<?php echo esc_attr( (string) $day_id ); ?>][breaks][<?php echo esc_attr( (string) $break_index ); ?>][start]" value="<?php echo esc_attr( $break_start ); ?>" step="300" class="smooth-booking-schedule-break-start" <?php disabled( $is_off_day ); ?> />
+                                                    </label>
+                                                    <span class="smooth-booking-schedule-separator"><?php esc_html_e( 'to', 'smooth-booking' ); ?></span>
+                                                    <label>
+                                                        <span class="screen-reader-text"><?php esc_html_e( 'Break end', 'smooth-booking' ); ?></span>
+                                                        <input type="time" name="employee_schedule[<?php echo esc_attr( (string) $day_id ); ?>][breaks][<?php echo esc_attr( (string) $break_index ); ?>][end]" value="<?php echo esc_attr( $break_end ); ?>" step="300" class="smooth-booking-schedule-break-end" <?php disabled( $is_off_day ); ?> />
+                                                    </label>
+                                                    <button type="button" class="button button-link-delete smooth-booking-schedule-remove-break" aria-label="<?php esc_attr_e( 'Remove break', 'smooth-booking' ); ?>">&times;</button>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="smooth-booking-schedule-break smooth-booking-schedule-break--template" data-template="break" hidden>
+                                <label>
+                                    <span class="screen-reader-text"><?php esc_html_e( 'Break start', 'smooth-booking' ); ?></span>
+                                    <input type="time" data-break-input="start" step="300" />
+                                </label>
+                                <span class="smooth-booking-schedule-separator"><?php esc_html_e( 'to', 'smooth-booking' ); ?></span>
+                                <label>
+                                    <span class="screen-reader-text"><?php esc_html_e( 'Break end', 'smooth-booking' ); ?></span>
+                                    <input type="time" data-break-input="end" step="300" />
+                                </label>
+                                <button type="button" class="button button-link-delete smooth-booking-schedule-remove-break" aria-label="<?php esc_attr_e( 'Remove break', 'smooth-booking' ); ?>">&times;</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
 
                 <div class="smooth-booking-form-actions">
                     <?php if ( $is_edit ) : ?>
@@ -570,6 +828,369 @@ class EmployeesPage {
             </form>
         </div>
         <?php
+    }
+
+    /**
+     * Group services by category for display.
+     *
+     * @param ServiceCategory[] $categories Service categories.
+     * @param Service[]         $services   Services to group.
+     *
+     * @return array<int, array{category:?ServiceCategory,services:Service[]}>
+     */
+    private function group_services_by_category( array $categories, array $services ): array {
+        $groups       = [];
+        $order        = [];
+        $uncategorized_key = 'uncategorized';
+
+        foreach ( $categories as $category ) {
+            if ( ! $category instanceof ServiceCategory ) {
+                continue;
+            }
+
+            $key           = 'category_' . $category->get_id();
+            $groups[ $key ] = [
+                'category' => $category,
+                'services' => [],
+            ];
+            $order[]        = $key;
+        }
+
+        $groups[ $uncategorized_key ] = [
+            'category' => null,
+            'services' => [],
+        ];
+
+        foreach ( $services as $service ) {
+            if ( ! $service instanceof Service ) {
+                continue;
+            }
+
+            $service_categories = array_filter(
+                $service->get_categories(),
+                static function ( $candidate ): bool {
+                    return $candidate instanceof ServiceCategory;
+                }
+            );
+
+            if ( empty( $service_categories ) ) {
+                $groups[ $uncategorized_key ]['services'][] = $service;
+                continue;
+            }
+
+            foreach ( $service_categories as $service_category ) {
+                $key = 'category_' . $service_category->get_id();
+
+                if ( ! isset( $groups[ $key ] ) ) {
+                    $groups[ $key ] = [
+                        'category' => $service_category,
+                        'services' => [],
+                    ];
+                    $order[]      = $key;
+                }
+
+                $groups[ $key ]['services'][] = $service;
+            }
+        }
+
+        $ordered_groups = [];
+
+        foreach ( $order as $key ) {
+            if ( ! isset( $groups[ $key ] ) ) {
+                continue;
+            }
+
+            $ordered_groups[] = $groups[ $key ];
+        }
+
+        if ( ! empty( $groups[ $uncategorized_key ]['services'] ) ) {
+            $ordered_groups[] = $groups[ $uncategorized_key ];
+        }
+
+        return $ordered_groups;
+    }
+
+    /**
+     * Determine whether all services in a group are selected.
+     *
+     * @param Service[] $services           Services in the group.
+     * @param array     $assigned_services  Selected services keyed by service ID.
+     */
+    private function is_service_group_selected( array $services, array $assigned_services ): bool {
+        $has_services = false;
+
+        foreach ( $services as $service ) {
+            if ( ! $service instanceof Service ) {
+                continue;
+            }
+
+            $has_services = true;
+
+            if ( ! isset( $assigned_services[ $service->get_id() ] ) ) {
+                return false;
+            }
+        }
+
+        return $has_services;
+    }
+
+    /**
+     * Format a service price for display.
+     */
+    private function format_service_price( ?float $price ): string {
+        if ( null === $price ) {
+            return '—';
+        }
+
+        $rounded = round( $price, 2 );
+        $decimals = abs( $rounded - round( $rounded ) ) < 0.01 ? 0 : 2;
+
+        return number_format_i18n( $rounded, $decimals );
+    }
+
+    /**
+     * Build a schedule map keyed by location identifier.
+     *
+     * @param Location[] $locations Available locations.
+     *
+     * @return array<int, array<int, array{start_time:string,end_time:string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>>
+     */
+    private function build_location_schedule_map( array $locations ): array {
+        $map = [];
+
+        foreach ( $locations as $location ) {
+            if ( ! $location instanceof Location ) {
+                continue;
+            }
+
+            $hours = $this->business_hours_service->get_location_hours( $location->get_id() );
+
+            if ( is_wp_error( $hours ) ) {
+                continue;
+            }
+
+            $schedule = [];
+
+            foreach ( $hours as $day => $definition ) {
+                $day_index = (int) $day;
+
+                if ( $day_index < 1 || $day_index > 7 || ! is_array( $definition ) ) {
+                    continue;
+                }
+
+                $schedule[ $day_index ] = [
+                    'start_time' => isset( $definition['open'] ) ? (string) $definition['open'] : '',
+                    'end_time'   => isset( $definition['close'] ) ? (string) $definition['close'] : '',
+                    'is_off_day' => ! empty( $definition['is_closed'] ),
+                    'breaks'     => [],
+                ];
+            }
+
+            $map[ $location->get_id() ] = $this->normalize_schedule_for_view( $schedule );
+        }
+
+        return $map;
+    }
+
+    /**
+     * Prepare location schedules for JavaScript consumption.
+     *
+     * @param array<int, array<int, array{start_time:string,end_time:string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>> $location_schedules Location schedules.
+     *
+     * @return array<int, array<int, array{start_time:string,end_time:string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>>
+     */
+    private function prepare_location_schedule_for_js( array $location_schedules ): array {
+        $prepared = [];
+
+        foreach ( $location_schedules as $location_id => $schedule ) {
+            $location_id = (int) $location_id;
+
+            if ( $location_id <= 0 ) {
+                continue;
+            }
+
+            $normalized = $this->normalize_schedule_for_view( is_array( $schedule ) ? $schedule : [] );
+
+            foreach ( $normalized as $day => $definition ) {
+                $prepared[ $location_id ][ $day ] = [
+                    'start_time' => $definition['start_time'],
+                    'end_time'   => $definition['end_time'],
+                    'is_off_day' => ! empty( $definition['is_off_day'] ),
+                    'breaks'     => $definition['breaks'],
+                ];
+            }
+        }
+
+        return $prepared;
+    }
+
+    /**
+     * Prepare day labels for JavaScript.
+     *
+     * @param array<int, array{label:string}> $days Day definitions.
+     *
+     * @return array<int, string>
+     */
+    private function prepare_schedule_days_for_js( array $days ): array {
+        $prepared = [];
+
+        foreach ( $days as $index => $day ) {
+            if ( ! is_array( $day ) || ! isset( $day['label'] ) ) {
+                continue;
+            }
+
+            $prepared[ (int) $index ] = (string) $day['label'];
+        }
+
+        return $prepared;
+    }
+
+    /**
+     * Normalize schedule data for display.
+     *
+     * @param array<int|string, mixed> $schedule Raw schedule definition.
+     *
+     * @return array<int, array{start_time:string,end_time:string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>
+     */
+    private function normalize_schedule_for_view( array $schedule ): array {
+        $normalized = [];
+
+        for ( $day = 1; $day <= 7; $day++ ) {
+            $normalized[ $day ] = [
+                'start_time' => '',
+                'end_time'   => '',
+                'is_off_day' => true,
+                'breaks'     => [],
+            ];
+        }
+
+        foreach ( $schedule as $day => $definition ) {
+            $day_index = (int) $day;
+
+            if ( $day_index < 1 || $day_index > 7 || ! is_array( $definition ) ) {
+                continue;
+            }
+
+            $is_off = false;
+            if ( isset( $definition['is_off_day'] ) ) {
+                $is_off = (bool) $definition['is_off_day'];
+            } elseif ( isset( $definition['is_off'] ) ) {
+                $is_off = (bool) $definition['is_off'];
+            }
+
+            if ( $is_off ) {
+                $normalized[ $day_index ] = [
+                    'start_time' => '',
+                    'end_time'   => '',
+                    'is_off_day' => true,
+                    'breaks'     => [],
+                ];
+                continue;
+            }
+
+            $start_time = '';
+            if ( isset( $definition['start_time'] ) ) {
+                $start_time = $this->sanitize_schedule_time_for_display( (string) $definition['start_time'] );
+            } elseif ( isset( $definition['start'] ) ) {
+                $start_time = $this->sanitize_schedule_time_for_display( (string) $definition['start'] );
+            }
+
+            $end_time = '';
+            if ( isset( $definition['end_time'] ) ) {
+                $end_time = $this->sanitize_schedule_time_for_display( (string) $definition['end_time'] );
+            } elseif ( isset( $definition['end'] ) ) {
+                $end_time = $this->sanitize_schedule_time_for_display( (string) $definition['end'] );
+            }
+
+            if ( '' === $start_time || '' === $end_time ) {
+                $normalized[ $day_index ] = [
+                    'start_time' => '',
+                    'end_time'   => '',
+                    'is_off_day' => true,
+                    'breaks'     => [],
+                ];
+                continue;
+            }
+
+            $breaks = [];
+
+            if ( isset( $definition['breaks'] ) && is_array( $definition['breaks'] ) ) {
+                foreach ( $definition['breaks'] as $break ) {
+                    if ( ! is_array( $break ) ) {
+                        continue;
+                    }
+
+                    $break_start = '';
+                    if ( isset( $break['start_time'] ) ) {
+                        $break_start = $this->sanitize_schedule_time_for_display( (string) $break['start_time'] );
+                    } elseif ( isset( $break['start'] ) ) {
+                        $break_start = $this->sanitize_schedule_time_for_display( (string) $break['start'] );
+                    }
+
+                    $break_end = '';
+                    if ( isset( $break['end_time'] ) ) {
+                        $break_end = $this->sanitize_schedule_time_for_display( (string) $break['end_time'] );
+                    } elseif ( isset( $break['end'] ) ) {
+                        $break_end = $this->sanitize_schedule_time_for_display( (string) $break['end'] );
+                    }
+
+                    if ( '' === $break_start || '' === $break_end ) {
+                        continue;
+                    }
+
+                    $breaks[] = [
+                        'start_time' => $break_start,
+                        'end_time'   => $break_end,
+                    ];
+                }
+            }
+
+            $normalized[ $day_index ] = [
+                'start_time' => $start_time,
+                'end_time'   => $end_time,
+                'is_off_day' => false,
+                'breaks'     => $breaks,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Determine if a schedule is empty.
+     *
+     * @param array<int, array{start_time:string,end_time:string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>> $schedule Schedule definition.
+     */
+    private function schedule_is_empty( array $schedule ): bool {
+        foreach ( $schedule as $definition ) {
+            if ( ! is_array( $definition ) ) {
+                continue;
+            }
+
+            $is_off = ! empty( $definition['is_off_day'] );
+            $has_hours = ( isset( $definition['start_time'] ) && '' !== $definition['start_time'] )
+                && ( isset( $definition['end_time'] ) && '' !== $definition['end_time'] );
+            $has_breaks = ! empty( $definition['breaks'] );
+
+            if ( $has_hours || ( ! $is_off && $has_breaks ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Normalize time value for display.
+     */
+    private function sanitize_schedule_time_for_display( string $raw ): string {
+        $value = substr( trim( $raw ), 0, 5 );
+
+        if ( preg_match( '/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value ) ) {
+            return $value;
+        }
+
+        return '';
     }
 
     /**

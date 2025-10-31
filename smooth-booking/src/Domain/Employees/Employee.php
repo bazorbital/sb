@@ -74,6 +74,27 @@ class Employee {
     private array $categories;
 
     /**
+     * Assigned location identifiers.
+     *
+     * @var int[]
+     */
+    private array $location_ids;
+
+    /**
+     * Assigned services with optional price overrides.
+     *
+     * @var array<int, array{service_id:int, order:int, price:float|null}>
+     */
+    private array $services;
+
+    /**
+     * Weekly working schedule keyed by ISO-8601 day index (1 = Monday).
+     *
+     * @var array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}>>>
+     */
+    private array $schedule;
+
+    /**
      * Constructor.
      *
      * @param int         $id               Employee ID.
@@ -88,6 +109,9 @@ class Employee {
      * @param string|null           $created_at       Creation timestamp.
      * @param string|null           $updated_at       Update timestamp.
      * @param EmployeeCategory[]    $categories       Attached categories.
+     * @param int[]                 $location_ids     Assigned location identifiers.
+     * @param array<int, array{service_id:int, order:int, price:float|null}> $services Assigned services.
+     * @param array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}>}> $schedule Working schedule.
      */
     public function __construct(
         int $id,
@@ -101,7 +125,10 @@ class Employee {
         string $visibility,
         ?string $created_at,
         ?string $updated_at,
-        array $categories = []
+        array $categories = [],
+        array $location_ids = [],
+        array $services = [],
+        array $schedule = []
     ) {
         $this->id               = $id;
         $this->name             = $name;
@@ -115,6 +142,9 @@ class Employee {
         $this->created_at       = $created_at;
         $this->updated_at       = $updated_at;
         $this->categories       = $categories;
+        $this->location_ids     = $location_ids;
+        $this->services         = $services;
+        $this->schedule         = $schedule;
     }
 
     /**
@@ -136,7 +166,10 @@ class Employee {
             (string) ( $row['visibility'] ?? 'public' ),
             isset( $row['created_at'] ) ? (string) $row['created_at'] : null,
             isset( $row['updated_at'] ) ? (string) $row['updated_at'] : null,
-            $categories
+            $categories,
+            [],
+            [],
+            []
         );
     }
 
@@ -232,20 +265,73 @@ class Employee {
      * @param EmployeeCategory[] $categories Categories to assign.
      */
     public function with_categories( array $categories ): self {
-        return new self(
-            $this->id,
-            $this->name,
-            $this->email,
-            $this->phone,
-            $this->specialization,
-            $this->available_online,
-            $this->profile_image_id,
-            $this->default_color,
-            $this->visibility,
-            $this->created_at,
-            $this->updated_at,
-            $categories
-        );
+        $clone             = clone $this;
+        $clone->categories = $categories;
+
+        return $clone;
+    }
+
+    /**
+     * Retrieve assigned location identifiers.
+     *
+     * @return int[]
+     */
+    public function get_location_ids(): array {
+        return $this->location_ids;
+    }
+
+    /**
+     * Return a clone with provided location identifiers.
+     *
+     * @param int[] $location_ids Assigned locations.
+     */
+    public function with_locations( array $location_ids ): self {
+        $clone               = clone $this;
+        $clone->location_ids = array_values( $location_ids );
+
+        return $clone;
+    }
+
+    /**
+     * Retrieve assigned services.
+     *
+     * @return array<int, array{service_id:int, order:int, price:float|null}>
+     */
+    public function get_services(): array {
+        return $this->services;
+    }
+
+    /**
+     * Return a clone with provided service assignments.
+     *
+     * @param array<int, array{service_id:int, order:int, price:float|null}> $services Services to assign.
+     */
+    public function with_services( array $services ): self {
+        $clone           = clone $this;
+        $clone->services = $services;
+
+        return $clone;
+    }
+
+    /**
+     * Retrieve weekly schedule definition.
+     *
+     * @return array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>}
+     */
+    public function get_schedule(): array {
+        return $this->schedule;
+    }
+
+    /**
+     * Return a clone with provided schedule definition.
+     *
+     * @param array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}> $schedule Schedule to assign.
+     */
+    public function with_schedule( array $schedule ): self {
+        $clone          = clone $this;
+        $clone->schedule = $schedule;
+
+        return $clone;
     }
 
     /**
@@ -272,6 +358,9 @@ class Employee {
                 },
                 $this->categories
             ),
+            'locations'        => $this->location_ids,
+            'services'         => $this->services,
+            'schedule'         => $this->schedule,
         ];
     }
 }
