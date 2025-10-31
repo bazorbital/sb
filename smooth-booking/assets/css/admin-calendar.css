@@ -49,6 +49,56 @@
     overflow: hidden;
 }
 
+.smooth-booking-calendar-quickfilters {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: -12px 0 32px;
+    padding: 16px 24px;
+    background: var(--sba-cl-white);
+    border-radius: var(--sba-radius-16px);
+    box-shadow: 0 16px 44px rgba(32, 44, 69, 0.08);
+}
+
+.smooth-booking-calendar-quickfilters__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sba-dt-black-300);
+}
+
+.smooth-booking-calendar-quickfilters__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.smooth-booking-calendar-quickfilters__button {
+    border: 1px solid var(--sba-gt-gray-300);
+    background: var(--sba-gt-gray-50);
+    color: var(--sba-dt-black-300);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.smooth-booking-calendar-quickfilters__button:hover,
+.smooth-booking-calendar-quickfilters__button:focus {
+    outline: none;
+    border-color: var(--sba-pt-royal-blue);
+    color: var(--sba-pt-royal-blue);
+    box-shadow: 0 0 0 3px var(--sba-pt-royal-blue-alpha-08);
+}
+
+.smooth-booking-calendar-quickfilters__button.is-active {
+    background: var(--sba-pt-royal-blue);
+    border-color: var(--sba-pt-royal-blue);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(33, 103, 241, 0.18);
+}
+
 .smooth-booking-calendar-meta {
     display: flex;
     gap: 16px;

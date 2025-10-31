@@ -2,6 +2,17 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.15.0] - 2025-05-31
+### Changed
+- Replaced the bespoke admin calendar grid with an EventCalendar-powered timeline that renders employee columns, slot grids, and colour-coded appointments sourced from the schedule payload.
+- Localized appointment metadata, edit/delete affordances, and the booking modal launcher into the EventCalendar instance for a cohesive scheduling workflow.
+
+# [0.14.0] - 2025-05-20
+### Changed
+- Calendar admin workspace now offers service and staff filters with Select2 multi-selects, preserving selections across reloads and limiting the appointment grid to the chosen criteria.
+- Added chip-style quick buttons representing each location staff member plus an "All staff" shortcut that stay in sync with the employee filter.
+- Updated calendar rendering to hide appointments outside the selected service/provider set and surface guidance when no staff are selected, while keeping the appointment modal fed with the full employee roster.
+
 # [0.13.1] - 2025-05-15
 ### Fixed
 - Ensure the email notification drawer re-prepares the TinyMCE editor when opened so the "Add new notification" action no longer triggers asynchronous listener errors. Editor assets are now enqueued explicitly and the instance is refreshed after the drawer becomes visible.
