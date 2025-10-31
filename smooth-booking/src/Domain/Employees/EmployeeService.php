@@ -522,7 +522,7 @@ class EmployeeService {
                 continue;
             }
 
-            $selected = true;
+            $selected = false;
 
             if ( array_key_exists( 'selected', $payload ) ) {
                 $selected = (bool) rest_sanitize_boolean( $payload['selected'] );
