@@ -607,7 +607,7 @@ class SchemaDefinitionBuilder {
                 PRIMARY KEY  (template_id),
                 UNIQUE KEY uq_tpl (code, channel_id, locale),
                 KEY tpl_channel (channel_id),
-                CONSTRAINT fk_tpl_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
+                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
             ) %2$s;',
             $prefix,
             $options
@@ -633,7 +633,7 @@ class SchemaDefinitionBuilder {
                 KEY idx_rule_trigger (trigger_event, is_enabled, priority),
                 KEY idx_rule_template (template_code),
                 KEY idx_rule_location (location_id),
-                CONSTRAINT fk_rule_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
+                FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
             ) %2$s;',
             $prefix,
             $options
@@ -661,10 +661,10 @@ class SchemaDefinitionBuilder {
                 KEY idx_send_status_time (status, scheduled_at),
                 KEY idx_send_recipient (recipient_id, scheduled_at),
                 KEY idx_send_rule (rule_id),
-                CONSTRAINT fk_send_rule FOREIGN KEY (rule_id) REFERENCES %1$ssmooth_notification_rules (rule_id),
-                CONSTRAINT fk_send_recipient FOREIGN KEY (recipient_id) REFERENCES %1$ssmooth_notification_recipients (recipient_id),
-                CONSTRAINT fk_send_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id),
-                CONSTRAINT fk_send_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
+                FOREIGN KEY (rule_id) REFERENCES %1$ssmooth_notification_rules (rule_id),
+                FOREIGN KEY (recipient_id) REFERENCES %1$ssmooth_notification_recipients (recipient_id),
+                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id),
+                FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
             ) %2$s;',
             $prefix,
             $options
@@ -684,7 +684,7 @@ class SchemaDefinitionBuilder {
                 PRIMARY KEY  (attempt_id),
                 UNIQUE KEY uq_attempt_per_send (send_id, attempt_no),
                 KEY idx_attempt_provider (provider_message_id),
-                CONSTRAINT fk_attempt_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
+                FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
             ) %2$s;',
             $prefix,
             $options
@@ -699,7 +699,7 @@ class SchemaDefinitionBuilder {
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY  (suppression_id),
                 UNIQUE KEY uq_suppression (channel_id, address_hash),
-                CONSTRAINT fk_supp_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
+                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
             ) %2$s;',
             $prefix,
             $options
@@ -715,7 +715,7 @@ class SchemaDefinitionBuilder {
                 payload LONGTEXT NULL,
                 PRIMARY KEY  (event_id),
                 KEY idx_event_lookup (channel_id, event_type, occurred_at),
-                CONSTRAINT fk_event_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
+                FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
             ) %2$s;',
             $prefix,
             $options
