@@ -139,7 +139,7 @@ class CalendarPage {
                 <div class="smooth-booking-admin-header">
                     <div class="smooth-booking-admin-header__content">
                         <h1><?php echo esc_html__( 'Calendar', 'smooth-booking' ); ?></h1>
-                        <p class="description"><?php esc_html_e( 'Review today's schedule per employee and add new bookings directly from the grid.', 'smooth-booking' ); ?></p>
+                        <p class="description"><?php esc_html_e( 'Review today\'s schedule per employee and add new bookings directly from the grid.', 'smooth-booking' ); ?></p>
                     </div>
                 </div>
 
