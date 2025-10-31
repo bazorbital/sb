@@ -2,6 +2,12 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.13.0] - 2025-05-01
+### Added
+- Calendar admin workspace presenting per-location employee columns, configurable slot length, colour-coded appointments, and inline booking modal with edit/delete affordances.
+- General settings for time slot length powering appointment forms and calendar calculations, plus repository support for fetching employee appointments within a day range and appointment entities now exposing service colours.
+- Dedicated calendar JavaScript/CSS assets and PHPUnit coverage for general settings sanitisation alongside calendar aggregation logic.
+
 # [0.12.0] - 2025-04-01
 ### Added
 - Employee administration drawer now features tabbed General, Location, Services, and Schedule sections with location assignment, visibility controls, and working hours seeded from location business hours.

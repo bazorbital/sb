@@ -13,6 +13,7 @@ use SmoothBooking\Domain\Holidays\HolidayService;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\SchemaStatusService;
 use SmoothBooking\Domain\Notifications\EmailSettingsService;
+use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 
 use function __;
 use function absint;
@@ -95,13 +96,19 @@ class SettingsPage {
     private EmailSettingsService $email_settings;
 
     /**
+     * General settings accessor.
+     */
+    private GeneralSettings $general_settings;
+
+    /**
      * Constructor.
      */
-    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service, HolidayService $holiday_service, EmailSettingsService $email_settings ) {
+    public function __construct( SchemaStatusService $schema_service, BusinessHoursService $business_hours_service, HolidayService $holiday_service, EmailSettingsService $email_settings, GeneralSettings $general_settings ) {
         $this->schema_service           = $schema_service;
         $this->business_hours_service   = $business_hours_service;
         $this->holiday_service          = $holiday_service;
         $this->email_settings           = $email_settings;
+        $this->general_settings         = $general_settings;
     }
 
     /**
@@ -128,7 +135,7 @@ class SettingsPage {
             [
                 'type'              => 'array',
                 'sanitize_callback' => [ $this, 'sanitize_settings' ],
-                'default'           => [ 'auto_repair_schema' => 1 ],
+                'default'           => $this->general_settings->sanitize( [] ),
             ]
         );
 
@@ -149,6 +156,17 @@ class SettingsPage {
                 'label_for' => 'smooth-booking-auto-repair-schema',
             ]
         );
+
+        add_settings_field(
+            'smooth_booking_time_slot_length',
+            __( 'Default time slot length', 'smooth-booking' ),
+            [ $this, 'render_time_slot_length_field' ],
+            self::MENU_SLUG,
+            'smooth_booking_general_section',
+            [
+                'label_for' => 'smooth-booking-time-slot-length',
+            ]
+        );
     }
 
     /**
@@ -159,10 +177,11 @@ class SettingsPage {
      * @return array<string, int>
      */
     public function sanitize_settings( $input ): array {
-        $sanitized                              = [];
-        $sanitized['auto_repair_schema'] = empty( $input['auto_repair_schema'] ) ? 0 : 1;
+        if ( ! is_array( $input ) ) {
+            $input = [];
+        }
 
-        return $sanitized;
+        return $this->general_settings->sanitize( $input );
     }
 
     /**
@@ -1089,7 +1108,7 @@ class SettingsPage {
      * Render checkbox for auto repair setting.
      */
     public function render_auto_repair_field(): void {
-        $option         = get_option( self::OPTION_NAME, [ 'auto_repair_schema' => 1 ] );
+        $option         = $this->general_settings->get_all();
         $description_id = 'smooth-booking-auto-repair-schema-description';
         ?>
         <div class="smooth-booking-toggle-field">
@@ -1110,6 +1129,25 @@ class SettingsPage {
                 <?php esc_html_e( 'Enable this option to keep the Smooth Booking database tables healthy without manual intervention.', 'smooth-booking' ); ?>
             </p>
         </div>
+        <?php
+    }
+
+    /**
+     * Render select field for default time slot length.
+     */
+    public function render_time_slot_length_field(): void {
+        $option    = $this->general_settings->get_all();
+        $current   = isset( $option['time_slot_length'] ) ? (int) $option['time_slot_length'] : $this->general_settings->get_time_slot_length();
+        $options   = $this->general_settings->get_time_slot_length_options();
+        $field_id  = 'smooth-booking-time-slot-length';
+        $field_name = sprintf( '%s[time_slot_length]', GeneralSettings::OPTION_NAME );
+        ?>
+        <select id="<?php echo esc_attr( $field_id ); ?>" name="<?php echo esc_attr( $field_name ); ?>" class="regular-text">
+            <?php foreach ( $options as $minutes => $label ) : ?>
+                <option value="<?php echo esc_attr( (string) $minutes ); ?>" <?php selected( $current, $minutes ); ?>><?php echo esc_html( $label ); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <p class="description"><?php esc_html_e( 'Controls how the admin calendar groups rows when displaying working hours and appointment durations.', 'smooth-booking' ); ?></p>
         <?php
     }
 }

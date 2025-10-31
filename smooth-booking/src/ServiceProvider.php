@@ -9,6 +9,7 @@ namespace SmoothBooking;
 
 use SmoothBooking\Admin\AppointmentsPage;
 use SmoothBooking\Admin\CustomersPage;
+use SmoothBooking\Admin\CalendarPage;
 use SmoothBooking\Admin\EmployeesPage;
 use SmoothBooking\Admin\Menu;
 use SmoothBooking\Admin\NotificationsPage;
@@ -40,6 +41,7 @@ use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Notifications\EmailNotificationRepositoryInterface;
 use SmoothBooking\Domain\Notifications\EmailNotificationService;
 use SmoothBooking\Domain\Notifications\EmailSettingsService;
+use SmoothBooking\Domain\Calendar\CalendarService;
 use SmoothBooking\Domain\SchemaStatusService;
 use SmoothBooking\Domain\Services\ServiceCategoryRepositoryInterface;
 use SmoothBooking\Domain\Services\ServiceRepositoryInterface;
@@ -47,6 +49,7 @@ use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Domain\Services\ServiceTagRepositoryInterface;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
+use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
@@ -65,6 +68,7 @@ use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
+use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
 use SmoothBooking\Rest\LocationsController;
@@ -100,6 +104,10 @@ class ServiceProvider {
             return new SchemaStatusService(
                 $container->get( SchemaManager::class )
             );
+        } );
+
+        $container->singleton( GeneralSettings::class, static function (): GeneralSettings {
+            return new GeneralSettings();
         } );
 
         $container->singleton( EmployeeCategoryRepositoryInterface::class, static function ( ServiceContainer $container ): EmployeeCategoryRepositoryInterface {
@@ -286,7 +294,8 @@ class ServiceProvider {
                 $container->get( SchemaStatusService::class ),
                 $container->get( BusinessHoursService::class ),
                 $container->get( HolidayService::class ),
-                $container->get( EmailSettingsService::class )
+                $container->get( EmailSettingsService::class ),
+                $container->get( GeneralSettings::class )
             );
         } );
 
@@ -306,7 +315,30 @@ class ServiceProvider {
                 $container->get( AppointmentService::class ),
                 $container->get( EmployeeService::class ),
                 $container->get( ServiceService::class ),
-                $container->get( CustomerService::class )
+                $container->get( CustomerService::class ),
+                $container->get( GeneralSettings::class )
+            );
+        } );
+
+        $container->singleton( CalendarService::class, static function ( ServiceContainer $container ): CalendarService {
+            return new CalendarService(
+                $container->get( AppointmentService::class ),
+                $container->get( EmployeeService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( BusinessHoursService::class ),
+                $container->get( LocationService::class ),
+                $container->get( GeneralSettings::class )
+            );
+        } );
+
+        $container->singleton( CalendarPage::class, static function ( ServiceContainer $container ): CalendarPage {
+            return new CalendarPage(
+                $container->get( CalendarService::class ),
+                $container->get( LocationService::class ),
+                $container->get( EmployeeService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( CustomerService::class ),
+                $container->get( GeneralSettings::class )
             );
         } );
 
@@ -328,6 +360,7 @@ class ServiceProvider {
                 $container->get( ServicesPage::class ),
                 $container->get( LocationsPage::class ),
                 $container->get( AppointmentsPage::class ),
+                $container->get( CalendarPage::class ),
                 $container->get( EmployeesPage::class ),
                 $container->get( CustomersPage::class ),
                 $container->get( SettingsPage::class ),
