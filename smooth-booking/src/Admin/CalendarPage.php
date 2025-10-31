@@ -29,7 +29,6 @@ use function add_query_arg;
 use function array_filter;
 use function array_map;
 use function array_values;
-use function in_array;
 use function esc_attr;
 use function esc_attr__;
 use function esc_html;
@@ -38,15 +37,19 @@ use function esc_html_e;
 use function esc_url;
 use function esc_url_raw;
 use function get_option;
+use function in_array;
 use function is_array;
 use function is_ssl;
-use function sanitize_text_field;
-use function sprintf;
 use function plugins_url;
-use function wp_nonce_field;
-use function wp_unslash;
-use function wp_timezone;
+use function sanitize_text_field;
 use function selected;
+use function sprintf;
+use function wp_add_inline_script;
+use function wp_create_nonce;
+use function wp_json_encode;
+use function wp_nonce_field;
+use function wp_timezone;
+use function wp_unslash;
 
 /**
  * Displays a per-location calendar with employee columns.
@@ -114,6 +117,7 @@ class CalendarPage {
         $appointments_by_employee = [];
         $is_closed    = false;
         $open_time    = $selected_date->setTime( 8, 0 );
+        $close_time   = null;
         $slot_length  = $this->general_settings->get_time_slot_length();
         $selected_employee_ids = [];
         $all_employees = [];
@@ -136,6 +140,9 @@ class CalendarPage {
             $is_closed = ! empty( $schedule['is_closed'] );
             if ( isset( $schedule['open'] ) && $schedule['open'] instanceof DateTimeImmutable ) {
                 $open_time = $schedule['open'];
+            }
+            if ( isset( $schedule['close'] ) && $schedule['close'] instanceof DateTimeImmutable ) {
+                $close_time = $schedule['close'];
             }
             if ( isset( $schedule['slot_length'] ) ) {
                 $slot_length = (int) $schedule['slot_length'];
@@ -184,7 +191,7 @@ class CalendarPage {
                     <?php elseif ( $no_employee_selected ) : ?>
                         <div class="notice notice-warning"><p><?php esc_html_e( 'No staff members are selected. Use the quick filters above to display at least one employee.', 'smooth-booking' ); ?></p></div>
                     <?php else : ?>
-                        <?php $this->render_calendar_grid( $slots, $employees, $appointments_by_employee, $open_time, $slot_length, $selected_date, $timezone_string ); ?>
+                        <?php $this->render_calendar_grid( $slots, $employees, $appointments_by_employee, $open_time, $close_time, $slot_length, $selected_date, $timezone_string ); ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -222,9 +229,17 @@ class CalendarPage {
         );
 
         wp_enqueue_script(
+            'smooth-booking-event-calendar',
+            plugins_url( 'assets/js/vendor/event-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
+            [],
+            SMOOTH_BOOKING_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/js/admin-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'smooth-booking-vanilla-calendar', 'select2' ],
+            [ 'jquery', 'smooth-booking-vanilla-calendar', 'smooth-booking-event-calendar', 'select2' ],
             SMOOTH_BOOKING_VERSION,
             true
         );
@@ -330,79 +345,116 @@ class CalendarPage {
      * @param Employee[]              $employees    Employees list.
      * @param array<int,Appointment[]> $appointments_by_employee Grouped appointments.
      * @param DateTimeImmutable       $open_time    Opening datetime.
+     * @param DateTimeImmutable|null  $close_time   Closing datetime.
      * @param int                     $slot_length  Slot length in minutes.
      * @param DateTimeImmutable       $selected_date Current date.
      * @param string                  $timezone     Timezone identifier.
      */
-    private function render_calendar_grid( array $slots, array $employees, array $appointments_by_employee, DateTimeImmutable $open_time, int $slot_length, DateTimeImmutable $selected_date, string $timezone ): void {
-        $slot_count = max( 1, count( $slots ) );
+    private function render_calendar_grid( array $slots, array $employees, array $appointments_by_employee, DateTimeImmutable $open_time, ?DateTimeImmutable $close_time, int $slot_length, DateTimeImmutable $selected_date, string $timezone ): void {
+        $payload = $this->build_calendar_payload( $slots, $employees, $appointments_by_employee, $open_time, $close_time, $slot_length, $selected_date, $timezone );
+
+        if ( ! empty( $payload ) ) {
+            wp_add_inline_script(
+                'smooth-booking-admin-calendar',
+                'window.SmoothBookingCalendar = window.SmoothBookingCalendar || {}; window.SmoothBookingCalendar.data = ' . wp_json_encode( $payload ) . ';',
+                'before'
+            );
+        }
+
         $timezone_label = $timezone ? $timezone : 'UTC';
         ?>
         <div class="smooth-booking-calendar-meta">
             <span class="smooth-booking-calendar-meta__item"><?php echo esc_html( sprintf( __( 'Date: %s', 'smooth-booking' ), $selected_date->format( 'Y-m-d' ) ) ); ?></span>
             <span class="smooth-booking-calendar-meta__item"><?php echo esc_html( sprintf( __( 'Timezone: %s', 'smooth-booking' ), $timezone_label ) ); ?></span>
         </div>
-        <div class="smooth-booking-calendar-grid" style="grid-template-columns: <?php echo esc_attr( 'minmax(120px, 160px) repeat(' . count( $employees ) . ', minmax(220px, 1fr))' ); ?>">
-            <div class="smooth-booking-calendar-column smooth-booking-calendar-column--times" style="grid-template-rows: <?php echo esc_attr( 'repeat(' . $slot_count . ', var(--sbc-slot-height))' ); ?>">
-                <?php foreach ( $slots as $slot ) : ?>
-                    <div class="smooth-booking-calendar-time" aria-hidden="true"><?php echo esc_html( $slot ); ?></div>
-                <?php endforeach; ?>
-            </div>
-            <?php foreach ( $employees as $employee ) : ?>
-                <?php if ( ! $employee instanceof Employee ) { continue; } ?>
-                <?php $employee_id = $employee->get_id(); ?>
-                <div class="smooth-booking-calendar-column" data-employee-id="<?php echo esc_attr( (string) $employee_id ); ?>">
-                    <div class="smooth-booking-calendar-column__header">
-                        <span class="smooth-booking-calendar-column__title"><?php echo esc_html( $employee->get_name() ); ?></span>
-                    </div>
-                    <div class="smooth-booking-calendar-column__body" style="grid-template-rows: <?php echo esc_attr( 'repeat(' . $slot_count . ', var(--sbc-slot-height))' ); ?>">
-                        <?php foreach ( $slots as $slot ) : ?>
-                            <button type="button" class="smooth-booking-calendar-slot" data-slot="<?php echo esc_attr( $slot ); ?>" data-employee="<?php echo esc_attr( (string) $employee_id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Create appointment at %1$s for %2$s', 'smooth-booking' ), $slot, $employee->get_name() ) ); ?>"></button>
-                        <?php endforeach; ?>
-                        <?php foreach ( $appointments_by_employee[ $employee_id ] ?? [] as $appointment ) : ?>
-                            <?php if ( ! $appointment instanceof Appointment ) { continue; } ?>
-                            <?php
-                            $start_index = $this->calculate_slot_index( $open_time, $appointment->get_scheduled_start(), $slot_length, $slot_count );
-                            $span        = $this->calculate_slot_span( $appointment, $slot_length, $slot_count, $start_index );
-                            $service_color = $appointment->get_service_color() ?: '#2271b1';
-                            ?>
-                            <div
-                                class="smooth-booking-calendar-appointment"
-                                style="grid-row: <?php echo esc_attr( (string) ( $start_index + 1 ) ); ?> / span <?php echo esc_attr( (string) $span ); ?>; border-color: <?php echo esc_attr( $service_color ); ?>;"
-                                data-employee="<?php echo esc_attr( (string) $employee_id ); ?>"
-                                data-appointment="<?php echo esc_attr( (string) $appointment->get_id() ); ?>"
-                            >
-                                <span class="smooth-booking-calendar-appointment__service" style="background-color: <?php echo esc_attr( $service_color ); ?>;">
-                                    <?php echo esc_html( $appointment->get_service_name() ?? __( 'Service', 'smooth-booking' ) ); ?>
-                                </span>
-                                <span class="smooth-booking-calendar-appointment__time"><?php echo esc_html( sprintf( '%s - %s', $appointment->get_scheduled_start()->format( 'H:i' ), $appointment->get_scheduled_end()->format( 'H:i' ) ) ); ?></span>
-                                <span class="smooth-booking-calendar-appointment__customer"><?php echo esc_html( $this->format_customer_name( $appointment ) ); ?></span>
-                                <span class="smooth-booking-calendar-appointment__contact">
-                                    <?php if ( $appointment->get_customer_phone() ) : ?>
-                                        <span><?php echo esc_html( $appointment->get_customer_phone() ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( $appointment->get_customer_email() ) : ?>
-                                        <span><?php echo esc_html( $appointment->get_customer_email() ); ?></span>
-                                    <?php endif; ?>
-                                </span>
-                                <span class="smooth-booking-calendar-appointment__status"><?php echo esc_html( ucfirst( $appointment->get_status() ) ); ?></span>
-                                <div class="smooth-booking-calendar-appointment__actions">
-                                    <a class="button button-small" href="<?php echo esc_url( $this->get_edit_link( $appointment->get_id() ) ); ?>"><?php esc_html_e( 'Edit', 'smooth-booking' ); ?></a>
-                                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="smooth-booking-calendar-appointment__delete">
-                                        <?php wp_nonce_field( 'smooth_booking_delete_appointment' ); ?>
-                                        <input type="hidden" name="action" value="smooth_booking_delete_appointment" />
-                                        <input type="hidden" name="appointment_id" value="<?php echo esc_attr( (string) $appointment->get_id() ); ?>" />
-                                        <input type="hidden" name="_wp_http_referer" value="<?php echo esc_attr( $this->get_current_url() ); ?>" />
-                                        <button type="submit" class="button button-small button-link-delete"><?php esc_html_e( 'Delete', 'smooth-booking' ); ?></button>
-                                    </form>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+        <div id="smooth-booking-calendar-view" class="smooth-booking-calendar-grid"></div>
         <?php
+    }
+
+    /**
+     * Build structured data for the EventCalendar integration.
+     *
+     * @param string[]                 $slots                    Time slots labels.
+     * @param Employee[]               $employees                Visible employees.
+     * @param array<int,Appointment[]> $appointments_by_employee Appointments grouped by employee.
+     */
+    private function build_calendar_payload( array $slots, array $employees, array $appointments_by_employee, DateTimeImmutable $open_time, ?DateTimeImmutable $close_time, int $slot_length, DateTimeImmutable $selected_date, string $timezone ): array {
+        $slot_count = max( 1, count( $slots ) );
+        $resources  = [];
+
+        foreach ( $employees as $employee ) {
+            if ( ! $employee instanceof Employee ) {
+                continue;
+            }
+
+            $resources[] = [
+                'id'    => $employee->get_id(),
+                'title' => $employee->get_name(),
+            ];
+        }
+
+        $events          = [];
+        $delete_endpoint = admin_url( 'admin-post.php' );
+        $current_url     = $this->get_current_url();
+
+        foreach ( $appointments_by_employee as $employee_id => $appointments ) {
+            foreach ( $appointments as $appointment ) {
+                if ( ! $appointment instanceof Appointment ) {
+                    continue;
+                }
+
+                $start        = $appointment->get_scheduled_start();
+                $end          = $appointment->get_scheduled_end();
+                $start_index  = $this->calculate_slot_index( $open_time, $start, $slot_length, $slot_count );
+                $span         = $this->calculate_slot_span( $appointment, $slot_length, $slot_count, $start_index );
+                $service_name = $appointment->get_service_name() ?? __( 'Service', 'smooth-booking' );
+                $service_color = $appointment->get_service_color() ?: '#2271b1';
+                $customer_name = $this->format_customer_name( $appointment );
+
+                $events[] = [
+                    'id'         => $appointment->get_id(),
+                    'resourceId' => $employee_id,
+                    'start'      => $start->format( DATE_ATOM ),
+                    'end'        => $end->format( DATE_ATOM ),
+                    'startIndex' => $start_index,
+                    'span'       => $span,
+                    'service'    => $service_name,
+                    'color'      => $service_color,
+                    'timeLabel'  => sprintf( '%s - %s', $start->format( 'H:i' ), $end->format( 'H:i' ) ),
+                    'customer'   => [
+                        'name'  => $customer_name,
+                        'phone' => $appointment->get_customer_phone(),
+                        'email' => $appointment->get_customer_email(),
+                    ],
+                    'status'     => ucfirst( $appointment->get_status() ),
+                    'statusSlug' => $appointment->get_status(),
+                    'editUrl'    => $this->get_edit_link( $appointment->get_id() ),
+                    'editLabel'  => __( 'Edit', 'smooth-booking' ),
+                    'delete'     => [
+                        'endpoint'      => $delete_endpoint,
+                        'action'        => 'smooth_booking_delete_appointment',
+                        'nonce'         => wp_create_nonce( 'smooth_booking_delete_appointment' ),
+                        'appointmentId' => $appointment->get_id(),
+                        'referer'       => $current_url,
+                        'label'         => __( 'Delete', 'smooth-booking' ),
+                    ],
+                ];
+            }
+        }
+
+        return [
+            'date'       => $selected_date->format( 'Y-m-d' ),
+            'timezone'   => $timezone ?: 'UTC',
+            'slotLength' => $slot_length,
+            'openTime'   => $open_time->format( 'H:i' ),
+            'closeTime'  => $close_time instanceof DateTimeImmutable ? $close_time->format( 'H:i' ) : '',
+            'slots'      => array_values( array_map( 'strval', $slots ) ),
+            'resources'  => $resources,
+            'events'     => $events,
+            'labels'     => [
+                'slotAria' => __( 'Create appointment at %1$s for %2$s', 'smooth-booking' ),
+            ],
+        ];
     }
 
     /**

@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.15.0] - 2025-05-31
+### Changed
+- Replaced the bespoke admin calendar grid with an EventCalendar-powered timeline that renders employee columns, slot grids, and colour-coded appointments sourced from the schedule payload.
+- Localized appointment metadata, edit/delete affordances, and the booking modal launcher into the EventCalendar instance for a cohesive scheduling workflow.
+
 # [0.14.0] - 2025-05-20
 ### Changed
 - Calendar admin workspace now offers service and staff filters with Select2 multi-selects, preserving selections across reloads and limiting the appointment grid to the chosen criteria.

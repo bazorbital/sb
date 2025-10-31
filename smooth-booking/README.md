@@ -13,7 +13,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - REST API endpoint suite at `/wp-json/smooth-booking/v1/services` for listing, creating, updating, deleting, and restoring services
 - Shortcode `[smooth_booking_schema_status]` and Gutenberg block “Smooth Booking Schema Status”
 - Top-level Smooth Booking admin menu with the **Locations**, **Appointments**, **Employees**, **Customers**, and **Services** screens
-- Calendar workspace showing per-location employee columns, configurable time-slot length, service-coloured appointments, inline booking modal, quick edit/delete affordances, and Select2-powered service/location/staff filters with chip-style staff toggles
+- Calendar workspace powered by the EventCalendar library, showing per-location employee columns, configurable time-slot length, service-coloured appointments, inline booking modal, quick edit/delete affordances, and Select2-powered service/location/staff filters with chip-style staff toggles
 - Email notifications workspace with list view, drawer-based creation/editing, recipient scoping, placeholder reference table, and soft delete/disable flows plus SMTP-aware delivery settings
 - Daily cron health check
 - WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth locations <list|create|update|delete|restore>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, `wp smooth appointments <list|delete|restore>`, and `wp smooth holidays <list|add|delete>`

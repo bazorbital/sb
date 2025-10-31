@@ -99,14 +99,7 @@
         }
     }
 
-    function bindSlots() {
-        $(document).on('click', '.smooth-booking-calendar-slot', function () {
-            var employeeId = $(this).data('employee');
-            var slotTime = $(this).data('slot');
-            prepareForm(employeeId, slotTime);
-            openModal();
-        });
-
+    function bindAppointmentDelete() {
         $(document).on('click', '.smooth-booking-calendar-appointment__delete', function (event) {
             event.stopPropagation();
         });
@@ -234,6 +227,50 @@
         });
     }
 
+    function initEventCalendar() {
+        if (typeof window.EventCalendar !== 'function') {
+            return;
+        }
+
+        var container = document.getElementById('smooth-booking-calendar-view');
+        if (!container) {
+            return;
+        }
+
+        var data = settings.data || {};
+        var slots = Array.isArray(data.slots) ? data.slots : [];
+        var resources = Array.isArray(data.resources) ? data.resources : [];
+        var events = Array.isArray(data.events) ? data.events : [];
+        var labels = data.labels || {};
+
+        window.SmoothBookingCalendarInstance = new window.EventCalendar(container, {
+            slots: slots,
+            resources: resources,
+            events: events,
+            labels: labels,
+            onTimeSlotClick: function (info) {
+                prepareForm(info.resourceId, info.slot);
+                openModal();
+            },
+            onEventClick: function (info) {
+                if (!info || !info.event) {
+                    return;
+                }
+
+                if (info.originalEvent && info.originalEvent.target) {
+                    var actionable = info.originalEvent.target.closest('a, button, form');
+                    if (actionable) {
+                        return;
+                    }
+                }
+
+                if (info.event.editUrl) {
+                    window.location.href = info.event.editUrl;
+                }
+            }
+        });
+    }
+
     function initVanillaCalendar() {
         if (typeof window.VanillaCalendar !== 'function') {
             return;
@@ -266,9 +303,10 @@
     $(function () {
         initSelect2();
         syncEndOptions();
-        bindSlots();
+        bindAppointmentDelete();
         bindModalEvents();
         initVanillaCalendar();
         bindEmployeeQuickFilters();
+        initEventCalendar();
     });
 })(jQuery, window);
