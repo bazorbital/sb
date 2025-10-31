@@ -109,11 +109,6 @@ class AppointmentsPage {
     private CustomerService $customers;
 
     /**
-     * General settings accessor.
-     */
-    private GeneralSettings $general_settings;
-
-    /**
      * Constructor.
      */
     public function __construct( AppointmentService $appointments, EmployeeService $employees, ServiceService $services, CustomerService $customers, GeneralSettings $general_settings ) {
