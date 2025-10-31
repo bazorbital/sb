@@ -442,6 +442,11 @@ class ServiceRepository implements ServiceRepositoryInterface {
 
         $table = $this->get_service_provider_table();
 
+        $existing_prices = [];
+        foreach ( $this->get_providers_for_services( [ $service_id ] ) as $provider_data ) {
+            $existing_prices[ $provider_data['employee_id'] ] = $provider_data['price'];
+        }
+
         $this->wpdb->delete( $table, [ 'service_id' => $service_id ], [ '%d' ] );
 
         if ( empty( $providers ) ) {
@@ -450,6 +455,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
 
         $values       = [];
         $placeholders = [];
+        $now          = current_time( 'mysql' );
 
         foreach ( $providers as $provider ) {
             $employee_id = isset( $provider['employee_id'] ) ? (int) $provider['employee_id'] : 0;
@@ -459,20 +465,30 @@ class ServiceRepository implements ServiceRepositoryInterface {
                 continue;
             }
 
-            $values[]       = $service_id;
-            $values[]       = $employee_id;
-            $values[]       = $order;
-            $values[]       = current_time( 'mysql' );
-            $values[]       = current_time( 'mysql' );
-            $placeholders[] = '( %d, %d, %d, %s, %s )';
+            $values[] = $service_id;
+            $values[] = $employee_id;
+            $values[] = $order;
+
+            if ( isset( $provider['price'] ) && '' !== $provider['price'] ) {
+                $placeholders[] = '( %d, %d, %d, %f, %s, %s )';
+                $values[]       = (float) $provider['price'];
+            } elseif ( isset( $existing_prices[ $employee_id ] ) && null !== $existing_prices[ $employee_id ] ) {
+                $placeholders[] = '( %d, %d, %d, %f, %s, %s )';
+                $values[]       = (float) $existing_prices[ $employee_id ];
+            } else {
+                $placeholders[] = '( %d, %d, %d, NULL, %s, %s )';
+            }
+
+            $values[] = $now;
+            $values[] = $now;
         }
 
-        if ( empty( $values ) ) {
+        if ( empty( $placeholders ) ) {
             return true;
         }
 
         $sql = sprintf(
-            'INSERT INTO %1$s (service_id, employee_id, provider_order, created_at, updated_at) VALUES %2$s',
+            'INSERT INTO %1$s (service_id, employee_id, provider_order, price_override, created_at, updated_at) VALUES %2$s',
             $table,
             implode( ', ', $placeholders )
         );
@@ -588,7 +604,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
         $placeholders = implode( ',', array_fill( 0, count( $service_ids ), '%d' ) );
 
         $sql = sprintf(
-            'SELECT service_id, employee_id, provider_order FROM %1$s WHERE service_id IN (%2$s) ORDER BY provider_order ASC, employee_id ASC',
+            'SELECT service_id, employee_id, provider_order, price_override FROM %1$s WHERE service_id IN (%2$s) ORDER BY provider_order ASC, employee_id ASC',
             $table,
             $placeholders
         );
@@ -609,9 +625,15 @@ class ServiceRepository implements ServiceRepositoryInterface {
                 $map[ $service_id ] = [];
             }
 
+            $price = null;
+            if ( isset( $row['price_override'] ) && null !== $row['price_override'] && '' !== $row['price_override'] ) {
+                $price = (float) $row['price_override'];
+            }
+
             $map[ $service_id ][] = [
                 'employee_id' => (int) $row['employee_id'],
                 'order'       => (int) $row['provider_order'],
+                'price'       => $price,
             ];
         }
 

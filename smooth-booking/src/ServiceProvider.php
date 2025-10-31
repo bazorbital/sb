@@ -311,7 +311,12 @@ class ServiceProvider {
         } );
 
         $container->singleton( EmployeesPage::class, static function ( ServiceContainer $container ): EmployeesPage {
-            return new EmployeesPage( $container->get( EmployeeService::class ) );
+            return new EmployeesPage(
+                $container->get( EmployeeService::class ),
+                $container->get( LocationService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( BusinessHoursService::class )
+            );
         } );
 
         $container->singleton( CustomersPage::class, static function ( ServiceContainer $container ): CustomersPage {

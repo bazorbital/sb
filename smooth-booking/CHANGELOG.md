@@ -2,6 +2,13 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.12.0] - 2025-04-01
+### Added
+- Employee administration drawer now features tabbed General, Location, Services, and Schedule sections with location assignment, visibility controls, and working hours seeded from location business hours.
+- Per-provider service price overrides with validation and repository persistence, alongside UI affordances for enabling or disabling services per employee.
+- Weekly schedule editor supporting copy-to-all, applying location templates, and managing multiple breaks per day, backed by new JavaScript and CSS assets.
+- PHPUnit coverage for employee service pricing validation and schedule sanitisation rules.
+
 # [0.11.0] - 2025-03-01
 ### Added
 - Email notifications admin workspace with drawer-based creation/editing, recipient scoping (client, employee, administrators, custom), Select2-powered service filters, placeholder reference table, ICS attachment toggle, and soft delete/disable actions with notices.

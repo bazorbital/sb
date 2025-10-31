@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.11.0
+Stable tag: 0.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,7 @@ Smooth Booking validates and creates required database tables on activation and 
 Administrators can also define per-location business hours templates that inform new staff defaults and optional calendar visibility hours.
 Administrators can now configure per-location holidays from a yearly calendar, including date ranges, recurring closures, and color-coded statuses that surface in the admin UI and WP-CLI tooling.
 Administrators gain a dedicated **Locations** workspace to capture physical or virtual venues with media-powered profile images, address/phone/email/website fields, industry selection, event toggles, company details, and soft delete/restore workflows powering business hours, holidays, REST, and CLI automation.
+Administrators can assign employees to one or more locations, toggle service availability with custom price overrides, and configure per-day working hours with optional breaks directly inside the Employees drawer.
 Administrators can manage booking-related email notifications, choose recipients, restrict by services, attach ICS files, and design HTML/Text content with placeholder codes. Email delivery preferences are configurable under **Smooth Booking → Settings → Email**, including SMTP credentials, retry periods, and test-sending.
 
 == Installation ==
@@ -39,6 +40,13 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.12.0 =
+* Revamped the Employees drawer with tabbed General, Location, Services, and Schedule sections so administrators can manage locations, visibility, service availability, and working hours from a single panel.
+* Added per-employee service price overrides with validation to prevent negative or non-numeric entries and persisted overrides in the repository layer.
+* Introduced a weekly schedule editor that supports copying hours, applying location templates, and defining multiple breaks per day with client-side controls and server-side validation.
+* Updated admin JavaScript and CSS to power the new tab navigation, service toggles, and schedule interactions while localizing schedule data seeded from location business hours.
+* Expanded PHPUnit coverage with tests for service pricing validation and schedule sanitisation in the employee domain service.
+
 = 0.11.0 =
 * Added Email Notifications admin screen with drawer-based creation/editing, recipient targeting (client, employee, administrators, custom), per-status filters, service scoping, Select2 multi-selects, placeholder tables, and soft delete/disable workflows.
 * Introduced notification domain models, repository, and schema tables for channels, recipients, templates, rules, send jobs, attempts, suppression list, and delivery events alongside PHPUnit coverage.
@@ -100,6 +108,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 * Initial release. Creates booking schema on activation and runtime. Provides Settings API integration, REST endpoint, shortcode, Gutenberg block, cron maintenance, and WP-CLI commands for schema management.
 
 == Upgrade Notice ==
+= 0.12.0 =
+Adds location assignment, per-service price overrides, and a weekly schedule editor with breaks to the Employees workspace. Update to manage staff availability and pricing without leaving the employee drawer.
+
 = 0.11.0 =
 Adds configurable email notifications with per-recipient targeting, placeholder guidance, and SMTP-aware email settings plus location timezone support. Update to enable automated communication flows from Smooth Booking.
 

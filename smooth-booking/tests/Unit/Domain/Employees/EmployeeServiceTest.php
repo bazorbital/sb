@@ -54,6 +54,49 @@ class EmployeeServiceTest extends TestCase {
         $this->assertSame( '#ff0000', $result->get_default_color() );
         $this->assertSame( 'public', $result->get_visibility() );
     }
+
+    public function test_create_employee_rejects_non_numeric_service_price(): void {
+        $repository = new InMemoryEmployeeRepository();
+        $categories = new InMemoryEmployeeCategoryRepository();
+        $service    = new EmployeeService( $repository, $categories, new Logger( 'test' ) );
+
+        $result = $service->create_employee(
+            [
+                'name'     => 'Jane Doe',
+                'services' => [
+                    10 => [
+                        'service_id' => 10,
+                        'selected'   => '1',
+                        'price'      => 'abc',
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertInstanceOf( WP_Error::class, $result );
+        $this->assertSame( 'smooth_booking_employee_invalid_service_price', $result->get_error_code() );
+    }
+
+    public function test_create_employee_rejects_schedule_with_invalid_hours(): void {
+        $repository = new InMemoryEmployeeRepository();
+        $categories = new InMemoryEmployeeCategoryRepository();
+        $service    = new EmployeeService( $repository, $categories, new Logger( 'test' ) );
+
+        $result = $service->create_employee(
+            [
+                'name'     => 'John Doe',
+                'schedule' => [
+                    1 => [
+                        'start' => '10:00',
+                        'end'   => '09:00',
+                    ],
+                ],
+            ]
+        );
+
+        $this->assertInstanceOf( WP_Error::class, $result );
+        $this->assertSame( 'smooth_booking_employee_invalid_schedule', $result->get_error_code() );
+    }
 }
 
 /**
@@ -64,6 +107,15 @@ class InMemoryEmployeeRepository implements EmployeeRepositoryInterface {
 
     /** @var array<int, Employee> */
     private array $employees = [];
+
+    /** @var array<int, int[]> */
+    private array $locations = [];
+
+    /** @var array<int, array<int, array{service_id:int, order:int, price:float|null}>> */
+    private array $services = [];
+
+    /** @var array<int, array<int, array{start_time:?string,end_time:?string,is_off_day:bool,breaks:array<int,array{start_time:string,end_time:string}}>>> */
+    private array $schedule = [];
 
     public function all( bool $include_deleted = false, bool $only_deleted = false ): array {
         return array_values( $this->employees );
@@ -94,6 +146,9 @@ class InMemoryEmployeeRepository implements EmployeeRepositoryInterface {
         );
 
         $this->employees[ $employee->get_id() ] = $employee;
+        $this->locations[ $employee->get_id() ] = [];
+        $this->services[ $employee->get_id() ]  = [];
+        $this->schedule[ $employee->get_id() ]  = [];
 
         return $employee;
     }
@@ -121,12 +176,43 @@ class InMemoryEmployeeRepository implements EmployeeRepositoryInterface {
 
     public function soft_delete( int $employee_id ) {
         unset( $this->employees[ $employee_id ] );
+        unset( $this->locations[ $employee_id ], $this->services[ $employee_id ], $this->schedule[ $employee_id ] );
 
         return true;
     }
 
     public function restore( int $employee_id ) {
         return $this->find( $employee_id ) ?? new WP_Error( 'missing', 'not found' );
+    }
+
+    public function get_employee_locations( int $employee_id ): array {
+        return $this->locations[ $employee_id ] ?? [];
+    }
+
+    public function sync_employee_locations( int $employee_id, array $location_ids ) {
+        $this->locations[ $employee_id ] = array_values( $location_ids );
+
+        return true;
+    }
+
+    public function get_employee_services( int $employee_id ): array {
+        return $this->services[ $employee_id ] ?? [];
+    }
+
+    public function sync_employee_services( int $employee_id, array $services ) {
+        $this->services[ $employee_id ] = array_values( $services );
+
+        return true;
+    }
+
+    public function get_employee_schedule( int $employee_id ): array {
+        return $this->schedule[ $employee_id ] ?? [];
+    }
+
+    public function save_employee_schedule( int $employee_id, array $schedule ) {
+        $this->schedule[ $employee_id ] = $schedule;
+
+        return true;
     }
 }
 
