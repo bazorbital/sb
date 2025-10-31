@@ -832,8 +832,4 @@ class AppointmentsPage {
 
         return add_query_arg( $args, admin_url( 'admin.php' ) );
     }
-
-
-        return $slots;
-    }
 }
