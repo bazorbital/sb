@@ -29,7 +29,6 @@ use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Rest\AppointmentsController;
-use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
 use SmoothBooking\Rest\SchemaStatusController;
@@ -281,9 +280,6 @@ class Plugin {
         $appointments = $this->container->get( AppointmentsController::class );
         $appointments->register_routes();
 
-        /** @var CalendarController $calendar */
-        $calendar = $this->container->get( CalendarController::class );
-        $calendar->register_routes();
     }
 
     /**
