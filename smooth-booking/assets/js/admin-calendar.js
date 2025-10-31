@@ -130,6 +130,110 @@
         });
     }
 
+    function getEmployeeSelect() {
+        return $('#smooth-booking-calendar-employees');
+    }
+
+    function getSelectedEmployeeIds($select) {
+        if (!$select.length) {
+            return [];
+        }
+
+        var value = $select.val();
+
+        if (!value) {
+            return [];
+        }
+
+        if (Array.isArray(value)) {
+            return value.slice();
+        }
+
+        return [String(value)];
+    }
+
+    function getAllEmployeeIds($select) {
+        var ids = [];
+
+        $select.find('option').each(function () {
+            var val = $(this).val();
+            if (val) {
+                ids.push(String(val));
+            }
+        });
+
+        return ids;
+    }
+
+    function setEmployeeSelection($select, ids) {
+        if (!$select.length) {
+            return;
+        }
+
+        $select.val(ids).trigger('change');
+    }
+
+    function updateEmployeeButtons() {
+        var $select = getEmployeeSelect();
+
+        if (!$select.length) {
+            return;
+        }
+
+        var selected = getSelectedEmployeeIds($select);
+        var allIds = getAllEmployeeIds($select);
+        var allActive = selected.length && selected.length === allIds.length;
+
+        $('[data-employee-toggle]').each(function () {
+            var $button = $(this);
+            var toggleId = String($button.data('employee-toggle'));
+
+            if (toggleId === 'all') {
+                $button.toggleClass('is-active', allActive);
+            } else {
+                $button.toggleClass('is-active', selected.indexOf(toggleId) !== -1);
+            }
+        });
+    }
+
+    function bindEmployeeQuickFilters() {
+        var $select = getEmployeeSelect();
+
+        if (!$select.length) {
+            return;
+        }
+
+        updateEmployeeButtons();
+
+        $(document).on('change', '#smooth-booking-calendar-employees', function () {
+            updateEmployeeButtons();
+        });
+
+        $(document).on('click', '[data-employee-toggle]', function (event) {
+            var $button = $(this);
+            var target = String($button.data('employee-toggle'));
+            var allIds = getAllEmployeeIds($select);
+            var selected = getSelectedEmployeeIds($select);
+
+            if (target === 'all') {
+                setEmployeeSelection($select, allIds);
+                event.preventDefault();
+                return;
+            }
+
+            if (selected.indexOf(target) === -1) {
+                selected.push(target);
+            } else {
+                selected = selected.filter(function (id) {
+                    return id !== target;
+                });
+            }
+
+            setEmployeeSelection($select, selected);
+            event.preventDefault();
+        });
+    }
+
     function initVanillaCalendar() {
         if (typeof window.VanillaCalendar !== 'function') {
             return;
@@ -165,5 +269,6 @@
         bindSlots();
         bindModalEvents();
         initVanillaCalendar();
+        bindEmployeeQuickFilters();
     });
 })(jQuery, window);

@@ -26,7 +26,12 @@ use function __;
 use function absint;
 use function admin_url;
 use function add_query_arg;
+use function array_filter;
+use function array_map;
+use function array_values;
+use function in_array;
 use function esc_attr;
+use function esc_attr__;
 use function esc_html;
 use function esc_html__;
 use function esc_html_e;
@@ -99,6 +104,9 @@ class CalendarPage {
 
         $location_id  = $this->determine_location_id( $locations );
         $selected_date = $this->determine_date();
+        $services     = $this->services->list_services();
+        $selected_service_ids = $this->determine_selected_service_ids( $services );
+        $requested_employee_ids = $this->get_requested_employee_ids();
         $schedule     = $this->calendar->get_daily_schedule( $location_id, $selected_date );
         $error_message = '';
         $employees    = [];
@@ -107,13 +115,23 @@ class CalendarPage {
         $is_closed    = false;
         $open_time    = $selected_date->setTime( 8, 0 );
         $slot_length  = $this->general_settings->get_time_slot_length();
+        $selected_employee_ids = [];
+        $all_employees = [];
+        $no_employee_selected = false;
 
         if ( is_wp_error( $schedule ) ) {
             $error_message = $schedule->get_error_message();
         } else {
             $employees   = $schedule['employees'] ?? [];
+            $all_employees = $employees;
+            $selected_employee_ids = $this->determine_selected_employee_ids( $employees, $requested_employee_ids );
+            $employees   = $this->filter_employees_for_display( $employees, $selected_employee_ids );
+            if ( empty( $employees ) && ! empty( $all_employees ) ) {
+                $no_employee_selected = true;
+            }
             $slots       = $schedule['slots'] ?? [];
             $appointments = $schedule['appointments'] ?? [];
+            $appointments = $this->filter_appointments( $appointments, $selected_service_ids, $selected_employee_ids );
             $appointments_by_employee = $this->group_appointments_by_employee( $appointments );
             $is_closed = ! empty( $schedule['is_closed'] );
             if ( isset( $schedule['open'] ) && $schedule['open'] instanceof DateTimeImmutable ) {
@@ -124,7 +142,6 @@ class CalendarPage {
             }
         }
 
-        $services  = $this->services->list_services();
         $customers = $this->customers->paginate_customers( [ 'per_page' => 200 ] );
         $customer_items = [];
         if ( is_array( $customers ) && isset( $customers['customers'] ) && is_array( $customers['customers'] ) ) {
@@ -143,7 +160,17 @@ class CalendarPage {
                     </div>
                 </div>
 
-                <?php $this->render_filters( $locations, $location_id, $selected_date ); ?>
+                <?php
+                $this->render_filters(
+                    $locations,
+                    $location_id,
+                    $selected_date,
+                    $services,
+                    $selected_service_ids,
+                    $all_employees,
+                    $selected_employee_ids
+                );
+                ?>
 
                 <?php if ( $error_message ) : ?>
                     <div class="notice notice-error"><p><?php echo esc_html( $error_message ); ?></p></div>
@@ -152,8 +179,10 @@ class CalendarPage {
                 <div class="smooth-booking-calendar-board" data-slot-length="<?php echo esc_attr( (string) $slot_length ); ?>">
                     <?php if ( $is_closed ) : ?>
                         <div class="notice notice-info"><p><?php esc_html_e( 'This location is closed on the selected day.', 'smooth-booking' ); ?></p></div>
-                    <?php elseif ( empty( $slots ) || empty( $employees ) ) : ?>
+                    <?php elseif ( empty( $slots ) || empty( $all_employees ) ) : ?>
                         <div class="notice notice-warning"><p><?php esc_html_e( 'No working hours or employees available for the selected location.', 'smooth-booking' ); ?></p></div>
+                    <?php elseif ( $no_employee_selected ) : ?>
+                        <div class="notice notice-warning"><p><?php esc_html_e( 'No staff members are selected. Use the quick filters above to display at least one employee.', 'smooth-booking' ); ?></p></div>
                     <?php else : ?>
                         <?php $this->render_calendar_grid( $slots, $employees, $appointments_by_employee, $open_time, $slot_length, $selected_date, $timezone_string ); ?>
                     <?php endif; ?>
@@ -161,7 +190,7 @@ class CalendarPage {
             </div>
         </div>
         <?php
-        $this->render_modal( $employees, $services, $customer_items );
+        $this->render_modal( $all_employees, $services, $customer_items );
     }
 
     /**
@@ -214,15 +243,20 @@ class CalendarPage {
     }
 
     /**
-     * Render filters for location and date.
+     * Render filters for location, services, and staff members.
      *
-     * @param Location[]         $locations    Available locations.
-     * @param int                $location_id  Current location id.
-     * @param DateTimeImmutable  $selected_date Selected date.
+     * @param Location[]        $locations              Available locations.
+     * @param int               $location_id            Current location id.
+     * @param DateTimeImmutable $selected_date          Selected date.
+     * @param Service[]         $services               Services collection for the filter.
+     * @param int[]             $selected_service_ids   Active service identifiers.
+     * @param Employee[]        $employees              Employees assigned to the location.
+     * @param int[]             $selected_employee_ids  Active employee identifiers.
      */
-    private function render_filters( array $locations, int $location_id, DateTimeImmutable $selected_date ): void {
+    private function render_filters( array $locations, int $location_id, DateTimeImmutable $selected_date, array $services, array $selected_service_ids, array $employees, array $selected_employee_ids ): void {
         $timezone = wp_timezone();
         $date_value = $selected_date->setTimezone( $timezone )->format( 'Y-m-d' );
+        $all_services_selected = empty( $services ) || count( $selected_service_ids ) === count( $this->extract_ids_from_services( $services ) );
         ?>
         <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="smooth-booking-calendar-filters">
             <input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>" />
@@ -239,9 +273,53 @@ class CalendarPage {
                 <span><?php esc_html_e( 'Date', 'smooth-booking' ); ?></span>
                 <input type="date" name="calendar_date" value="<?php echo esc_attr( $date_value ); ?>" data-calendar-input />
             </label>
+            <label>
+                <span><?php esc_html_e( 'Services', 'smooth-booking' ); ?></span>
+                <select id="smooth-booking-calendar-services" class="smooth-booking-select2" name="service_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter services…', 'smooth-booking' ); ?>">
+                    <?php foreach ( $services as $service ) : ?>
+                        <?php if ( ! $service instanceof Service ) { continue; } ?>
+                        <?php $is_selected = in_array( $service->get_id(), $selected_service_ids, true ); ?>
+                        <option value="<?php echo esc_attr( (string) $service->get_id() ); ?>" <?php selected( $is_selected ); ?>><?php echo esc_html( $service->get_name() ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ( $all_services_selected && ! empty( $services ) ) : ?>
+                    <p class="description"><?php esc_html_e( 'All services are currently visible.', 'smooth-booking' ); ?></p>
+                <?php endif; ?>
+            </label>
+            <label>
+                <span><?php esc_html_e( 'Staff members', 'smooth-booking' ); ?></span>
+                <select id="smooth-booking-calendar-employees" class="smooth-booking-select2" name="employee_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter staff…', 'smooth-booking' ); ?>">
+                    <?php foreach ( $employees as $employee ) : ?>
+                        <?php if ( ! $employee instanceof Employee ) { continue; } ?>
+                        <?php $is_selected = in_array( $employee->get_id(), $selected_employee_ids, true ); ?>
+                        <option value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" <?php selected( $is_selected ); ?>><?php echo esc_html( $employee->get_name() ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="description"><?php esc_html_e( 'Use the quick buttons below to toggle staff columns.', 'smooth-booking' ); ?></p>
+            </label>
             <div id="smooth-booking-calendar-picker" class="smooth-booking-calendar-picker" data-initial-date="<?php echo esc_attr( $date_value ); ?>"></div>
             <button type="submit" class="button button-primary"><?php esc_html_e( 'Apply', 'smooth-booking' ); ?></button>
         </form>
+        <?php if ( ! empty( $employees ) ) : ?>
+            <div class="smooth-booking-calendar-quickfilters" role="group" aria-label="<?php echo esc_attr__( 'Quick staff filters', 'smooth-booking' ); ?>">
+                <span class="smooth-booking-calendar-quickfilters__label"><?php esc_html_e( 'Quick staff filters', 'smooth-booking' ); ?></span>
+                <div class="smooth-booking-calendar-quickfilters__buttons">
+                    <?php
+                    $all_selected = ! empty( $employees ) && count( $selected_employee_ids ) === count( $employees );
+                    ?>
+                    <button type="button" class="smooth-booking-calendar-quickfilters__button<?php echo $all_selected ? ' is-active' : ''; ?>" data-employee-toggle="all">
+                        <?php esc_html_e( 'All staff', 'smooth-booking' ); ?>
+                    </button>
+                    <?php foreach ( $employees as $employee ) : ?>
+                        <?php if ( ! $employee instanceof Employee ) { continue; } ?>
+                        <?php $is_active = in_array( $employee->get_id(), $selected_employee_ids, true ); ?>
+                        <button type="button" class="smooth-booking-calendar-quickfilters__button<?php echo $is_active ? ' is-active' : ''; ?>" data-employee-toggle="<?php echo esc_attr( (string) $employee->get_id() ); ?>">
+                            <?php echo esc_html( $employee->get_name() ); ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
         <?php
     }
 
@@ -468,6 +546,230 @@ class CalendarPage {
         }
 
         return $appointment->get_customer_account_name() ?: __( 'Guest', 'smooth-booking' );
+    }
+
+    /**
+     * Retrieve requested service identifiers from the query string.
+     *
+     * @return int[]
+     */
+    private function get_requested_service_ids(): array {
+        if ( empty( $_GET['service_ids'] ) || ! is_array( $_GET['service_ids'] ) ) {
+            return [];
+        }
+
+        $raw = wp_unslash( $_GET['service_ids'] );
+
+        return $this->sanitize_id_list( is_array( $raw ) ? $raw : [] );
+    }
+
+    /**
+     * Retrieve requested employee identifiers from the query string.
+     *
+     * @return int[]
+     */
+    private function get_requested_employee_ids(): array {
+        if ( empty( $_GET['employee_ids'] ) || ! is_array( $_GET['employee_ids'] ) ) {
+            return [];
+        }
+
+        $raw = wp_unslash( $_GET['employee_ids'] );
+
+        return $this->sanitize_id_list( is_array( $raw ) ? $raw : [] );
+    }
+
+    /**
+     * Sanitize an array of identifiers.
+     *
+     * @param array<int|string, mixed> $values Raw values.
+     *
+     * @return int[]
+     */
+    private function sanitize_id_list( array $values ): array {
+        $sanitized = array_map(
+            static function ( $value ): int {
+                return absint( sanitize_text_field( (string) $value ) );
+            },
+            $values
+        );
+
+        return array_values(
+            array_filter(
+                $sanitized,
+                static function ( int $id ): bool {
+                    return $id > 0;
+                }
+            )
+        );
+    }
+
+    /**
+     * Determine which services should be visible.
+     *
+     * @param Service[] $services Service collection.
+     *
+     * @return int[]
+     */
+    private function determine_selected_service_ids( array $services ): array {
+        $requested = $this->get_requested_service_ids();
+        $available = $this->extract_ids_from_services( $services );
+
+        if ( empty( $available ) ) {
+            return [];
+        }
+
+        $selected = array_values(
+            array_filter(
+                $requested,
+                static function ( int $id ) use ( $available ): bool {
+                    return in_array( $id, $available, true );
+                }
+            )
+        );
+
+        if ( empty( $selected ) ) {
+            return $available;
+        }
+
+        return $selected;
+    }
+
+    /**
+     * Extract identifiers from service collection.
+     *
+     * @param Service[] $services Services list.
+     *
+     * @return int[]
+     */
+    private function extract_ids_from_services( array $services ): array {
+        return array_values(
+            array_map(
+                static function ( Service $service ): int {
+                    return $service->get_id();
+                },
+                array_filter(
+                    $services,
+                    static function ( $service ): bool {
+                        return $service instanceof Service;
+                    }
+                )
+            )
+        );
+    }
+
+    /**
+     * Determine which employees should be visible.
+     *
+     * @param Employee[] $employees            Available employees.
+     * @param int[]      $requested_employee_ids Requested identifiers.
+     *
+     * @return int[]
+     */
+    private function determine_selected_employee_ids( array $employees, array $requested_employee_ids ): array {
+        $available = $this->extract_ids_from_employees( $employees );
+
+        if ( empty( $available ) ) {
+            return [];
+        }
+
+        $selected = array_values(
+            array_filter(
+                $requested_employee_ids,
+                static function ( int $id ) use ( $available ): bool {
+                    return in_array( $id, $available, true );
+                }
+            )
+        );
+
+        if ( empty( $selected ) ) {
+            return $available;
+        }
+
+        return $selected;
+    }
+
+    /**
+     * Extract identifiers from employee collection.
+     *
+     * @param Employee[] $employees Employees list.
+     *
+     * @return int[]
+     */
+    private function extract_ids_from_employees( array $employees ): array {
+        return array_values(
+            array_map(
+                static function ( Employee $employee ): int {
+                    return $employee->get_id();
+                },
+                array_filter(
+                    $employees,
+                    static function ( $employee ): bool {
+                        return $employee instanceof Employee;
+                    }
+                )
+            )
+        );
+    }
+
+    /**
+     * Filter employees for the grid display.
+     *
+     * @param Employee[] $employees         All employees.
+     * @param int[]      $selected_employee_ids Selected identifiers.
+     *
+     * @return Employee[]
+     */
+    private function filter_employees_for_display( array $employees, array $selected_employee_ids ): array {
+        if ( empty( $selected_employee_ids ) ) {
+            return $employees;
+        }
+
+        return array_values(
+            array_filter(
+                $employees,
+                static function ( $employee ) use ( $selected_employee_ids ): bool {
+                    return $employee instanceof Employee && in_array( $employee->get_id(), $selected_employee_ids, true );
+                }
+            )
+        );
+    }
+
+    /**
+     * Filter appointments based on current selections.
+     *
+     * @param Appointment[] $appointments          Appointment list.
+     * @param int[]         $selected_service_ids  Selected service identifiers.
+     * @param int[]         $selected_employee_ids Selected employee identifiers.
+     *
+     * @return Appointment[]
+     */
+    private function filter_appointments( array $appointments, array $selected_service_ids, array $selected_employee_ids ): array {
+        return array_values(
+            array_filter(
+                $appointments,
+                static function ( $appointment ) use ( $selected_service_ids, $selected_employee_ids ): bool {
+                    if ( ! $appointment instanceof Appointment ) {
+                        return false;
+                    }
+
+                    if ( ! empty( $selected_service_ids ) ) {
+                        $service_id = $appointment->get_service_id();
+                        if ( null === $service_id || ! in_array( $service_id, $selected_service_ids, true ) ) {
+                            return false;
+                        }
+                    }
+
+                    if ( ! empty( $selected_employee_ids ) ) {
+                        $employee_id = $appointment->get_employee_id();
+                        if ( null === $employee_id || ! in_array( $employee_id, $selected_employee_ids, true ) ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+            )
+        );
     }
 
     /**
