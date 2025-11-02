@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.15.1] - 2025-06-02
+### Fixed
+- Ensure the admin calendar stores schedule payloads in a dedicated global so the EventCalendar grid continues to render appointments after applying location, service, or staff filters and reloading the page.
+- Reapply the hydrated schedule to the localized settings object after scripts load, keeping downstream integrations compatible.
+
 # [0.15.0] - 2025-05-31
 ### Changed
 - Replaced the bespoke admin calendar grid with an EventCalendar-powered timeline that renders employee columns, slot grids, and colour-coded appointments sourced from the schedule payload.

@@ -2,6 +2,7 @@
     'use strict';
 
     var settings = window.SmoothBookingCalendar || {};
+    var calendarData = window.SmoothBookingCalendarData || (settings.data || {});
 
     function initSelect2() {
         if (typeof $.fn.select2 !== 'function') {
@@ -237,7 +238,7 @@
             return;
         }
 
-        var data = settings.data || {};
+        var data = calendarData || {};
         var slots = Array.isArray(data.slots) ? data.slots : [];
         var resources = Array.isArray(data.resources) ? data.resources : [];
         var events = Array.isArray(data.events) ? data.events : [];
