@@ -8,6 +8,10 @@
 namespace SmoothBooking\Domain\Customers;
 
 use DateTimeImmutable;
+use function __;
+use function implode;
+use function sprintf;
+use function trim;
 
 /**
  * Customer domain entity.
@@ -219,6 +223,36 @@ class Customer {
      */
     public function get_name(): string {
         return $this->name;
+    }
+
+    /**
+     * Human readable display name assembled from available fields.
+     *
+     * @return string
+     */
+    public function get_display_name(): string {
+        $parts = array_filter(
+            [
+                null !== $this->first_name ? trim( $this->first_name ) : null,
+                null !== $this->last_name ? trim( $this->last_name ) : null,
+            ]
+        );
+
+        if ( ! empty( $parts ) ) {
+            return trim( implode( ' ', $parts ) );
+        }
+
+        $name = trim( $this->name );
+
+        if ( '' !== $name ) {
+            return $name;
+        }
+
+        if ( null !== $this->email && '' !== trim( $this->email ) ) {
+            return trim( $this->email );
+        }
+
+        return sprintf( __( 'Customer #%d', 'smooth-booking' ), $this->id );
     }
 
     /**
