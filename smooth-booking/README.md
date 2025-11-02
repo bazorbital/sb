@@ -102,6 +102,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Run coding standards with `vendor/bin/phpcs` (ruleset in `phpcs.xml`).
 - Run unit tests with `composer test` (PHPUnit bootstrap in `tests/bootstrap.php`).
 - REST controllers reside in `src/Rest/` and register routes on `rest_api_init`.
+- Admin calendar data is exposed via the `window.SmoothBookingCalendarData` global before `admin-calendar.js` runs to prevent WordPress localisation helpers from overwriting the schedule payload that feeds the EventCalendar grid.
 
 ## Hooks
 - `smooth_booking_cleanup_event` — Daily cron event for health checks.

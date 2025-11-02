@@ -354,10 +354,18 @@ class CalendarPage {
         $payload = $this->build_calendar_payload( $slots, $employees, $appointments_by_employee, $open_time, $close_time, $slot_length, $selected_date, $timezone );
 
         if ( ! empty( $payload ) ) {
+            $encoded_payload = wp_json_encode( $payload );
+
             wp_add_inline_script(
                 'smooth-booking-admin-calendar',
-                'window.SmoothBookingCalendar = window.SmoothBookingCalendar || {}; window.SmoothBookingCalendar.data = ' . wp_json_encode( $payload ) . ';',
+                'window.SmoothBookingCalendarData = ' . $encoded_payload . ';',
                 'before'
+            );
+
+            wp_add_inline_script(
+                'smooth-booking-admin-calendar',
+                'window.SmoothBookingCalendar = window.SmoothBookingCalendar || {}; window.SmoothBookingCalendar.data = window.SmoothBookingCalendarData;',
+                'after'
             );
         }
 
