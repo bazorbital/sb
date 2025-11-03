@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.2] - 2025-06-15
+### Fixed
+- Deduplicated the Calendar service and employee filters so only the sentinel “All” options render as selected by default and Select2 keeps a single set of chips without repeating entries when locations share overlapping assignments.
+
 # [0.16.1] - 2025-06-10
 ### Fixed
 - Removed the VanillaCalendar date picker and duplicate markup so the Calendar screen relies on the browser’s native single-day selector without injecting extra DOM nodes that prevented the EventCalendar grid from rendering after filter changes.
