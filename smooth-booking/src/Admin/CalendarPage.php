@@ -109,7 +109,7 @@ class CalendarPage {
 
         $location_id  = $this->determine_location_id( $locations );
         $selected_date = $this->determine_date();
-        $services     = $this->services->list_services();
+        $services     = $this->unique_services( $this->services->list_services() );
         $selected_service_ids = $this->determine_selected_service_ids( $services );
         $requested_employee_ids = $this->get_requested_employee_ids();
         $schedule     = $this->calendar->get_daily_schedule( $location_id, $selected_date );
@@ -128,7 +128,7 @@ class CalendarPage {
         if ( is_wp_error( $schedule ) ) {
             $error_message = $schedule->get_error_message();
         } else {
-            $employees   = $schedule['employees'] ?? [];
+            $employees   = $this->unique_employees( $schedule['employees'] ?? [] );
             $all_employees = $employees;
             $selected_employee_ids = $this->determine_selected_employee_ids( $employees, $requested_employee_ids );
             $employees   = $this->filter_employees_for_display( $employees, $selected_employee_ids );
@@ -265,7 +265,9 @@ class CalendarPage {
     private function render_filters( array $locations, int $location_id, DateTimeImmutable $selected_date, array $services, array $selected_service_ids, array $employees, array $selected_employee_ids ): void {
         $timezone   = wp_timezone();
         $date_value = $selected_date->setTimezone( $timezone )->format( 'Y-m-d' );
-        $service_ids = $this->extract_ids_from_services( $services );
+        $services     = $this->unique_services( $services );
+        $employees    = $this->unique_employees( $employees );
+        $service_ids  = $this->extract_ids_from_services( $services );
         $employee_ids = $this->extract_ids_from_employees( $employees );
         $all_services_selected  = empty( $service_ids ) || count( $selected_service_ids ) === count( $service_ids );
         $all_employees_selected = empty( $employee_ids ) || count( $selected_employee_ids ) === count( $employee_ids );
@@ -291,7 +293,7 @@ class CalendarPage {
                     <option value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>" <?php selected( $all_services_selected ); ?>><?php esc_html_e( 'All services', 'smooth-booking' ); ?></option>
                     <?php foreach ( $services as $service ) : ?>
                         <?php if ( ! $service instanceof Service ) { continue; } ?>
-                        <?php $is_selected = in_array( $service->get_id(), $selected_service_ids, true ); ?>
+                        <?php $is_selected = $all_services_selected ? false : in_array( $service->get_id(), $selected_service_ids, true ); ?>
                         <option value="<?php echo esc_attr( (string) $service->get_id() ); ?>" <?php selected( $is_selected ); ?>><?php echo esc_html( $service->get_name() ); ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -305,7 +307,7 @@ class CalendarPage {
                     <option value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>" <?php selected( $all_employees_selected ); ?>><?php esc_html_e( 'All employees', 'smooth-booking' ); ?></option>
                     <?php foreach ( $employees as $employee ) : ?>
                         <?php if ( ! $employee instanceof Employee ) { continue; } ?>
-                        <?php $is_selected = in_array( $employee->get_id(), $selected_employee_ids, true ); ?>
+                        <?php $is_selected = $all_employees_selected ? false : in_array( $employee->get_id(), $selected_employee_ids, true ); ?>
                         <option value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" <?php selected( $is_selected ); ?>><?php echo esc_html( $employee->get_name() ); ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -767,6 +769,48 @@ class CalendarPage {
                 )
             )
         );
+    }
+
+    /**
+     * Ensure service collections contain unique identifiers.
+     *
+     * @param array<int,Service|mixed> $services Service list, potentially containing duplicates.
+     *
+     * @return Service[]
+     */
+    private function unique_services( array $services ): array {
+        $unique = [];
+
+        foreach ( $services as $service ) {
+            if ( ! $service instanceof Service ) {
+                continue;
+            }
+
+            $unique[ $service->get_id() ] = $service;
+        }
+
+        return array_values( $unique );
+    }
+
+    /**
+     * Ensure employee collections contain unique identifiers.
+     *
+     * @param array<int,Employee|mixed> $employees Employee list, potentially containing duplicates.
+     *
+     * @return Employee[]
+     */
+    private function unique_employees( array $employees ): array {
+        $unique = [];
+
+        foreach ( $employees as $employee ) {
+            if ( ! $employee instanceof Employee ) {
+                continue;
+            }
+
+            $unique[ $employee->get_id() ] = $employee;
+        }
+
+        return array_values( $unique );
     }
 
     /**
