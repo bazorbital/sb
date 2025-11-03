@@ -24,21 +24,29 @@ use function rest_ensure_response;
 class CustomersController {
     /**
      * Namespace for routes.
+     *
+     * @var string
      */
     private const NAMESPACE = 'smooth-booking/v1';
 
     /**
      * Route base.
+     *
+     * @var string
      */
     private const ROUTE = '/customers';
 
     /**
+     * Customer domain service handling persistence and validation.
+     *
      * @var CustomerService
      */
     private CustomerService $service;
 
     /**
-     * Constructor.
+     * Set up controller dependencies.
+     *
+     * @param CustomerService $service Domain service used for customer operations.
      */
     public function __construct( CustomerService $service ) {
         $this->service = $service;
@@ -46,6 +54,8 @@ class CustomersController {
 
     /**
      * Register REST routes.
+     *
+     * @return void
      */
     public function register_routes(): void {
         register_rest_route(
@@ -113,6 +123,10 @@ class CustomersController {
 
     /**
      * Retrieve customers list.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Paginated customer list.
      */
     public function list_customers( WP_REST_Request $request ): WP_REST_Response {
         $paged    = (int) $request->get_param( 'page' );
@@ -139,8 +153,12 @@ class CustomersController {
 
     /**
      * Retrieve a single customer.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Response containing the customer data or error.
      */
-    public function get_customer( WP_REST_Request $request ) {
+    public function get_customer( WP_REST_Request $request ): WP_REST_Response {
         $customer_id = (int) $request['id'];
         $customer    = $this->service->get_customer( $customer_id );
 
@@ -153,8 +171,12 @@ class CustomersController {
 
     /**
      * Create a new customer.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Newly created customer payload or error.
      */
-    public function create_customer( WP_REST_Request $request ) {
+    public function create_customer( WP_REST_Request $request ): WP_REST_Response {
         $data = $this->extract_customer_data( $request );
 
         $result = $this->service->create_customer( $data );
@@ -168,8 +190,12 @@ class CustomersController {
 
     /**
      * Update an existing customer.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Updated customer payload or error.
      */
-    public function update_customer( WP_REST_Request $request ) {
+    public function update_customer( WP_REST_Request $request ): WP_REST_Response {
         $customer_id = (int) $request['id'];
         $data        = $this->extract_customer_data( $request );
 
@@ -184,8 +210,12 @@ class CustomersController {
 
     /**
      * Soft delete a customer.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Confirmation payload or error.
      */
-    public function delete_customer( WP_REST_Request $request ) {
+    public function delete_customer( WP_REST_Request $request ): WP_REST_Response {
         $customer_id = (int) $request['id'];
 
         $result = $this->service->delete_customer( $customer_id );
@@ -199,8 +229,12 @@ class CustomersController {
 
     /**
      * Restore a customer.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Restored customer payload or error.
      */
-    public function restore_customer( WP_REST_Request $request ) {
+    public function restore_customer( WP_REST_Request $request ): WP_REST_Response {
         $customer_id = (int) $request['id'];
 
         $result = $this->service->restore_customer( $customer_id );
@@ -213,7 +247,9 @@ class CustomersController {
     }
 
     /**
-     * Permission callback.
+     * Determine whether the current user can manage customers.
+     *
+     * @return bool True when the user may manage customers.
      */
     public function can_manage_customers(): bool {
         return current_user_can( 'manage_options' );
@@ -222,7 +258,9 @@ class CustomersController {
     /**
      * Extract customer payload from request.
      *
-     * @return array<string, mixed>
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return array<string, mixed> Sanitised customer payload consumed by the service layer.
      */
     private function extract_customer_data( WP_REST_Request $request ): array {
         $params = $request->get_json_params();

@@ -80,6 +80,15 @@ use SmoothBooking\Support\ServiceContainer;
 class ServiceProvider {
     /**
      * Register plugin services in the container.
+     *
+     * Binds repositories, domain services, controllers and UI handlers to the
+     * {@see ServiceContainer}. Registrations primarily use the singleton scope
+     * because the plugin relies on shared state such as the WordPress database
+     * connection and logger instance.
+     *
+     * @param ServiceContainer $container Dependency container used throughout the plugin.
+     *
+     * @return void
      */
     public function register( ServiceContainer $container ): void {
         $container->singleton( Logger::class, static function ( ServiceContainer $_container ): Logger {

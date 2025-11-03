@@ -14,9 +14,11 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+use function array_map;
 use function current_user_can;
 use function is_array;
 use function is_wp_error;
+use function register_rest_route;
 use function rest_ensure_response;
 use function rest_sanitize_boolean;
 use function implode;
@@ -27,21 +29,29 @@ use function implode;
 class ServicesController {
     /**
      * API namespace.
+     *
+     * @var string
      */
     private const NAMESPACE = 'smooth-booking/v1';
 
     /**
      * Route base.
+     *
+     * @var string
      */
     private const ROUTE = '/services';
 
     /**
+     * Service domain service orchestrating persistence and validation.
+     *
      * @var ServiceService
      */
     private ServiceService $service;
 
     /**
-     * Constructor.
+     * Inject dependencies.
+     *
+     * @param ServiceService $service Domain service used for service operations.
      */
     public function __construct( ServiceService $service ) {
         $this->service = $service;
@@ -49,6 +59,8 @@ class ServicesController {
 
     /**
      * Register REST API routes.
+     *
+     * @return void
      */
     public function register_routes(): void {
         register_rest_route(
@@ -103,6 +115,10 @@ class ServicesController {
 
     /**
      * List services.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Serialised services list.
      */
     public function list_services( WP_REST_Request $request ): WP_REST_Response {
         $include_deleted = rest_sanitize_boolean( $request->get_param( 'include_deleted' ) );
@@ -125,8 +141,12 @@ class ServicesController {
 
     /**
      * Retrieve a single service.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Service payload or error message.
      */
-    public function get_service( WP_REST_Request $request ) {
+    public function get_service( WP_REST_Request $request ): WP_REST_Response {
         $service_id = (int) $request['id'];
         $service    = $this->service->get_service( $service_id );
 
@@ -139,8 +159,12 @@ class ServicesController {
 
     /**
      * Create a new service.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Newly created service payload or validation errors.
      */
-    public function create_service( WP_REST_Request $request ) {
+    public function create_service( WP_REST_Request $request ): WP_REST_Response {
         $data = $this->extract_service_data( $request );
 
         $result = $this->service->create_service( $data );
@@ -154,8 +178,12 @@ class ServicesController {
 
     /**
      * Update a service.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Updated service payload or validation errors.
      */
-    public function update_service( WP_REST_Request $request ) {
+    public function update_service( WP_REST_Request $request ): WP_REST_Response {
         $service_id = (int) $request['id'];
         $data       = $this->extract_service_data( $request );
 
@@ -170,8 +198,12 @@ class ServicesController {
 
     /**
      * Soft delete a service.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Confirmation payload or validation errors.
      */
-    public function delete_service( WP_REST_Request $request ) {
+    public function delete_service( WP_REST_Request $request ): WP_REST_Response {
         $service_id = (int) $request['id'];
 
         $result = $this->service->delete_service( $service_id );
@@ -185,8 +217,12 @@ class ServicesController {
 
     /**
      * Restore a soft-deleted service.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Restored service payload or validation errors.
      */
-    public function restore_service( WP_REST_Request $request ) {
+    public function restore_service( WP_REST_Request $request ): WP_REST_Response {
         $service_id = (int) $request['id'];
 
         $result = $this->service->restore_service( $service_id );
@@ -205,7 +241,9 @@ class ServicesController {
     }
 
     /**
-     * Permission callback.
+     * Determine whether the current user can manage services.
+     *
+     * @return bool True when the user has access to manage services.
      */
     public function can_manage_services(): bool {
         return current_user_can( ServicesPage::CAPABILITY );
@@ -214,7 +252,9 @@ class ServicesController {
     /**
      * Extract payload for service operations.
      *
-     * @return array<string, mixed>
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return array<string, mixed> Sanitised service data consumed by the service layer.
      */
     private function extract_service_data( WP_REST_Request $request ): array {
         $params = $request->get_json_params();

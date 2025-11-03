@@ -13,27 +13,40 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+use function __;
+use function check_ajax_referer;
+use function current_user_can;
+use function rest_ensure_response;
+
 /**
  * Register REST API routes for schema status.
  */
 class SchemaStatusController {
     /**
      * Namespace for routes.
+     *
+     * @var string
      */
     private const NAMESPACE = 'smooth-booking/v1';
 
     /**
      * Route base.
+     *
+     * @var string
      */
     private const ROUTE = '/schema-status';
 
     /**
+     * Domain service exposing schema health information.
+     *
      * @var SchemaStatusService
      */
     private SchemaStatusService $schema_service;
 
     /**
-     * Constructor.
+     * Inject dependencies.
+     *
+     * @param SchemaStatusService $schema_service Service orchestrating schema status checks.
      */
     public function __construct( SchemaStatusService $schema_service ) {
         $this->schema_service = $schema_service;
@@ -41,6 +54,8 @@ class SchemaStatusController {
 
     /**
      * Register REST routes.
+     *
+     * @return void
      */
     public function register_routes(): void {
         register_rest_route(
@@ -63,8 +78,12 @@ class SchemaStatusController {
 
     /**
      * Retrieve schema status.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Schema status data or error response.
      */
-    public function get_status( WP_REST_Request $request ) {
+    public function get_status( WP_REST_Request $request ): WP_REST_Response {
         $force_refresh = (bool) $request->get_param( 'force' );
 
         $status = $this->schema_service->get_status( $force_refresh );
@@ -83,6 +102,8 @@ class SchemaStatusController {
      * Repair schema.
      *
      * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Response confirming the repair was initiated.
      */
     public function repair_schema( WP_REST_Request $request ): WP_REST_Response {
         unset( $request );
@@ -94,6 +115,8 @@ class SchemaStatusController {
 
     /**
      * Permission callback for viewing status.
+     *
+     * @return bool True when the current user may view schema status.
      */
     public function can_view_status(): bool {
         return current_user_can( 'manage_options' );
@@ -101,6 +124,8 @@ class SchemaStatusController {
 
     /**
      * Permission callback for managing schema.
+     *
+     * @return bool True when the current user may repair the schema.
      */
     public function can_manage_schema(): bool {
         return current_user_can( 'manage_options' ) && check_ajax_referer( 'wp_rest', '_wpnonce', false );
