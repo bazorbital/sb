@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.15.1
+Stable tag: 0.16.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Administrators can now configure per-location holidays from a yearly calendar, i
 Administrators gain a dedicated **Locations** workspace to capture physical or virtual venues with media-powered profile images, address/phone/email/website fields, industry selection, event toggles, company details, and soft delete/restore workflows powering business hours, holidays, REST, and CLI automation.
 Administrators can assign employees to one or more locations, toggle service availability with custom price overrides, and configure per-day working hours with optional breaks directly inside the Employees drawer.
 Administrators can manage booking-related email notifications, choose recipients, restrict by services, attach ICS files, and design HTML/Text content with placeholder codes. Email delivery preferences are configurable under **Smooth Booking → Settings → Email**, including SMTP credentials, retry periods, and test-sending.
-Administrators gain a dedicated **Calendar** view under **Smooth Booking → Calendar** to inspect each location's day-at-a-glance schedule with employee columns, configurable time-slot granularity, appointment colour-coding from service palettes, inline creation via modal, quick edit/delete affordances, and service/location/staff filters with Select2 multi-selects and chip-style toggles.
+Administrators gain a dedicated **Calendar** view under **Smooth Booking → Calendar** to inspect each location's day-at-a-glance schedule with employee columns, configurable time-slot granularity, appointment colour-coding from service palettes, inline creation via modal, quick edit/delete affordances, and service/location/employee filters with Select2 multi-selects that ship with “All services” and “All employees” defaults alongside chip-style toggles.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
@@ -41,6 +41,12 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.16.1 =
+* Fix: Remove the duplicate VanillaCalendar date picker in favour of the native single-day selector, ensure Select2 filters are initialised only once, and keep the EventCalendar grid rendering appointments after applying new filters.
+
+= 0.16.0 =
+* Change: Refresh the Calendar filters so the “Employees” terminology matches the rest of the admin UI, include dedicated “All services” and “All employees” Select2 options, and automatically fall back to those defaults when clearing selections, ensuring every employee column renders for the chosen location and date after pressing **Apply**.
+
 = 0.15.1 =
 * Fix: Persist calendar schedule data in a dedicated global so the EventCalendar grid continues to render appointments after applying service, location, or staff filters and reloading the page.
 

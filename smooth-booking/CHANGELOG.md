@@ -2,6 +2,16 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.1] - 2025-06-10
+### Fixed
+- Removed the VanillaCalendar date picker and duplicate markup so the Calendar screen relies on the browser’s native single-day selector without injecting extra DOM nodes that prevented the EventCalendar grid from rendering after filter changes.
+- Guarded Select2 initialisation against duplicate execution to keep the Services and Employees filters from spawning multiple dropdown containers when the screen reloads or scripts run again.
+
+# [0.16.0] - 2025-06-07
+### Changed
+- Renamed the Calendar filter to “Employees”, added explicit “All services” and “All employees” Select2 options, and ensured clearing selections defaults back to showing every employee column for the chosen location and day before rendering the EventCalendar grid.
+- Normalised Select2 handling so location, service, and employee filters share consistent dropdown parents and automatic “all” fallbacks, restoring the employee columns after pressing **Apply** even when only the sentinel options are submitted.
+
 # [0.15.1] - 2025-06-02
 ### Fixed
 - Ensure the admin calendar stores schedule payloads in a dedicated global so the EventCalendar grid continues to render appointments after applying location, service, or staff filters and reloading the page.

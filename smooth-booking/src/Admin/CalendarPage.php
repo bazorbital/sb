@@ -62,6 +62,8 @@ class CalendarPage {
 
     public const MENU_SLUG = 'smooth-booking-calendar';
 
+    private const ALL_FILTER_VALUE = 'all';
+
     private CalendarService $calendar;
 
     private LocationService $locations;
@@ -221,14 +223,6 @@ class CalendarPage {
         wp_enqueue_script( 'select2' );
 
         wp_enqueue_script(
-            'smooth-booking-vanilla-calendar',
-            plugins_url( 'assets/js/vendor/vanilla-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery' ],
-            SMOOTH_BOOKING_VERSION,
-            true
-        );
-
-        wp_enqueue_script(
             'smooth-booking-event-calendar',
             plugins_url( 'assets/js/vendor/event-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
             [],
@@ -239,7 +233,7 @@ class CalendarPage {
         wp_enqueue_script(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/js/admin-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'smooth-booking-vanilla-calendar', 'smooth-booking-event-calendar', 'select2' ],
+            [ 'jquery', 'smooth-booking-event-calendar', 'select2' ],
             SMOOTH_BOOKING_VERSION,
             true
         );
@@ -258,7 +252,7 @@ class CalendarPage {
     }
 
     /**
-     * Render filters for location, services, and staff members.
+     * Render filters for location, services, and employees.
      *
      * @param Location[]        $locations              Available locations.
      * @param int               $location_id            Current location id.
@@ -269,9 +263,12 @@ class CalendarPage {
      * @param int[]             $selected_employee_ids  Active employee identifiers.
      */
     private function render_filters( array $locations, int $location_id, DateTimeImmutable $selected_date, array $services, array $selected_service_ids, array $employees, array $selected_employee_ids ): void {
-        $timezone = wp_timezone();
+        $timezone   = wp_timezone();
         $date_value = $selected_date->setTimezone( $timezone )->format( 'Y-m-d' );
-        $all_services_selected = empty( $services ) || count( $selected_service_ids ) === count( $this->extract_ids_from_services( $services ) );
+        $service_ids = $this->extract_ids_from_services( $services );
+        $employee_ids = $this->extract_ids_from_employees( $employees );
+        $all_services_selected  = empty( $service_ids ) || count( $selected_service_ids ) === count( $service_ids );
+        $all_employees_selected = empty( $employee_ids ) || count( $selected_employee_ids ) === count( $employee_ids );
         ?>
         <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="smooth-booking-calendar-filters">
             <input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>" />
@@ -286,11 +283,12 @@ class CalendarPage {
             </label>
             <label>
                 <span><?php esc_html_e( 'Date', 'smooth-booking' ); ?></span>
-                <input type="date" name="calendar_date" value="<?php echo esc_attr( $date_value ); ?>" data-calendar-input />
+                <input type="date" name="calendar_date" value="<?php echo esc_attr( $date_value ); ?>" />
             </label>
             <label>
                 <span><?php esc_html_e( 'Services', 'smooth-booking' ); ?></span>
-                <select id="smooth-booking-calendar-services" class="smooth-booking-select2" name="service_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter services…', 'smooth-booking' ); ?>">
+                <select id="smooth-booking-calendar-services" class="smooth-booking-select2" name="service_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter services…', 'smooth-booking' ); ?>" data-all-value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>">
+                    <option value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>" <?php selected( $all_services_selected ); ?>><?php esc_html_e( 'All services', 'smooth-booking' ); ?></option>
                     <?php foreach ( $services as $service ) : ?>
                         <?php if ( ! $service instanceof Service ) { continue; } ?>
                         <?php $is_selected = in_array( $service->get_id(), $selected_service_ids, true ); ?>
@@ -302,28 +300,28 @@ class CalendarPage {
                 <?php endif; ?>
             </label>
             <label>
-                <span><?php esc_html_e( 'Staff members', 'smooth-booking' ); ?></span>
-                <select id="smooth-booking-calendar-employees" class="smooth-booking-select2" name="employee_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter staff…', 'smooth-booking' ); ?>">
+                <span><?php esc_html_e( 'Employees', 'smooth-booking' ); ?></span>
+                <select id="smooth-booking-calendar-employees" class="smooth-booking-select2" name="employee_ids[]" multiple data-placeholder="<?php echo esc_attr__( 'Filter employees…', 'smooth-booking' ); ?>" data-all-value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>">
+                    <option value="<?php echo esc_attr( self::ALL_FILTER_VALUE ); ?>" <?php selected( $all_employees_selected ); ?>><?php esc_html_e( 'All employees', 'smooth-booking' ); ?></option>
                     <?php foreach ( $employees as $employee ) : ?>
                         <?php if ( ! $employee instanceof Employee ) { continue; } ?>
                         <?php $is_selected = in_array( $employee->get_id(), $selected_employee_ids, true ); ?>
                         <option value="<?php echo esc_attr( (string) $employee->get_id() ); ?>" <?php selected( $is_selected ); ?>><?php echo esc_html( $employee->get_name() ); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <p class="description"><?php esc_html_e( 'Use the quick buttons below to toggle staff columns.', 'smooth-booking' ); ?></p>
+                <p class="description"><?php esc_html_e( 'Use the quick buttons below to toggle employee columns.', 'smooth-booking' ); ?></p>
             </label>
-            <div id="smooth-booking-calendar-picker" class="smooth-booking-calendar-picker" data-initial-date="<?php echo esc_attr( $date_value ); ?>"></div>
             <button type="submit" class="button button-primary"><?php esc_html_e( 'Apply', 'smooth-booking' ); ?></button>
         </form>
         <?php if ( ! empty( $employees ) ) : ?>
-            <div class="smooth-booking-calendar-quickfilters" role="group" aria-label="<?php echo esc_attr__( 'Quick staff filters', 'smooth-booking' ); ?>">
-                <span class="smooth-booking-calendar-quickfilters__label"><?php esc_html_e( 'Quick staff filters', 'smooth-booking' ); ?></span>
+            <div class="smooth-booking-calendar-quickfilters" role="group" aria-label="<?php echo esc_attr__( 'Quick employee filters', 'smooth-booking' ); ?>">
+                <span class="smooth-booking-calendar-quickfilters__label"><?php esc_html_e( 'Quick employee filters', 'smooth-booking' ); ?></span>
                 <div class="smooth-booking-calendar-quickfilters__buttons">
                     <?php
-                    $all_selected = ! empty( $employees ) && count( $selected_employee_ids ) === count( $employees );
+                    $all_selected = $all_employees_selected;
                     ?>
                     <button type="button" class="smooth-booking-calendar-quickfilters__button<?php echo $all_selected ? ' is-active' : ''; ?>" data-employee-toggle="all">
-                        <?php esc_html_e( 'All staff', 'smooth-booking' ); ?>
+                        <?php esc_html_e( 'All employees', 'smooth-booking' ); ?>
                     </button>
                     <?php foreach ( $employees as $employee ) : ?>
                         <?php if ( ! $employee instanceof Employee ) { continue; } ?>
