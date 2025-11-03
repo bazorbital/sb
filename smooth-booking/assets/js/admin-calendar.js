@@ -4,6 +4,83 @@
     var settings = window.SmoothBookingCalendar || {};
     var calendarData = window.SmoothBookingCalendarData || (settings.data || {});
 
+    function toArray(value) {
+        if (Array.isArray(value)) {
+            return value.slice();
+        }
+
+        if (typeof value === 'undefined' || value === null || value === '') {
+            return [];
+        }
+
+        return [String(value)];
+    }
+
+    function normaliseArray(values) {
+        return values.slice().sort();
+    }
+
+    function arraysEqual(a, b) {
+        if (a.length !== b.length) {
+            return false;
+        }
+
+        var first = normaliseArray(a);
+        var second = normaliseArray(b);
+
+        for (var i = 0; i < first.length; i++) {
+            if (first[i] !== second[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function setSelectValues($select, values) {
+        var current = toArray($select.val()).map(String);
+        var target = values.map(String);
+
+        if (arraysEqual(current, target)) {
+            return;
+        }
+
+        $select.val(target).trigger('change.select2');
+    }
+
+    function getAllOptionValue($select) {
+        var value = $select.data('all-value');
+
+        if (typeof value === 'undefined' || value === null || value === '') {
+            return '';
+        }
+
+        return String(value);
+    }
+
+    function enforceAllOption($select) {
+        var allValue = getAllOptionValue($select);
+
+        if (!allValue) {
+            return;
+        }
+
+        var values = toArray($select.val()).map(String);
+        var hasAll = values.indexOf(allValue) !== -1;
+        var others = values.filter(function (value) {
+            return value !== allValue && value !== '';
+        });
+
+        if (hasAll && others.length) {
+            setSelectValues($select, others);
+            return;
+        }
+
+        if (!others.length && !hasAll && $select.find('option[value="' + allValue + '"]').length) {
+            setSelectValues($select, [allValue]);
+        }
+    }
+
     function initSelect2() {
         if (typeof $.fn.select2 !== 'function') {
             return;
@@ -13,12 +90,24 @@
             var $select = $(this);
             var placeholder = $select.data('placeholder') || '';
 
+            var dropdownParent = $select.closest('.smooth-booking-form-card');
+
+            if (!dropdownParent.length) {
+                dropdownParent = $(document.body);
+            }
+
             $select.select2({
                 width: 'resolve',
                 placeholder: placeholder,
                 allowClear: true,
-                dropdownParent: $select.closest('.smooth-booking-form-card')
+                dropdownParent: dropdownParent
             });
+
+            $select.on('change', function () {
+                enforceAllOption($select);
+            });
+
+            enforceAllOption($select);
         });
     }
 
@@ -139,19 +228,36 @@
             return [];
         }
 
-        if (Array.isArray(value)) {
-            return value.slice();
+        var values = Array.isArray(value) ? value.slice() : [String(value)];
+        var allValue = getAllOptionValue($select);
+        var pattern = /^\d+$/;
+        var hasAll = allValue && values.indexOf(allValue) !== -1;
+
+        if (hasAll) {
+            return getAllEmployeeIds($select);
         }
 
-        return [String(value)];
+        return values.filter(function (val) {
+            return pattern.test(String(val));
+        }).map(String);
     }
 
     function getAllEmployeeIds($select) {
         var ids = [];
+        var allValue = getAllOptionValue($select);
+        var pattern = /^\d+$/;
 
         $select.find('option').each(function () {
             var val = $(this).val();
-            if (val) {
+            if (!val) {
+                return;
+            }
+
+            if (allValue && String(val) === allValue) {
+                return;
+            }
+
+            if (pattern.test(String(val))) {
                 ids.push(String(val));
             }
         });
@@ -164,7 +270,20 @@
             return;
         }
 
-        $select.val(ids).trigger('change');
+        var allValue = getAllOptionValue($select);
+        var allIds = getAllEmployeeIds($select);
+        var values = ids.slice().map(String);
+
+        if (!values.length && allValue) {
+            setSelectValues($select, [allValue]);
+            return;
+        }
+
+        if (allValue && allIds.length && values.length === allIds.length) {
+            values = [allValue].concat(values);
+        }
+
+        setSelectValues($select, values);
     }
 
     function updateEmployeeButtons() {
@@ -176,14 +295,14 @@
 
         var selected = getSelectedEmployeeIds($select);
         var allIds = getAllEmployeeIds($select);
-        var allActive = selected.length && selected.length === allIds.length;
+        var allActive = allIds.length && selected.length === allIds.length;
 
         $('[data-employee-toggle]').each(function () {
             var $button = $(this);
             var toggleId = String($button.data('employee-toggle'));
 
             if (toggleId === 'all') {
-                $button.toggleClass('is-active', allActive);
+                $button.toggleClass('is-active', !!allActive);
             } else {
                 $button.toggleClass('is-active', selected.indexOf(toggleId) !== -1);
             }
