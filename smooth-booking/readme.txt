@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.16.2
+Stable tag: 0.16.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.16.3 =
+* Ensure the calendar, appointments, and notifications screens register Select2 using WordPress' bundled SelectWoo assets so the multi-select filters render with the expected dropdown UI even when no third-party Select2 library is available.
+
 = 0.16.2 =
 * Fix: Remove duplicate service and employee entries from the Calendar filters so only the sentinel “All” options are pre-selected and the Select2 multi-selects render a single set of choices.
 

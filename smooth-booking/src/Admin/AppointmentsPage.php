@@ -16,6 +16,7 @@ use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
+use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
@@ -348,13 +349,13 @@ class AppointmentsPage {
             SMOOTH_BOOKING_VERSION
         );
 
-        wp_enqueue_style( 'select2' );
-        wp_enqueue_script( 'select2' );
+        wp_enqueue_style( Select2AssetRegistrar::STYLE_HANDLE );
+        wp_enqueue_script( Select2AssetRegistrar::SCRIPT_HANDLE );
 
         wp_enqueue_script(
             'smooth-booking-admin-appointments',
             plugins_url( 'assets/js/admin-appointments.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'select2' ],
+            [ 'jquery', Select2AssetRegistrar::SCRIPT_HANDLE ],
             SMOOTH_BOOKING_VERSION,
             true
         );

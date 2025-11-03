@@ -53,6 +53,7 @@ use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Infrastructure\Database\SchemaDefinitionBuilder;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Repository\AppointmentRepository;
 use SmoothBooking\Infrastructure\Repository\BusinessHoursRepository;
 use SmoothBooking\Infrastructure\Repository\CustomerRepository;
@@ -83,6 +84,12 @@ class ServiceProvider {
     public function register( ServiceContainer $container ): void {
         $container->singleton( Logger::class, static function ( ServiceContainer $_container ): Logger {
             return new Logger( 'smooth-booking' );
+        } );
+
+        $container->singleton( Select2AssetRegistrar::class, static function ( ServiceContainer $container ): Select2AssetRegistrar {
+            return new Select2AssetRegistrar(
+                $container->get( Logger::class )
+            );
         } );
 
         $container->singleton( SchemaDefinitionBuilder::class, static function ( ServiceContainer $_container ): SchemaDefinitionBuilder {

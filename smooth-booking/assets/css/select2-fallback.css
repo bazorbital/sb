@@ -1,0 +1,24 @@
+/*
+ * Minimal fallback styles when WordPress' SelectWoo stylesheet is unavailable.
+ *
+ * @package SmoothBooking\Assets
+ */
+
+.smooth-booking-select2 {
+    min-width: 220px;
+    width: 100%;
+}
+
+.smooth-booking-select2[multiple] {
+    min-height: 120px;
+    padding: 4px 6px;
+}
+
+.smooth-booking-select2 option {
+    padding: 3px 4px;
+}
+
+.smooth-booking-select2:focus {
+    outline: 2px solid #1d72b8;
+    outline-offset: 2px;
+}
