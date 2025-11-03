@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.16.0
+Stable tag: 0.16.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,9 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.16.1 =
+* Fix: Remove the duplicate VanillaCalendar date picker in favour of the native single-day selector, ensure Select2 filters are initialised only once, and keep the EventCalendar grid rendering appointments after applying new filters.
+
 = 0.16.0 =
 * Change: Refresh the Calendar filters so the “Employees” terminology matches the rest of the admin UI, include dedicated “All services” and “All employees” Select2 options, and automatically fall back to those defaults when clearing selections, ensuring every employee column renders for the chosen location and date after pressing **Apply**.
 

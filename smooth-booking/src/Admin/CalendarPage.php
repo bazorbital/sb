@@ -223,14 +223,6 @@ class CalendarPage {
         wp_enqueue_script( 'select2' );
 
         wp_enqueue_script(
-            'smooth-booking-vanilla-calendar',
-            plugins_url( 'assets/js/vendor/vanilla-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery' ],
-            SMOOTH_BOOKING_VERSION,
-            true
-        );
-
-        wp_enqueue_script(
             'smooth-booking-event-calendar',
             plugins_url( 'assets/js/vendor/event-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
             [],
@@ -241,7 +233,7 @@ class CalendarPage {
         wp_enqueue_script(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/js/admin-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'smooth-booking-vanilla-calendar', 'smooth-booking-event-calendar', 'select2' ],
+            [ 'jquery', 'smooth-booking-event-calendar', 'select2' ],
             SMOOTH_BOOKING_VERSION,
             true
         );
@@ -291,7 +283,7 @@ class CalendarPage {
             </label>
             <label>
                 <span><?php esc_html_e( 'Date', 'smooth-booking' ); ?></span>
-                <input type="date" name="calendar_date" value="<?php echo esc_attr( $date_value ); ?>" data-calendar-input />
+                <input type="date" name="calendar_date" value="<?php echo esc_attr( $date_value ); ?>" />
             </label>
             <label>
                 <span><?php esc_html_e( 'Services', 'smooth-booking' ); ?></span>
@@ -319,7 +311,6 @@ class CalendarPage {
                 </select>
                 <p class="description"><?php esc_html_e( 'Use the quick buttons below to toggle employee columns.', 'smooth-booking' ); ?></p>
             </label>
-            <div id="smooth-booking-calendar-picker" class="smooth-booking-calendar-picker" data-initial-date="<?php echo esc_attr( $date_value ); ?>"></div>
             <button type="submit" class="button button-primary"><?php esc_html_e( 'Apply', 'smooth-booking' ); ?></button>
         </form>
         <?php if ( ! empty( $employees ) ) : ?>

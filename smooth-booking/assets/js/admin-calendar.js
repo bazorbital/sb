@@ -88,6 +88,9 @@
 
         $('.smooth-booking-select2').each(function () {
             var $select = $(this);
+            if ($select.data('select2')) {
+                return;
+            }
             var placeholder = $select.data('placeholder') || '';
 
             var dropdownParent = $select.closest('.smooth-booking-form-card');
@@ -391,41 +394,11 @@
         });
     }
 
-    function initVanillaCalendar() {
-        if (typeof window.VanillaCalendar !== 'function') {
-            return;
-        }
-
-        var picker = document.getElementById('smooth-booking-calendar-picker');
-        if (!picker) {
-            return;
-        }
-
-        var input = document.querySelector('[data-calendar-input]');
-        var initialDate = picker.getAttribute('data-initial-date') || (input ? input.value : null);
-
-        var calendar = new window.VanillaCalendar(picker, {
-            selectedDate: initialDate ? new Date(initialDate) : new Date(),
-            initialDate: initialDate,
-            onSelect: function (dateString) {
-                if (input) {
-                    input.value = dateString;
-                }
-                Array.prototype.forEach.call(picker.querySelectorAll('.vanilla-calendar__day'), function (dayButton) {
-                    dayButton.classList.toggle('is-selected', dayButton.dataset.date === dateString);
-                });
-            }
-        });
-
-        calendar.init();
-    }
-
     $(function () {
         initSelect2();
         syncEndOptions();
         bindAppointmentDelete();
         bindModalEvents();
-        initVanillaCalendar();
         bindEmployeeQuickFilters();
         initEventCalendar();
     });
