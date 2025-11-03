@@ -15,6 +15,7 @@ use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
+use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
@@ -145,12 +146,15 @@ class CalendarServiceTest extends TestCase {
             ->method('get_slots_for_range')
             ->willReturn(['09:00', '09:30', '10:00', '10:30']);
 
+        $logger = $this->createMock(Logger::class);
+
         $service = new CalendarService(
             $appointmentService,
             $employeeService,
             $businessHours,
             $locationService,
-            $settings
+            $settings,
+            $logger
         );
 
         $result = $service->get_daily_schedule($location->get_id(), $date);
@@ -182,12 +186,15 @@ class CalendarServiceTest extends TestCase {
             ->method('get_location')
             ->willReturn(new WP_Error('missing', 'Missing location'));
 
+        $logger = $this->createMock(Logger::class);
+
         $service = new CalendarService(
             $appointmentService,
             $employeeService,
             $businessHours,
             $locationService,
-            $settings
+            $settings,
+            $logger
         );
 
         $result = $service->get_daily_schedule(99, $date);

@@ -15,6 +15,7 @@ class GeneralSettingsTest extends TestCase {
             [
                 'auto_repair_schema' => 'yes',
                 'time_slot_length'   => 15,
+                'enable_debug_logging' => '1',
             ]
         );
 
@@ -22,6 +23,7 @@ class GeneralSettingsTest extends TestCase {
             [
                 'auto_repair_schema' => 1,
                 'time_slot_length'   => 15,
+                'enable_debug_logging' => 1,
             ],
             $result
         );
@@ -34,6 +36,7 @@ class GeneralSettingsTest extends TestCase {
             [
                 'auto_repair_schema' => '0',
                 'time_slot_length'   => 17,
+                'enable_debug_logging' => '',
             ]
         );
 
@@ -41,8 +44,23 @@ class GeneralSettingsTest extends TestCase {
             [
                 'auto_repair_schema' => 0,
                 'time_slot_length'   => 30,
+                'enable_debug_logging' => 0,
             ],
             $result
         );
+    }
+
+    public function test_is_debug_logging_enabled_reflects_option(): void {
+        $settings = new GeneralSettings();
+
+        $this->assertFalse( $settings->is_debug_logging_enabled() );
+
+        $GLOBALS['smooth_booking_test_options'][ GeneralSettings::OPTION_NAME ] = [
+            'enable_debug_logging' => 1,
+        ];
+
+        $this->assertTrue( $settings->is_debug_logging_enabled() );
+
+        unset( $GLOBALS['smooth_booking_test_options'][ GeneralSettings::OPTION_NAME ] );
     }
 }

@@ -14,6 +14,7 @@ use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Locations\LocationService;
+use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
@@ -21,8 +22,10 @@ use function absint;
 use function array_filter;
 use function array_map;
 use function in_array;
+use function count;
 use function is_wp_error;
 use function wp_timezone;
+use function sprintf;
 
 /**
  * Provides structured calendar data for the admin interface.
@@ -38,18 +41,22 @@ class CalendarService {
 
     private GeneralSettings $settings;
 
+    private Logger $logger;
+
     public function __construct(
         AppointmentService $appointments,
         EmployeeService $employees,
         BusinessHoursService $business_hours,
         LocationService $locations,
-        GeneralSettings $settings
+        GeneralSettings $settings,
+        Logger $logger
     ) {
         $this->appointments   = $appointments;
         $this->employees      = $employees;
         $this->business_hours = $business_hours;
         $this->locations      = $locations;
         $this->settings       = $settings;
+        $this->logger         = $logger;
     }
 
     /**
@@ -58,18 +65,48 @@ class CalendarService {
      * @return array<string, mixed>|WP_Error
      */
     public function get_daily_schedule( int $location_id, DateTimeImmutable $date ) {
+        $this->logger->info(
+            sprintf(
+                'Requesting schedule for location #%d on %s',
+                $location_id,
+                $date->format( 'Y-m-d' )
+            )
+        );
+
         $location_result = $this->locations->get_location( $location_id );
 
         if ( is_wp_error( $location_result ) ) {
+            $this->logger->error(
+                sprintf(
+                    'Location lookup failed for #%d: %s',
+                    $location_id,
+                    $location_result->get_error_message()
+                )
+            );
             return $location_result;
         }
 
         $location = $location_result;
         $employees = $this->filter_employees_for_location( $location_id );
 
+        $this->logger->info(
+            sprintf(
+                'Employees available for location #%d: %d',
+                $location_id,
+                count( $employees )
+            )
+        );
+
         $hours_result = $this->business_hours->get_location_hours( $location_id );
 
         if ( is_wp_error( $hours_result ) ) {
+            $this->logger->error(
+                sprintf(
+                    'Business hours lookup failed for location #%d: %s',
+                    $location_id,
+                    $hours_result->get_error_message()
+                )
+            );
             return $hours_result;
         }
 
@@ -104,6 +141,19 @@ class CalendarService {
 
             $appointments = $this->appointments->get_appointments_for_employees( $employee_ids, $day_start, $day_end );
         }
+
+        $this->logger->info(
+            sprintf(
+                'Resolved schedule window for location #%d on %s (open: %s, close: %s, slots: %d, appointments: %d, closed flag: %s)',
+                $location_id,
+                $date->format( 'Y-m-d' ),
+                $open_datetime->format( 'H:i' ),
+                $close_datetime->format( 'H:i' ),
+                count( $slots ),
+                count( $appointments ),
+                ! empty( $day_hours['is_closed'] ) ? 'yes' : 'no'
+            )
+        );
 
         return [
             'location'     => $location,

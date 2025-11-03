@@ -37,8 +37,9 @@ class GeneralSettings {
      * @var array<string, mixed>
      */
     private const DEFAULTS = [
-        'auto_repair_schema' => 1,
-        'time_slot_length'   => 30,
+        'auto_repair_schema'   => 1,
+        'time_slot_length'     => 30,
+        'enable_debug_logging' => 0,
     ];
 
     /**
@@ -106,6 +107,10 @@ class GeneralSettings {
             $sanitized['auto_repair_schema'] = empty( $input['auto_repair_schema'] ) ? 0 : 1;
         }
 
+        if ( isset( $input['enable_debug_logging'] ) ) {
+            $sanitized['enable_debug_logging'] = empty( $input['enable_debug_logging'] ) ? 0 : 1;
+        }
+
         if ( isset( $input['time_slot_length'] ) ) {
             $length = absint( $input['time_slot_length'] );
 
@@ -115,6 +120,15 @@ class GeneralSettings {
         }
 
         return $sanitized;
+    }
+
+    /**
+     * Determine whether debug logging is enabled.
+     */
+    public function is_debug_logging_enabled(): bool {
+        $settings = $this->get_all();
+
+        return ! empty( $settings['enable_debug_logging'] );
     }
 
     /**

@@ -332,7 +332,8 @@ class ServiceProvider {
                 $container->get( EmployeeService::class ),
                 $container->get( BusinessHoursService::class ),
                 $container->get( LocationService::class ),
-                $container->get( GeneralSettings::class )
+                $container->get( GeneralSettings::class ),
+                $container->get( Logger::class )
             );
         } );
 
@@ -343,7 +344,8 @@ class ServiceProvider {
                 $container->get( EmployeeService::class ),
                 $container->get( ServiceService::class ),
                 $container->get( CustomerService::class ),
-                $container->get( GeneralSettings::class )
+                $container->get( GeneralSettings::class ),
+                $container->get( Logger::class )
             );
         } );
 

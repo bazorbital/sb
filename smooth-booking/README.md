@@ -19,6 +19,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - WP-CLI commands `wp smooth schema <status|repair>`, `wp smooth locations <list|create|update|delete|restore>`, `wp smooth employees <list|create|update|delete|restore>`, `wp smooth customers <list|create|update|delete|restore>`, `wp smooth services <list|create|update|delete|restore>`, `wp smooth appointments <list|delete|restore>`, and `wp smooth holidays <list|add|delete>`
 - Multisite-aware activation, deactivation, and uninstall workflows
 - Location-based Business Hours editor under **Smooth Booking → Settings → Business Hours** with 15-minute dropdowns for each weekday powering staff templates and calendar visibility
+- Debug logging toggle under **Smooth Booking → Settings → General** that enables structured diagnostics for calendar aggregation, asset bootstrapping, and booking repositories while troubleshooting
 - Location-based Holidays planner under **Smooth Booking → Settings → Holidays** with yearly calendars, range selection, recurring closures, and color-coded status indicators
 
 ## Installation
@@ -104,6 +105,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - REST controllers reside in `src/Rest/` and register routes on `rest_api_init`.
 - Admin calendar data is exposed via the `window.SmoothBookingCalendarData` global before `admin-calendar.js` runs to prevent WordPress localisation helpers from overwriting the schedule payload that feeds the EventCalendar grid.
 - Select2 assets are registered through `SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar`, which aliases WordPress' bundled SelectWoo library to guarantee the enhanced multi-select UI without shipping duplicate vendor scripts.
+- Calendar aggregation, SelectWoo asset registration, and booking repository operations log to the WordPress debug log when the General → Debug logging option is enabled. Toggle the setting off for production.
 
 ## Hooks
 - `smooth_booking_cleanup_event` — Daily cron event for health checks.
