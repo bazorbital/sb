@@ -114,6 +114,35 @@
         });
     }
 
+    function ensureAllOnSubmit($select) {
+        if (!$select.length) {
+            return;
+        }
+
+        var values = toArray($select.val());
+
+        if (values.length) {
+            return;
+        }
+
+        var allValue = getAllOptionValue($select);
+
+        if (!allValue) {
+            return;
+        }
+
+        if ($select.find('option[value="' + allValue + '"]').length) {
+            setSelectValues($select, [allValue]);
+        }
+    }
+
+    function bindFilterFormSubmission() {
+        $('.smooth-booking-calendar-filters').on('submit', function () {
+            ensureAllOnSubmit($('#smooth-booking-calendar-services'));
+            ensureAllOnSubmit($('#smooth-booking-calendar-employees'));
+        });
+    }
+
     function syncEndOptions() {
         var startValue = $('#smooth-booking-appointment-start').val();
         var $endSelect = $('#smooth-booking-appointment-end');
@@ -400,6 +429,7 @@
         bindAppointmentDelete();
         bindModalEvents();
         bindEmployeeQuickFilters();
+        bindFilterFormSubmission();
         initEventCalendar();
     });
 })(jQuery, window);

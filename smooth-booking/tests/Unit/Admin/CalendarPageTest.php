@@ -12,6 +12,7 @@ use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
+use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 
 /**
@@ -65,7 +66,8 @@ class CalendarPageTest extends TestCase {
             $this->createMock( EmployeeService::class ),
             $this->createMock( ServiceService::class ),
             $this->createMock( CustomerService::class ),
-            $this->createMock( GeneralSettings::class )
+            $this->createMock( GeneralSettings::class ),
+            $this->createMock( Logger::class )
         );
     }
 

@@ -2,6 +2,13 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.4] - 2025-07-05
+### Added
+- Debug logging switch under **Settings → General** that controls whether the plugin emits structured diagnostics for calendar aggregation, SelectWoo registration, and booking repositories, plus expanded log coverage for daily schedule hydration.
+
+### Fixed
+- Always register the core SelectWoo script and stylesheet handles (regardless of filesystem checks) so Select2-powered filters render consistently, and ensure the Calendar Apply action rehydrates the sentinel "All" filter selections when nothing is chosen.
+
 # [0.16.3] - 2025-06-20
 ### Fixed
 - Registered Select2 assets against WordPress' bundled SelectWoo library and added a guarded alias so calendar, appointment, and notification filters consistently render as Select2 dropdowns even when no external Select2 script is present.

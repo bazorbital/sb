@@ -20,6 +20,7 @@ use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
+use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
@@ -30,6 +31,7 @@ use function add_query_arg;
 use function array_filter;
 use function array_map;
 use function array_values;
+use function count;
 use function esc_attr;
 use function esc_attr__;
 use function esc_html;
@@ -43,6 +45,7 @@ use function is_array;
 use function is_ssl;
 use function plugins_url;
 use function sanitize_text_field;
+use function implode;
 use function selected;
 use function sprintf;
 use function wp_add_inline_script;
@@ -77,13 +80,16 @@ class CalendarPage {
 
     protected GeneralSettings $general_settings;
 
+    private Logger $logger;
+
     public function __construct(
         CalendarService $calendar,
         LocationService $locations,
         EmployeeService $employees,
         ServiceService $services,
         CustomerService $customers,
-        GeneralSettings $general_settings
+        GeneralSettings $general_settings,
+        Logger $logger
     ) {
         $this->calendar          = $calendar;
         $this->locations         = $locations;
@@ -91,6 +97,7 @@ class CalendarPage {
         $this->services          = $services;
         $this->customers         = $customers;
         $this->general_settings  = $general_settings;
+        $this->logger            = $logger;
     }
 
     /**
@@ -128,6 +135,14 @@ class CalendarPage {
 
         if ( is_wp_error( $schedule ) ) {
             $error_message = $schedule->get_error_message();
+            $this->logger->error(
+                sprintf(
+                    'Calendar load failed for location #%d on %s: %s',
+                    $location_id,
+                    $selected_date->format( 'Y-m-d' ),
+                    $error_message
+                )
+            );
         } else {
             $employees   = $this->unique_employees( $schedule['employees'] ?? [] );
             $all_employees = $employees;
@@ -138,6 +153,7 @@ class CalendarPage {
             }
             $slots       = $schedule['slots'] ?? [];
             $appointments = $schedule['appointments'] ?? [];
+            $raw_appointment_count = is_array( $appointments ) ? count( $appointments ) : 0;
             $appointments = $this->filter_appointments( $appointments, $selected_service_ids, $selected_employee_ids );
             $appointments_by_employee = $this->group_appointments_by_employee( $appointments );
             $is_closed = ! empty( $schedule['is_closed'] );
@@ -150,6 +166,26 @@ class CalendarPage {
             if ( isset( $schedule['slot_length'] ) ) {
                 $slot_length = (int) $schedule['slot_length'];
             }
+
+            $this->logger->info(
+                sprintf(
+                    'Calendar prepared for location #%d on %s (requested services: %s, requested employees: %s, roster: %d, visible: %d, slots: %d, appointments total: %d, appointments visible: %d, closed: %s)',
+                    $location_id,
+                    $selected_date->format( 'Y-m-d' ),
+                    $this->format_ids_for_log( $selected_service_ids ),
+                    $this->format_ids_for_log( $selected_employee_ids ),
+                    count( $all_employees ),
+                    count( $employees ),
+                    count( $slots ),
+                    $raw_appointment_count,
+                    count( $appointments ),
+                    $is_closed ? 'yes' : 'no'
+                )
+            );
+
+            if ( $raw_appointment_count > 0 && empty( $appointments ) ) {
+                $this->logger->info( 'All appointments were filtered out by the selected service or employee criteria.' );
+            }
         }
 
         $customers = $this->customers->paginate_customers( [ 'per_page' => 200 ] );
@@ -160,6 +196,17 @@ class CalendarPage {
 
         $current_location = $this->find_location( $locations, $location_id );
         $timezone_string  = $current_location ? $current_location->get_timezone() : get_option( 'timezone_string', 'UTC' );
+
+        if ( empty( $all_employees ) ) {
+            $this->logger->info( sprintf( 'No employees assigned to location #%d.', $location_id ) );
+        } elseif ( $no_employee_selected ) {
+            $this->logger->info( 'Employee filters excluded all available staff.' );
+        }
+
+        if ( empty( $slots ) ) {
+            $this->logger->info( sprintf( 'No time slots available for location #%d on %s.', $location_id, $selected_date->format( 'Y-m-d' ) ) );
+        }
+
         ?>
         <div class="wrap smooth-booking-admin smooth-booking-calendar-wrap">
             <div class="smooth-booking-admin__content">
@@ -637,6 +684,19 @@ class CalendarPage {
         $raw = wp_unslash( $_GET['employee_ids'] );
 
         return $this->sanitize_id_list( is_array( $raw ) ? $raw : [] );
+    }
+
+    /**
+     * Format identifier values for structured logging.
+     *
+     * @param int[] $ids Identifier list.
+     */
+    private function format_ids_for_log( array $ids ): string {
+        if ( empty( $ids ) ) {
+            return 'all';
+        }
+
+        return implode( ',', array_map( 'strval', $ids ) );
     }
 
     /**

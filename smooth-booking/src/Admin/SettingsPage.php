@@ -158,6 +158,17 @@ class SettingsPage {
         );
 
         add_settings_field(
+            'smooth_booking_enable_debug_logging',
+            __( 'Enable debug logging', 'smooth-booking' ),
+            [ $this, 'render_logging_field' ],
+            self::MENU_SLUG,
+            'smooth_booking_general_section',
+            [
+                'label_for' => 'smooth-booking-enable-debug-logging',
+            ]
+        );
+
+        add_settings_field(
             'smooth_booking_time_slot_length',
             __( 'Default time slot length', 'smooth-booking' ),
             [ $this, 'render_time_slot_length_field' ],
@@ -182,6 +193,21 @@ class SettingsPage {
         }
 
         return $this->general_settings->sanitize( $input );
+    }
+
+    /**
+     * Render the debug logging field.
+     */
+    public function render_logging_field(): void {
+        $settings = $this->general_settings->get_all();
+        $enabled  = ! empty( $settings['enable_debug_logging'] );
+        ?>
+        <label for="smooth-booking-enable-debug-logging">
+            <input type="checkbox" id="smooth-booking-enable-debug-logging" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[enable_debug_logging]" value="1" <?php checked( $enabled ); ?> />
+            <?php esc_html_e( 'Write detailed plugin diagnostics to the WordPress debug log.', 'smooth-booking' ); ?>
+        </label>
+        <p class="description"><?php esc_html_e( 'Disable logging on production sites once troubleshooting is complete.', 'smooth-booking' ); ?></p>
+        <?php
     }
 
     /**

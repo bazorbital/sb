@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.16.3
+Stable tag: 0.16.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,10 @@ Yes. Use the REST API at `/wp-json/smooth-booking/v1/locations`, `/wp-json/smoot
 2. Employee administration table with quick actions.
 
 == Changelog ==
+= 0.16.4 =
+* Fix: Always load WordPress' bundled SelectWoo assets so the Calendar filters render with the expected Select2 dropdowns regardless of filesystem restrictions, and harden the Apply action to resubmit the "All" sentinel options when nothing is selected.
+* Add: General → Debug logging toggle that controls structured diagnostics for calendar aggregation, asset registration, and repositories when troubleshooting booking visibility issues.
+
 = 0.16.3 =
 * Ensure the calendar, appointments, and notifications screens register Select2 using WordPress' bundled SelectWoo assets so the multi-select filters render with the expected dropdown UI even when no third-party Select2 library is available.
 

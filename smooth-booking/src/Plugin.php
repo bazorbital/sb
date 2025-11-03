@@ -29,6 +29,8 @@ use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
+use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
@@ -90,6 +92,10 @@ class Plugin {
      */
     public function run(): void {
         require_once SMOOTH_BOOKING_PLUGIN_DIR . 'src/Frontend/TemplateTags.php';
+
+        $this->refresh_logger_state();
+        add_action( 'update_option_' . GeneralSettings::OPTION_NAME, [ $this, 'refresh_logger_state' ], 10, 0 );
+        add_action( 'add_option_' . GeneralSettings::OPTION_NAME, [ $this, 'refresh_logger_state' ], 10, 0 );
 
         add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
         add_action( 'init', [ $this, 'register_shortcodes' ] );
@@ -168,6 +174,17 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_save_email_settings', [ $settings_page, 'handle_email_settings_save' ] );
         add_action( 'admin_post_smooth_booking_send_test_email', [ $settings_page, 'handle_send_test_email' ] );
         add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
+    }
+
+
+    /**
+     * Sync the logger state with the stored setting.
+     */
+    public function refresh_logger_state(): void {
+        /** @var GeneralSettings $general_settings */
+        $general_settings = $this->container->get( GeneralSettings::class );
+
+        Logger::set_enabled( $general_settings->is_debug_logging_enabled() );
     }
 
     /**

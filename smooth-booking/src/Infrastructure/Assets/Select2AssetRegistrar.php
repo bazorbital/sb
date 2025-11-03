@@ -10,10 +10,9 @@ namespace SmoothBooking\Infrastructure\Assets;
 use SmoothBooking\Infrastructure\Logging\Logger;
 
 use function add_action;
-use function file_exists;
 use function get_bloginfo;
 use function includes_url;
-use function plugins_url;
+use function sprintf;
 use function wp_add_inline_script;
 use function wp_register_script;
 use function wp_register_style;
@@ -31,6 +30,10 @@ class Select2AssetRegistrar {
     private bool $hooks_added = false;
 
     private bool $inline_added = false;
+
+    private bool $style_registered = false;
+
+    private bool $script_registered = false;
 
     private Logger $logger;
 
@@ -71,14 +74,20 @@ class Select2AssetRegistrar {
             return;
         }
 
-        $style_url = $this->resolve_style_url();
+        $this->register_core_style();
+
+        if ( $this->style_registered ) {
+            return;
+        }
 
         wp_register_style(
             self::STYLE_HANDLE,
-            $style_url,
-            [],
+            false,
+            [ 'selectWoo' ],
             $this->determine_version()
         );
+
+        $this->style_registered = true;
     }
 
     /**
@@ -89,19 +98,21 @@ class Select2AssetRegistrar {
             return;
         }
 
-        $dependencies = [ 'jquery' ];
+        $this->register_core_script();
 
-        if ( $this->ensure_core_selectwoo_script() ) {
-            $dependencies[] = 'selectWoo';
+        if ( $this->script_registered ) {
+            return;
         }
 
         wp_register_script(
             self::SCRIPT_HANDLE,
-            '',
-            $dependencies,
+            false,
+            [ 'selectWoo' ],
             $this->determine_version(),
             true
         );
+
+        $this->script_registered = true;
 
         $this->add_inline_alias();
     }
@@ -142,42 +153,69 @@ JS;
     /**
      * Ensure the SelectWoo script shipped with WordPress is registered.
      */
-    private function ensure_core_selectwoo_script(): bool {
+    private function register_core_script(): void {
         if ( wp_script_is( 'selectWoo', 'registered' ) ) {
-            return true;
+            return;
         }
 
-        $core_path = ABSPATH . WPINC . '/js/dist/vendor/selectWoo/selectWoo.full.min.js';
-
-        if ( ! file_exists( $core_path ) ) {
-            $this->logger->info( 'SelectWoo script not found; falling back to noop Select2 alias.' );
-            return false;
-        }
+        $relative_path = $this->get_script_relative_path();
 
         wp_register_script(
             'selectWoo',
-            includes_url( 'js/dist/vendor/selectWoo/selectWoo.full.min.js' ),
+            includes_url( $relative_path ),
             [ 'jquery' ],
             $this->determine_version(),
             true
         );
 
-        return true;
+        $this->logger->info( sprintf( 'Registered SelectWoo script handle using core asset: %s', $relative_path ) );
     }
 
     /**
      * Resolve the stylesheet URL, preferring the core SelectWoo styles when available.
      */
     private function resolve_style_url(): string {
-        $core_path = ABSPATH . WPINC . '/css/dist/vendor/selectWoo/selectWoo.min.css';
+        return includes_url( $this->get_style_relative_path() );
+    }
 
-        if ( file_exists( $core_path ) ) {
-            return includes_url( 'css/dist/vendor/selectWoo/selectWoo.min.css' );
+    /**
+     * Register the core SelectWoo stylesheet handle.
+     */
+    private function register_core_style(): void {
+        if ( wp_style_is( 'selectWoo', 'registered' ) ) {
+            return;
         }
 
-        $this->logger->info( 'SelectWoo stylesheet not found; using Smooth Booking fallback styles.' );
+        wp_register_style(
+            'selectWoo',
+            $this->resolve_style_url(),
+            [],
+            $this->determine_version()
+        );
 
-        return plugins_url( 'assets/css/select2-fallback.css', SMOOTH_BOOKING_PLUGIN_FILE );
+        $this->logger->info( sprintf( 'Registered SelectWoo stylesheet using core asset: %s', $this->get_style_relative_path() ) );
+    }
+
+    /**
+     * Determine the appropriate SelectWoo script relative path.
+     */
+    private function get_script_relative_path(): string {
+        $use_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+
+        return $use_debug
+            ? 'js/dist/vendor/selectWoo/selectWoo.full.js'
+            : 'js/dist/vendor/selectWoo/selectWoo.full.min.js';
+    }
+
+    /**
+     * Determine the appropriate SelectWoo style relative path.
+     */
+    private function get_style_relative_path(): string {
+        $use_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+
+        return $use_debug
+            ? 'css/dist/vendor/selectWoo/selectWoo.css'
+            : 'css/dist/vendor/selectWoo/selectWoo.min.css';
     }
 
     /**
