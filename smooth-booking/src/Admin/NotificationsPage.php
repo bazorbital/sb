@@ -9,6 +9,7 @@ namespace SmoothBooking\Admin;
 
 use SmoothBooking\Domain\Notifications\EmailNotification;
 use SmoothBooking\Domain\Notifications\EmailNotificationService;
+use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use WP_Error;
 
 use const MINUTE_IN_SECONDS;
@@ -328,13 +329,13 @@ class NotificationsPage {
             SMOOTH_BOOKING_VERSION
         );
 
-        wp_enqueue_style( 'select2' );
-        wp_enqueue_script( 'select2' );
+        wp_enqueue_style( Select2AssetRegistrar::STYLE_HANDLE );
+        wp_enqueue_script( Select2AssetRegistrar::SCRIPT_HANDLE );
 
         wp_enqueue_script(
             'smooth-booking-admin-notifications',
             plugins_url( 'assets/js/admin-notifications.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'select2' ],
+            [ 'jquery', Select2AssetRegistrar::SCRIPT_HANDLE ],
             SMOOTH_BOOKING_VERSION,
             true
         );

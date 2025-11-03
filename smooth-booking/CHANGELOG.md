@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.3] - 2025-06-20
+### Fixed
+- Registered Select2 assets against WordPress' bundled SelectWoo library and added a guarded alias so calendar, appointment, and notification filters consistently render as Select2 dropdowns even when no external Select2 script is present.
+
 # [0.16.2] - 2025-06-15
 ### Fixed
 - Deduplicated the Calendar service and employee filters so only the sentinel “All” options render as selected by default and Select2 keeps a single set of chips without repeating entries when locations share overlapping assignments.

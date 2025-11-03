@@ -27,6 +27,7 @@ use SmoothBooking\Cli\Commands\LocationsCommand;
 use SmoothBooking\Cron\CleanupScheduler;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
+use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
@@ -97,6 +98,10 @@ class Plugin {
         add_action( 'admin_init', [ $this, 'register_settings' ] );
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
         add_action( CleanupScheduler::EVENT_HOOK, [ $this, 'handle_cleanup_cron' ] );
+
+        /** @var Select2AssetRegistrar $select2_assets */
+        $select2_assets = $this->container->get( Select2AssetRegistrar::class );
+        $select2_assets->register();
 
         /** @var CleanupScheduler $scheduler */
         $scheduler = $this->container->get( CleanupScheduler::class );

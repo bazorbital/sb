@@ -19,6 +19,7 @@ use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
+use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
@@ -219,8 +220,8 @@ class CalendarPage {
             SMOOTH_BOOKING_VERSION
         );
 
-        wp_enqueue_style( 'select2' );
-        wp_enqueue_script( 'select2' );
+        wp_enqueue_style( Select2AssetRegistrar::STYLE_HANDLE );
+        wp_enqueue_script( Select2AssetRegistrar::SCRIPT_HANDLE );
 
         wp_enqueue_script(
             'smooth-booking-event-calendar',
@@ -233,7 +234,7 @@ class CalendarPage {
         wp_enqueue_script(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/js/admin-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'jquery', 'smooth-booking-event-calendar', 'select2' ],
+            [ 'jquery', 'smooth-booking-event-calendar', Select2AssetRegistrar::SCRIPT_HANDLE ],
             SMOOTH_BOOKING_VERSION,
             true
         );
