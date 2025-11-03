@@ -2,6 +2,9 @@
 /**
  * Main plugin orchestrator.
  *
+ * Bootstraps the dependency injection container, registers hooks and exposes
+ * the Smooth Booking integration points with WordPress.
+ *
  * @package SmoothBooking
  */
 
@@ -16,15 +19,15 @@ use SmoothBooking\Admin\Menu as AdminMenu;
 use SmoothBooking\Admin\NotificationsPage;
 use SmoothBooking\Admin\ServicesPage;
 use SmoothBooking\Admin\SettingsPage;
-use SmoothBooking\Domain\Notifications\EmailSettingsService;
 use SmoothBooking\Cli\Commands\AppointmentsCommand;
 use SmoothBooking\Cli\Commands\CustomersCommand;
 use SmoothBooking\Cli\Commands\EmployeesCommand;
 use SmoothBooking\Cli\Commands\HolidaysCommand;
+use SmoothBooking\Cli\Commands\LocationsCommand;
 use SmoothBooking\Cli\Commands\SchemaCommand;
 use SmoothBooking\Cli\Commands\ServicesCommand;
-use SmoothBooking\Cli\Commands\LocationsCommand;
 use SmoothBooking\Cron\CleanupScheduler;
+use SmoothBooking\Domain\Notifications\EmailSettingsService;
 use SmoothBooking\Frontend\Blocks\SchemaStatusBlock;
 use SmoothBooking\Frontend\Shortcodes\SchemaStatusShortcode;
 use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
@@ -34,32 +37,34 @@ use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
+use SmoothBooking\Rest\LocationsController;
 use SmoothBooking\Rest\SchemaStatusController;
 use SmoothBooking\Rest\ServicesController;
-use SmoothBooking\Rest\LocationsController;
-use SmoothBooking\Support\ServiceContainer;
 use SmoothBooking\ServiceProvider;
+use SmoothBooking\Support\ServiceContainer;
 
 /**
- * Plugin bootstrapper.
+ * Plugin bootstrapper responsible for wiring the runtime services.
  */
 class Plugin {
     /**
      * Plugin instance.
      *
-     * @var Plugin|null
+     * @var Plugin|null Stores the lazily created singleton instance.
      */
     private static ?Plugin $instance = null;
 
     /**
      * Service container.
      *
-     * @var ServiceContainer
+     * @var ServiceContainer Dependency container with registered services.
      */
     private ServiceContainer $container;
 
     /**
-     * Get singleton instance.
+     * Retrieve the singleton plugin instance.
+     *
+     * @return Plugin Bootstrapped plugin instance ready for runtime wiring.
      */
     public static function instance(): Plugin {
         if ( null === static::$instance ) {
@@ -74,7 +79,9 @@ class Plugin {
     }
 
     /**
-     * Constructor.
+     * Initialise the plugin with the resolved service container.
+     *
+     * @param ServiceContainer $container Fully configured service container.
      */
     public function __construct( ServiceContainer $container ) {
         $this->container = $container;
@@ -82,13 +89,21 @@ class Plugin {
 
     /**
      * Retrieve the service container.
+     *
+     * @return ServiceContainer Service container instance used across the plugin.
      */
     public function getContainer(): ServiceContainer {
         return $this->container;
     }
 
     /**
-     * Register runtime hooks.
+     * Register all runtime WordPress hooks required by the plugin.
+     *
+     * Bootstraps internationalisation, REST API routes, admin screens, cron
+     * events, and ensures that infrastructure services (such as logging and
+     * database schema management) are ready before the plugin is used.
+     *
+     * @return void
      */
     public function run(): void {
         require_once SMOOTH_BOOKING_PLUGIN_DIR . 'src/Frontend/TemplateTags.php';
@@ -105,36 +120,36 @@ class Plugin {
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
         add_action( CleanupScheduler::EVENT_HOOK, [ $this, 'handle_cleanup_cron' ] );
 
-        /** @var Select2AssetRegistrar $select2_assets */
+        /** @var Select2AssetRegistrar $select2_assets Select2 script/style registrar. */
         $select2_assets = $this->container->get( Select2AssetRegistrar::class );
         $select2_assets->register();
 
-        /** @var CleanupScheduler $scheduler */
+        /** @var CleanupScheduler $scheduler Cron scheduler handling cleanups. */
         $scheduler = $this->container->get( CleanupScheduler::class );
         $scheduler->register();
 
-        /** @var SchemaManager $schema_manager */
+        /** @var SchemaManager $schema_manager Handles schema migrations. */
         $schema_manager = $this->container->get( SchemaManager::class );
         $schema_manager->maybe_upgrade();
 
-        /** @var LocationsPage $locations_page */
+        /** @var LocationsPage $locations_page Admin controller for locations. */
         $locations_page = $this->container->get( LocationsPage::class );
-        /** @var EmployeesPage $employees_page */
+        /** @var EmployeesPage $employees_page Admin controller for employees. */
         $employees_page = $this->container->get( EmployeesPage::class );
-        /** @var AppointmentsPage $appointments_page */
+        /** @var AppointmentsPage $appointments_page Admin controller for appointments. */
         $appointments_page = $this->container->get( AppointmentsPage::class );
-        /** @var CalendarPage $calendar_page */
+        /** @var CalendarPage $calendar_page Calendar admin screen handler. */
         $calendar_page = $this->container->get( CalendarPage::class );
-        /** @var CustomersPage $customers_page */
+        /** @var CustomersPage $customers_page Admin controller for customers. */
         $customers_page = $this->container->get( CustomersPage::class );
-        /** @var ServicesPage $services_page */
+        /** @var ServicesPage $services_page Admin controller for services. */
         $services_page = $this->container->get( ServicesPage::class );
-        /** @var SettingsPage $settings_page */
+        /** @var SettingsPage $settings_page Settings admin screen handler. */
         $settings_page = $this->container->get( SettingsPage::class );
-        /** @var EmailSettingsService $email_settings_service */
+        /** @var EmailSettingsService $email_settings_service Manages email settings hooks. */
         $email_settings_service = $this->container->get( EmailSettingsService::class );
         $email_settings_service->register_hooks();
-        /** @var NotificationsPage $notifications_page */
+        /** @var NotificationsPage $notifications_page Notifications admin controller. */
         $notifications_page = $this->container->get( NotificationsPage::class );
 
         add_action( 'admin_post_smooth_booking_save_location', [ $locations_page, 'handle_save' ] );
@@ -176,9 +191,10 @@ class Plugin {
         add_action( 'admin_enqueue_scripts', [ $settings_page, 'enqueue_assets' ] );
     }
 
-
     /**
      * Sync the logger state with the stored setting.
+     *
+     * @return void
      */
     public function refresh_logger_state(): void {
         /** @var GeneralSettings $general_settings */
@@ -188,7 +204,12 @@ class Plugin {
     }
 
     /**
-     * Register CLI commands.
+     * Register CLI commands exposed by the plugin.
+     *
+     * Hooked to the custom bootstrapper invoked once WP-CLI is confirmed to be
+     * available. Each command maps to a domain-specific handler class.
+     *
+     * @return void
      */
     public function register_cli(): void {
         if ( ! class_exists( '\\WP_CLI' ) ) {
@@ -233,13 +254,17 @@ class Plugin {
 
     /**
      * Load plugin text domain for translations.
+     *
+     * @return void
      */
     public function load_textdomain(): void {
-        load_plugin_textdomain( 'smooth-booking', false, dirname( plugin_basename( SMOOTH_BOOKING_PLUGIN_FILE ) ) . '/languages' );
+        load_plugin_textdomain( 'smooth-booking', false, dirname( plugin_basename( SMOOTH_BOOKING_PLUGIN_FILE ) ) . '/languages/' );
     }
 
     /**
      * Register admin menu page.
+     *
+     * @return void
      */
     public function register_admin_menu(): void {
         /** @var AdminMenu $menu */
@@ -249,6 +274,8 @@ class Plugin {
 
     /**
      * Register Settings API configuration.
+     *
+     * @return void
      */
     public function register_settings(): void {
         /** @var SettingsPage $settings */
@@ -257,7 +284,9 @@ class Plugin {
     }
 
     /**
-     * Register shortcodes.
+     * Register shortcode handlers.
+     *
+     * @return void
      */
     public function register_shortcodes(): void {
         /** @var SchemaStatusShortcode $shortcode */
@@ -267,6 +296,8 @@ class Plugin {
 
     /**
      * Register Gutenberg blocks.
+     *
+     * @return void
      */
     public function register_blocks(): void {
         /** @var SchemaStatusBlock $block */
@@ -276,6 +307,8 @@ class Plugin {
 
     /**
      * Register REST API routes.
+     *
+     * @return void
      */
     public function register_rest_routes(): void {
         /** @var SchemaStatusController $controller */
@@ -301,11 +334,12 @@ class Plugin {
         /** @var AppointmentsController $appointments */
         $appointments = $this->container->get( AppointmentsController::class );
         $appointments->register_routes();
-
     }
 
     /**
      * Handle cron cleanup event.
+     *
+     * @return void
      */
     public function handle_cleanup_cron(): void {
         /** @var CleanupScheduler $scheduler */

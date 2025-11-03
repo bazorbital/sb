@@ -30,7 +30,13 @@ class ServiceContainer {
     /**
      * Register a singleton binding.
      *
-     * The factory callable should accept the container instance as its first argument.
+     * The factory callable should accept the container instance as its first
+     * argument.
+     *
+     * @param string   $id      Service identifier or class FQCN.
+     * @param callable $factory Factory that returns the concrete instance.
+     *
+     * @return void
      */
     public function singleton( string $id, callable $factory ): void {
         $this->bindings[ $id ] = $factory;
@@ -42,6 +48,8 @@ class ServiceContainer {
      * @param string $id Class or service identifier.
      *
      * @throws InvalidArgumentException When service is not registered.
+     *
+     * @return mixed Resolved instance associated with the identifier.
      */
     public function get( string $id ) {
         if ( isset( $this->instances[ $id ] ) ) {

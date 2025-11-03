@@ -14,6 +14,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+use function array_map;
 use function current_user_can;
 use function is_wp_error;
 use function register_rest_route;
@@ -30,21 +31,29 @@ use function sanitize_textarea_field;
 class AppointmentsController {
     /**
      * API namespace.
+     *
+     * @var string
      */
     private const NAMESPACE = 'smooth-booking/v1';
 
     /**
      * Route base.
+     *
+     * @var string
      */
     private const ROUTE = '/appointments';
 
     /**
+     * Appointment domain service orchestrating persistence and invariants.
+     *
      * @var AppointmentService
      */
     private AppointmentService $service;
 
     /**
-     * Constructor.
+     * Set up the controller dependencies.
+     *
+     * @param AppointmentService $service Domain service used to persist appointments.
      */
     public function __construct( AppointmentService $service ) {
         $this->service = $service;
@@ -52,6 +61,8 @@ class AppointmentsController {
 
     /**
      * Register REST API routes.
+     *
+     * @return void
      */
     public function register_routes(): void {
         register_rest_route(
@@ -106,6 +117,10 @@ class AppointmentsController {
 
     /**
      * List appointments.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Paginated appointment payload.
      */
     public function list_appointments( WP_REST_Request $request ): WP_REST_Response {
         $args = [
@@ -139,8 +154,12 @@ class AppointmentsController {
 
     /**
      * Retrieve a single appointment.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Response containing the appointment data or an error payload.
      */
-    public function get_appointment( WP_REST_Request $request ) {
+    public function get_appointment( WP_REST_Request $request ): WP_REST_Response {
         $appointment_id = (int) $request['id'];
         $appointment    = $this->service->get_appointment( $appointment_id );
 
@@ -153,8 +172,12 @@ class AppointmentsController {
 
     /**
      * Create a new appointment.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Newly created appointment payload or validation errors.
      */
-    public function create_appointment( WP_REST_Request $request ) {
+    public function create_appointment( WP_REST_Request $request ): WP_REST_Response {
         $data = $this->extract_payload( $request );
 
         $result = $this->service->create_appointment( $data );
@@ -168,8 +191,12 @@ class AppointmentsController {
 
     /**
      * Update an existing appointment.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Updated appointment payload or validation errors.
      */
-    public function update_appointment( WP_REST_Request $request ) {
+    public function update_appointment( WP_REST_Request $request ): WP_REST_Response {
         $appointment_id = (int) $request['id'];
         $data           = $this->extract_payload( $request );
 
@@ -184,8 +211,12 @@ class AppointmentsController {
 
     /**
      * Delete an appointment.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Confirmation payload or validation errors.
      */
-    public function delete_appointment( WP_REST_Request $request ) {
+    public function delete_appointment( WP_REST_Request $request ): WP_REST_Response {
         $appointment_id = (int) $request['id'];
 
         $result = $this->service->delete_appointment( $appointment_id );
@@ -199,8 +230,12 @@ class AppointmentsController {
 
     /**
      * Restore an appointment.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Restored appointment data or fallback confirmation.
      */
-    public function restore_appointment( WP_REST_Request $request ) {
+    public function restore_appointment( WP_REST_Request $request ): WP_REST_Response {
         $appointment_id = (int) $request['id'];
 
         $result = $this->service->restore_appointment( $appointment_id );
@@ -219,7 +254,9 @@ class AppointmentsController {
     }
 
     /**
-     * Determine capabilities.
+     * Determine whether the current user can manage appointments.
+     *
+     * @return bool True when the user can manage appointments.
      */
     public function can_manage_appointments(): bool {
         return current_user_can( AppointmentsPage::CAPABILITY );
@@ -228,7 +265,9 @@ class AppointmentsController {
     /**
      * Extract payload from request.
      *
-     * @return array<string, mixed>
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return array<string, mixed> Sanitised appointment data used by the service layer.
      */
     private function extract_payload( WP_REST_Request $request ): array {
         return [

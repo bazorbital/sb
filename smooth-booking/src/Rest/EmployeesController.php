@@ -15,6 +15,7 @@ use WP_REST_Server;
 
 use function current_user_can;
 use function is_wp_error;
+use function register_rest_route;
 use function rest_ensure_response;
 
 /**
@@ -23,21 +24,29 @@ use function rest_ensure_response;
 class EmployeesController {
     /**
      * Namespace for routes.
+     *
+     * @var string
      */
     private const NAMESPACE = 'smooth-booking/v1';
 
     /**
      * Route base.
+     *
+     * @var string
      */
     private const ROUTE = '/employees';
 
     /**
+     * Employee domain service handling persistence and validation.
+     *
      * @var EmployeeService
      */
     private EmployeeService $service;
 
     /**
-     * Constructor.
+     * Set up controller dependencies.
+     *
+     * @param EmployeeService $service Domain service used for employee operations.
      */
     public function __construct( EmployeeService $service ) {
         $this->service = $service;
@@ -45,6 +54,8 @@ class EmployeesController {
 
     /**
      * Register REST routes.
+     *
+     * @return void
      */
     public function register_routes(): void {
         register_rest_route(
@@ -89,6 +100,8 @@ class EmployeesController {
 
     /**
      * Retrieve employees.
+     *
+     * @return WP_REST_Response Response with the serialised employees list.
      */
     public function list_employees(): WP_REST_Response {
         $employees = array_map(
@@ -103,8 +116,12 @@ class EmployeesController {
 
     /**
      * Retrieve a single employee.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Employee payload or error message.
      */
-    public function get_employee( WP_REST_Request $request ) {
+    public function get_employee( WP_REST_Request $request ): WP_REST_Response {
         $employee_id = (int) $request['id'];
         $employee    = $this->service->get_employee( $employee_id );
 
@@ -117,8 +134,12 @@ class EmployeesController {
 
     /**
      * Create a new employee.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Newly created employee payload or validation errors.
      */
-    public function create_employee( WP_REST_Request $request ) {
+    public function create_employee( WP_REST_Request $request ): WP_REST_Response {
         $data = $this->extract_employee_data( $request );
 
         $result = $this->service->create_employee( $data );
@@ -132,8 +153,12 @@ class EmployeesController {
 
     /**
      * Update an existing employee.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Updated employee payload or validation errors.
      */
-    public function update_employee( WP_REST_Request $request ) {
+    public function update_employee( WP_REST_Request $request ): WP_REST_Response {
         $employee_id = (int) $request['id'];
         $data        = $this->extract_employee_data( $request );
 
@@ -148,8 +173,12 @@ class EmployeesController {
 
     /**
      * Soft delete an employee.
+     *
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return WP_REST_Response Confirmation payload or validation errors.
      */
-    public function delete_employee( WP_REST_Request $request ) {
+    public function delete_employee( WP_REST_Request $request ): WP_REST_Response {
         $employee_id = (int) $request['id'];
 
         $result = $this->service->delete_employee( $employee_id );
@@ -162,7 +191,9 @@ class EmployeesController {
     }
 
     /**
-     * Permission callback.
+     * Determine whether the current user can manage employees.
+     *
+     * @return bool True when the user may manage employees.
      */
     public function can_manage_employees(): bool {
         return current_user_can( 'manage_options' );
@@ -171,7 +202,9 @@ class EmployeesController {
     /**
      * Extract employee payload from request.
      *
-     * @return array<string, mixed>
+     * @param WP_REST_Request $request REST request instance.
+     *
+     * @return array<string, mixed> Sanitised employee payload consumed by the service layer.
      */
     private function extract_employee_data( WP_REST_Request $request ): array {
         $params = $request->get_json_params();
