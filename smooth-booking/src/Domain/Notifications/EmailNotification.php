@@ -10,13 +10,33 @@ namespace SmoothBooking\Domain\Notifications;
 use function absint;
 use function array_filter;
 use function array_map;
+use function array_unique;
+use function array_values;
+use function implode;
 use function is_array;
 use function json_decode;
+use function preg_replace;
+use function sort;
+use function sprintf;
+use function str_replace;
+use function strtolower;
+use function trim;
+use function ucwords;
 
 /**
  * Represents a rule + template pair for email delivery.
  */
 class EmailNotification {
+    private const RECIPIENT_SYNONYMS = [
+        'client'         => 'customer',
+        'customer'       => 'customer',
+        'employee'       => 'staff',
+        'staff'          => 'staff',
+        'administrator'  => 'admin',
+        'admin'          => 'admin',
+        'custom'         => 'custom',
+    ];
+
     private int $id;
 
     private string $name;
@@ -154,7 +174,9 @@ class EmailNotification {
 
         $recipients = [];
         if ( ! empty( $settings['recipients'] ) && is_array( $settings['recipients'] ) ) {
-            $recipients = array_map( 'strval', $settings['recipients'] );
+            $recipients = array_map( [ self::class, 'normalize_recipient_key' ], $settings['recipients'] );
+            $recipients = array_filter( $recipients, static fn( string $recipient ): bool => '' !== $recipient );
+            $recipients = array_values( array_unique( $recipients ) );
         }
 
         $custom_emails = [];
@@ -191,6 +213,46 @@ class EmailNotification {
             isset( $row['created_at'] ) ? (string) $row['created_at'] : null,
             isset( $row['updated_at'] ) ? (string) $row['updated_at'] : null
         );
+    }
+
+    /**
+     * Normalize the stored recipient key into canonical form.
+     */
+    public static function normalize_recipient_key( string $recipient ): string {
+        $key = strtolower( trim( $recipient ) );
+
+        return self::RECIPIENT_SYNONYMS[ $key ] ?? $key;
+    }
+
+    /**
+     * Generate the lookup key used for template uniqueness.
+     *
+     * @param array<int, string> $recipients Recipient identifiers.
+     */
+    public static function generate_template_lookup( string $trigger_event, array $recipients, string $channel = 'email' ): string {
+        $normalised = array_filter(
+            array_map( [ self::class, 'normalize_recipient_key' ], $recipients ),
+            static fn( string $value ): bool => '' !== $value
+        );
+
+        if ( empty( $normalised ) ) {
+            $normalised = [ 'customer' ];
+        }
+
+        sort( $normalised );
+
+        $recipient_key = implode( '+', $normalised );
+
+        $event_key = preg_replace( '/[^a-z0-9]+/i', ' ', strtolower( $trigger_event ) );
+        $event_key = ucwords( (string) $event_key );
+        $event_key = str_replace( ' ', '', $event_key );
+
+        $channel_key = strtolower( trim( $channel ) );
+        if ( '' === $channel_key ) {
+            $channel_key = 'email';
+        }
+
+        return sprintf( '%s-%s-%s', $event_key, $recipient_key, $channel_key );
     }
 
     public function get_id(): int {

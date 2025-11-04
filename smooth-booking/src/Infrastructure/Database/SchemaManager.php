@@ -21,7 +21,7 @@ class SchemaManager {
     /**
      * Schema version.
      */
-    private const DB_VERSION = '2024.10.15';
+    private const DB_VERSION = '2024.11.05';
 
     /**
      * Transient storing schema status.

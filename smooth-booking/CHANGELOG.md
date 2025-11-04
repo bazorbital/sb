@@ -2,6 +2,12 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.5] - 2025-11-05
+### Fixed
+- Added a canonical notification template lookup to prevent duplicate email rules and aligned database schema updates with the new index.
+- Normalised notification recipient keys between the admin form and storage, enforcing the correct combinations for customer, staff, administrator, and custom recipients.
+- Surfaced a validation error when attempting to create duplicate notification rules instead of triggering a database exception.
+
 # [0.16.4] - 2025-07-05
 ### Added
 - Debug logging switch under **Settings → General** that controls whether the plugin emits structured diagnostics for calendar aggregation, SelectWoo registration, and booking repositories, plus expanded log coverage for daily schedule hydration.

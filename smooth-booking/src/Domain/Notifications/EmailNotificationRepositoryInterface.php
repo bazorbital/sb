@@ -59,4 +59,12 @@ interface EmailNotificationRepositoryInterface {
      * @return true|\WP_Error
      */
     public function force_delete( int $notification_id );
+
+    /**
+     * Determine whether a template lookup already exists.
+     *
+     * @param string   $template_lookup Canonical lookup identifier.
+     * @param int|null $exclude_rule_id Optional rule identifier to exclude from the check.
+     */
+    public function template_lookup_exists( string $template_lookup, ?int $exclude_rule_id = null ): bool;
 }

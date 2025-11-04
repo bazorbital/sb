@@ -598,6 +598,7 @@ class SchemaDefinitionBuilder {
                 code VARCHAR(64) NOT NULL,
                 channel_id TINYINT UNSIGNED NOT NULL,
                 locale VARCHAR(16) NOT NULL,
+                template_lookup VARCHAR(191) NOT NULL,
                 subject VARCHAR(191) NULL,
                 body_text MEDIUMTEXT NULL,
                 body_html MEDIUMTEXT NULL,
@@ -605,6 +606,7 @@ class SchemaDefinitionBuilder {
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY  (template_id),
+                UNIQUE KEY template_lookup (template_lookup),
                 UNIQUE KEY uq_tpl (code, channel_id, locale),
                 KEY tpl_channel (channel_id),
                 FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
