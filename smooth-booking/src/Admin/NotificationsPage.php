@@ -368,7 +368,7 @@ class NotificationsPage {
         $appointment_status = $is_edit ? $notification->get_appointment_status() : 'any';
         $service_scope      = $is_edit ? $notification->get_service_scope() : 'any';
         $service_ids        = $is_edit ? $notification->get_service_ids() : [];
-        $recipients         = $is_edit ? $notification->get_recipients() : [ 'client' ];
+        $recipients         = $is_edit ? $notification->get_recipients() : [ 'customer' ];
         $custom_emails      = $is_edit ? implode( "\n", $notification->get_custom_emails() ) : '';
         $send_format        = $is_edit ? $notification->get_send_format() : 'html';
         $subject            = $is_edit ? $notification->get_subject() : '';

@@ -16,6 +16,9 @@ use function __;
 use function absint;
 use function array_filter;
 use function array_map;
+use function array_unique;
+use function array_values;
+use function implode;
 use function esc_html__;
 use function explode;
 use function get_locale;
@@ -89,6 +92,14 @@ class EmailNotificationService {
             return $validated;
         }
 
+        $template_lookup = $validated['template_lookup'] ?? '';
+        if ( $template_lookup && $this->repository->template_lookup_exists( $template_lookup ) ) {
+            return new WP_Error(
+                'smooth_booking_notification_duplicate',
+                __( 'A notification with this event and recipient combination already exists.', 'smooth-booking' )
+            );
+        }
+
         $result = $this->repository->create( $validated );
 
         if ( is_wp_error( $result ) ) {
@@ -126,6 +137,14 @@ class EmailNotificationService {
 
         if ( is_wp_error( $validated ) ) {
             return $validated;
+        }
+
+        $template_lookup = $validated['template_lookup'] ?? '';
+        if ( $template_lookup && $this->repository->template_lookup_exists( $template_lookup, $notification_id ) ) {
+            return new WP_Error(
+                'smooth_booking_notification_duplicate',
+                __( 'A notification with this event and recipient combination already exists.', 'smooth-booking' )
+            );
         }
 
         $result = $this->repository->update( $notification_id, $validated );
@@ -229,10 +248,10 @@ class EmailNotificationService {
      */
     public function get_recipient_options(): array {
         return [
-            'client'        => esc_html__( 'Client', 'smooth-booking' ),
-            'employee'      => esc_html__( 'Employee', 'smooth-booking' ),
-            'administrator' => esc_html__( 'Administrators', 'smooth-booking' ),
-            'custom'        => esc_html__( 'Custom', 'smooth-booking' ),
+            'customer' => esc_html__( 'Client', 'smooth-booking' ),
+            'staff'    => esc_html__( 'Employee', 'smooth-booking' ),
+            'admin'    => esc_html__( 'Administrators', 'smooth-booking' ),
+            'custom'   => esc_html__( 'Custom', 'smooth-booking' ),
         ];
     }
 
@@ -339,27 +358,32 @@ class EmailNotificationService {
             );
         }
 
-        $recipient_input = isset( $data['recipients'] ) && is_array( $data['recipients'] ) ? $data['recipients'] : [];
+        $recipient_input   = isset( $data['recipients'] ) && is_array( $data['recipients'] ) ? $data['recipients'] : [];
         $recipient_options = array_keys( $this->get_recipient_options() );
 
-        $recipients = array_values(
-            array_filter(
-                array_map(
-                    static function ( $value ): string {
-                        return sanitize_text_field( wp_unslash( (string) $value ) );
-                    },
-                    $recipient_input
-                ),
-                static function ( string $recipient ) use ( $recipient_options ): bool {
-                    return in_array( $recipient, $recipient_options, true );
-                }
-            )
-        );
+        $recipients = [];
+        foreach ( $recipient_input as $value ) {
+            $raw        = sanitize_text_field( wp_unslash( (string) $value ) );
+            $normalised = EmailNotification::normalize_recipient_key( $raw );
+
+            if ( in_array( $normalised, $recipient_options, true ) ) {
+                $recipients[] = $normalised;
+            }
+        }
+
+        $recipients = array_values( array_unique( $recipients ) );
 
         if ( empty( $recipients ) ) {
             return new WP_Error(
                 'smooth_booking_notification_missing_recipient',
                 __( 'Choose at least one recipient.', 'smooth-booking' )
+            );
+        }
+
+        if ( in_array( 'custom', $recipients, true ) && count( $recipients ) > 1 ) {
+            return new WP_Error(
+                'smooth_booking_notification_invalid_recipient_mix',
+                __( 'Custom recipients cannot be combined with other recipient types.', 'smooth-booking' )
             );
         }
 
@@ -429,6 +453,8 @@ class EmailNotificationService {
             'attach_ics'    => (bool) $attach_ics,
         ];
 
+        $template_lookup = EmailNotification::generate_template_lookup( $type, $recipients );
+
         $payload = [
             'display_name'        => $name,
             'is_enabled'          => $enabled ? 1 : 0,
@@ -439,6 +465,7 @@ class EmailNotificationService {
             'location_id'         => $location_id,
             'conditions_json'     => wp_json_encode( $conditions ),
             'settings_json'       => wp_json_encode( $settings ),
+            'template_lookup'     => $template_lookup,
             'template'            => [
                 'subject'   => $subject,
                 'body_html' => $body_html,

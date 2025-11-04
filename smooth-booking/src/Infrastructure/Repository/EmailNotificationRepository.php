@@ -16,7 +16,10 @@ use WP_Error;
 use function __;
 use function current_time;
 use function get_locale;
+use function is_array;
 use function is_wp_error;
+use function json_decode;
+use function trim;
 use function wp_generate_password;
 use const ARRAY_A;
 
@@ -114,8 +117,10 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
             return $channel_id;
         }
 
-        $template = $data['template'] ?? [];
-        $code     = $this->generate_template_code();
+        $template        = $data['template'] ?? [];
+        $code            = $this->generate_template_code();
+        $locale          = $template['locale'] ?? get_locale();
+        $template_lookup = $data['template_lookup'] ?? $this->build_template_lookup( $data );
 
         $templates_table = $this->get_templates_table();
         $inserted_template = $this->wpdb->insert(
@@ -123,7 +128,8 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
             [
                 'code'        => $code,
                 'channel_id'  => $channel_id,
-                'locale'      => $template['locale'] ?? get_locale(),
+                'locale'      => $locale,
+                'template_lookup' => $template_lookup,
                 'subject'     => $template['subject'] ?? '',
                 'body_text'   => $template['body_text'] ?? '',
                 'body_html'   => $template['body_html'] ?? '',
@@ -131,7 +137,7 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
                 'created_at'  => current_time( 'mysql' ),
                 'updated_at'  => current_time( 'mysql' ),
             ],
-            [ '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
+            [ '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' ]
         );
 
         if ( false === $inserted_template ) {
@@ -271,7 +277,9 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
             }
         }
 
-        $template_data = $data['template'] ?? [];
+        $template_data  = $data['template'] ?? [];
+        $locale         = $template_data['locale'] ?? get_locale();
+        $template_lookup = $data['template_lookup'] ?? $this->build_template_lookup( $data );
 
         $templates_table = $this->get_templates_table();
         $template_update = $this->wpdb->update(
@@ -280,7 +288,8 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
                 'subject'    => $template_data['subject'] ?? '',
                 'body_text'  => $template_data['body_text'] ?? '',
                 'body_html'  => $template_data['body_html'] ?? '',
-                'locale'     => $template_data['locale'] ?? get_locale(),
+                'locale'     => $locale,
+                'template_lookup' => $template_lookup,
                 'is_active'  => $data['is_enabled'],
                 'updated_at' => current_time( 'mysql' ),
             ],
@@ -288,7 +297,7 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
                 'code'       => $template_code,
                 'channel_id' => $channel_id,
             ],
-            [ '%s', '%s', '%s', '%s', '%d', '%s' ],
+            [ '%s', '%s', '%s', '%s', '%s', '%d', '%s' ],
             [ '%s', '%d' ]
         );
 
@@ -371,6 +380,39 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function template_lookup_exists( string $template_lookup, ?int $exclude_rule_id = null ): bool {
+        $template_lookup = trim( $template_lookup );
+
+        if ( '' === $template_lookup ) {
+            return false;
+        }
+
+        $channel_id = $this->ensure_email_channel();
+
+        if ( is_wp_error( $channel_id ) ) {
+            return false;
+        }
+
+        $rules_table     = $this->get_rules_table();
+        $templates_table = $this->get_templates_table();
+
+        $sql    = "SELECT r.rule_id FROM {$rules_table} r INNER JOIN {$templates_table} t ON t.code = r.template_code WHERE t.channel_id = %d AND t.template_lookup = %s";
+        $params = [ $channel_id, $template_lookup ];
+
+        if ( null !== $exclude_rule_id ) {
+            $sql     .= ' AND r.rule_id != %d';
+            $params[] = $exclude_rule_id;
+        }
+
+        $prepared = $this->wpdb->prepare( $sql, $params );
+        $existing = $this->wpdb->get_var( $prepared );
+
+        return null !== $existing;
+    }
+
+    /**
      * Ensure the email channel exists and return its identifier.
      *
      * @return int|WP_Error
@@ -429,5 +471,38 @@ class EmailNotificationRepository implements EmailNotificationRepositoryInterfac
 
     private function get_channels_table(): string {
         return $this->wpdb->prefix . 'smooth_notification_channels';
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function build_template_lookup( array $data ): string {
+        $settings   = $this->decode_settings( $data['settings_json'] ?? null );
+        $recipients = [];
+
+        if ( isset( $settings['recipients'] ) && is_array( $settings['recipients'] ) ) {
+            $recipients = $settings['recipients'];
+        }
+
+        return EmailNotification::generate_template_lookup(
+            isset( $data['trigger_event'] ) ? (string) $data['trigger_event'] : '',
+            is_array( $recipients ) ? $recipients : [],
+            'email'
+        );
+    }
+
+    /**
+     * @param mixed $settings_json Raw settings payload.
+     *
+     * @return array<string, mixed>
+     */
+    private function decode_settings( $settings_json ): array {
+        if ( empty( $settings_json ) ) {
+            return [];
+        }
+
+        $decoded = json_decode( (string) $settings_json, true );
+
+        return is_array( $decoded ) ? $decoded : [];
     }
 }

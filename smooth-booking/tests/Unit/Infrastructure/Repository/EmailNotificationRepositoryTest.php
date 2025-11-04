@@ -3,6 +3,7 @@
 namespace SmoothBooking\Tests\Unit\Infrastructure\Repository;
 
 use PHPUnit\Framework\TestCase;
+use SmoothBooking\Domain\Notifications\EmailNotification;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Repository\EmailNotificationRepository;
 use WP_Error;
@@ -57,6 +58,21 @@ class EmailNotificationRepositoryTest extends TestCase {
         $this->assertCount( 0, $wpdb->templates );
     }
 
+    public function test_template_lookup_exists_detects_duplicates(): void {
+        $wpdb   = new RecordingWpdb();
+        $logger = new Logger( 'test' );
+        $repo   = new EmailNotificationRepository( $wpdb, $logger );
+
+        $created = $repo->create( $this->samplePayload() );
+        $this->assertNotInstanceOf( WP_Error::class, $created );
+
+        $lookup = EmailNotification::generate_template_lookup( 'booking.created', [ 'client' ] );
+
+        $this->assertTrue( $repo->template_lookup_exists( $lookup ) );
+        $this->assertFalse( $repo->template_lookup_exists( $lookup, $created->get_id() ) );
+        $this->assertFalse( $repo->template_lookup_exists( 'BookingReminder-customer-email' ) );
+    }
+
     private function samplePayload( string $name = 'Reminder' ): array {
         return [
             'display_name'        => $name,
@@ -108,6 +124,36 @@ class RecordingWpdb extends \wpdb {
                     return $row['channel_id'];
                 }
             }
+        }
+
+        if ( str_contains( $data['query'], 'template_lookup' ) ) {
+            $channel_id = $data['args'][0] ?? null;
+            $lookup     = $data['args'][1] ?? '';
+            $exclude    = $data['args'][2] ?? null;
+
+            foreach ( $this->rules as $rule ) {
+                $template = $this->templates[ $rule['template_code'] ] ?? null;
+
+                if ( null === $template ) {
+                    continue;
+                }
+
+                if ( null !== $channel_id && (int) $template['channel_id'] !== (int) $channel_id ) {
+                    continue;
+                }
+
+                if ( $template['template_lookup'] !== $lookup ) {
+                    continue;
+                }
+
+                if ( null !== $exclude && (int) $rule['rule_id'] === (int) $exclude ) {
+                    continue;
+                }
+
+                return $rule['rule_id'];
+            }
+
+            return null;
         }
 
         return null;
