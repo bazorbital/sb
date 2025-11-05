@@ -63,6 +63,8 @@ class SchemaManager {
 
         dbDelta( implode( "\n", $tables ) );
 
+        $this->apply_foreign_keys();
+
         $views = $this->definitions->build_views( $this->wpdb->prefix );
         foreach ( $views as $view_name => $sql ) {
             $created = $this->wpdb->query( $sql );
@@ -109,6 +111,80 @@ class SchemaManager {
         }
 
         return false;
+    }
+
+    /**
+     * Add foreign key constraints after dbDelta execution.
+     */
+    private function apply_foreign_keys(): void {
+        $foreign_keys = $this->definitions->build_foreign_keys( $this->wpdb->prefix );
+
+        foreach ( $foreign_keys as $table => $constraints ) {
+            if ( empty( $constraints ) ) {
+                continue;
+            }
+
+            if ( ! $this->table_exists( $table ) ) {
+                continue;
+            }
+
+            if ( ! $this->table_supports_foreign_keys( $table ) ) {
+                $this->logger->info( sprintf( 'Skipping foreign keys for %s due to unsupported storage engine.', $table ) );
+                continue;
+            }
+
+            foreach ( $constraints as $constraint ) {
+                $name = $constraint['constraint'] ?? '';
+                $sql  = $constraint['sql'] ?? '';
+
+                if ( '' === $name || '' === $sql ) {
+                    continue;
+                }
+
+                if ( $this->foreign_key_exists( $table, $name ) ) {
+                    continue;
+                }
+
+                $result = $this->wpdb->query( $sql );
+                if ( false === $result ) {
+                    $this->logger->error( sprintf( 'Failed to add foreign key %1$s on %2$s: %3$s', $name, $table, $this->wpdb->last_error ) );
+                }
+            }
+        }
+    }
+
+    /**
+     * Determine if the given constraint already exists on the table.
+     */
+    private function foreign_key_exists( string $table, string $constraint ): bool {
+        if ( empty( $this->wpdb->dbname ) ) {
+            return false;
+        }
+
+        $sql = 'SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND CONSTRAINT_NAME = %s';
+        $prepared = $this->wpdb->prepare( $sql, $this->wpdb->dbname, $table, $constraint );
+
+        return (bool) $this->wpdb->get_var( $prepared );
+    }
+
+    /**
+     * Check whether table uses a storage engine that supports foreign keys.
+     */
+    private function table_supports_foreign_keys( string $table ): bool {
+        $status = $this->wpdb->get_row( $this->wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $table ) );
+
+        if ( null === $status ) {
+            return false;
+        }
+
+        $engine = '';
+        if ( isset( $status->Engine ) && is_string( $status->Engine ) ) {
+            $engine = $status->Engine;
+        } elseif ( isset( $status->engine ) && is_string( $status->engine ) ) {
+            $engine = $status->engine;
+        }
+
+        return ( '' !== $engine && 0 === strcasecmp( 'InnoDB', $engine ) );
     }
 
     /**
