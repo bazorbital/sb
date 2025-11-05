@@ -608,8 +608,7 @@ class SchemaDefinitionBuilder {
                 PRIMARY KEY  (template_id),
                 UNIQUE KEY template_lookup (template_lookup),
                 UNIQUE KEY uq_tpl (code, channel_id, locale),
-                KEY tpl_channel (channel_id),
-                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
+                KEY tpl_channel (channel_id)
             ) %2$s;',
             $prefix,
             $options
@@ -634,8 +633,7 @@ class SchemaDefinitionBuilder {
                 PRIMARY KEY  (rule_id),
                 KEY idx_rule_trigger (trigger_event, is_enabled, priority),
                 KEY idx_rule_template (template_code),
-                KEY idx_rule_location (location_id),
-                FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
+                KEY idx_rule_location (location_id)
             ) %2$s;',
             $prefix,
             $options
@@ -662,11 +660,7 @@ class SchemaDefinitionBuilder {
                 UNIQUE KEY uq_send_dedupe (dedupe_key),
                 KEY idx_send_status_time (status, scheduled_at),
                 KEY idx_send_recipient (recipient_id, scheduled_at),
-                KEY idx_send_rule (rule_id),
-                FOREIGN KEY (rule_id) REFERENCES %1$ssmooth_notification_rules (rule_id),
-                FOREIGN KEY (recipient_id) REFERENCES %1$ssmooth_notification_recipients (recipient_id),
-                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id),
-                FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id)
+                KEY idx_send_rule (rule_id)
             ) %2$s;',
             $prefix,
             $options
@@ -685,8 +679,7 @@ class SchemaDefinitionBuilder {
                 response_body TEXT NULL,
                 PRIMARY KEY  (attempt_id),
                 UNIQUE KEY uq_attempt_per_send (send_id, attempt_no),
-                KEY idx_attempt_provider (provider_message_id),
-                FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
+                KEY idx_attempt_provider (provider_message_id)
             ) %2$s;',
             $prefix,
             $options
@@ -700,8 +693,7 @@ class SchemaDefinitionBuilder {
                 reason VARCHAR(64) NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY  (suppression_id),
-                UNIQUE KEY uq_suppression (channel_id, address_hash),
-                FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id)
+                UNIQUE KEY uq_suppression (channel_id, address_hash)
             ) %2$s;',
             $prefix,
             $options
@@ -716,12 +708,105 @@ class SchemaDefinitionBuilder {
                 occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 payload LONGTEXT NULL,
                 PRIMARY KEY  (event_id),
-                KEY idx_event_lookup (channel_id, event_type, occurred_at),
-                FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id)
+                KEY idx_event_lookup (channel_id, event_type, occurred_at)
             ) %2$s;',
             $prefix,
             $options
         );
+
+        return $tables;
+    }
+
+    /**
+     * Retrieve foreign key constraint definitions keyed by table name.
+     *
+     * @param string $prefix WordPress table prefix.
+     *
+     * @return array<string, array<int, array<string, string>>> Array of constraint metadata.
+     */
+    public function build_foreign_keys( string $prefix ): array {
+        $tables = [];
+
+        $tables[ $prefix . 'smooth_notification_templates' ] = [
+            [
+                'constraint' => 'fk_smooth_ntpl_channel',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_templates ADD CONSTRAINT fk_smooth_ntpl_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id) ON UPDATE CASCADE ON DELETE RESTRICT',
+                    $prefix
+                ),
+            ],
+        ];
+
+        $tables[ $prefix . 'smooth_notification_rules' ] = [
+            [
+                'constraint' => 'fk_smooth_nrules_location',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_rules ADD CONSTRAINT fk_smooth_nrules_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id) ON UPDATE CASCADE ON DELETE SET NULL',
+                    $prefix
+                ),
+            ],
+        ];
+
+        $tables[ $prefix . 'smooth_notification_send_jobs' ] = [
+            [
+                'constraint' => 'fk_smooth_njobs_rule',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_send_jobs ADD CONSTRAINT fk_smooth_njobs_rule FOREIGN KEY (rule_id) REFERENCES %1$ssmooth_notification_rules (rule_id) ON UPDATE CASCADE ON DELETE SET NULL',
+                    $prefix
+                ),
+            ],
+            [
+                'constraint' => 'fk_smooth_njobs_recipient',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_send_jobs ADD CONSTRAINT fk_smooth_njobs_recipient FOREIGN KEY (recipient_id) REFERENCES %1$ssmooth_notification_recipients (recipient_id) ON UPDATE CASCADE ON DELETE CASCADE',
+                    $prefix
+                ),
+            ],
+            [
+                'constraint' => 'fk_smooth_njobs_channel',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_send_jobs ADD CONSTRAINT fk_smooth_njobs_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id) ON UPDATE CASCADE ON DELETE RESTRICT',
+                    $prefix
+                ),
+            ],
+            [
+                'constraint' => 'fk_smooth_njobs_location',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_send_jobs ADD CONSTRAINT fk_smooth_njobs_location FOREIGN KEY (location_id) REFERENCES %1$ssmooth_locations (location_id) ON UPDATE CASCADE ON DELETE SET NULL',
+                    $prefix
+                ),
+            ],
+        ];
+
+        $tables[ $prefix . 'smooth_notification_send_attempts' ] = [
+            [
+                'constraint' => 'fk_smooth_nattempts_send',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_send_attempts ADD CONSTRAINT fk_smooth_nattempts_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id) ON UPDATE CASCADE ON DELETE CASCADE',
+                    $prefix
+                ),
+            ],
+        ];
+
+        $tables[ $prefix . 'smooth_notification_suppressions' ] = [
+            [
+                'constraint' => 'fk_smooth_nsuppressions_channel',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_suppressions ADD CONSTRAINT fk_smooth_nsuppressions_channel FOREIGN KEY (channel_id) REFERENCES %1$ssmooth_notification_channels (channel_id) ON UPDATE CASCADE ON DELETE CASCADE',
+                    $prefix
+                ),
+            ],
+        ];
+
+        $tables[ $prefix . 'smooth_notification_events' ] = [
+            [
+                'constraint' => 'fk_smooth_nevents_send',
+                'sql'        => sprintf(
+                    'ALTER TABLE %1$ssmooth_notification_events ADD CONSTRAINT fk_smooth_nevents_send FOREIGN KEY (send_id) REFERENCES %1$ssmooth_notification_send_jobs (send_id) ON UPDATE CASCADE ON DELETE SET NULL',
+                    $prefix
+                ),
+            ],
+        ];
 
         return $tables;
     }

@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.16.6] - 2025-11-06
+### Fixed
+- Refactored database migrations to remove unsupported dbDelta foreign key statements, preventing SQL syntax errors during upgrades and ensuring schema changes complete inside the execution window.
+- Applied foreign key constraints via dedicated ALTER statements with safety checks so constraints are only added when supported, eliminating duplicate index warnings in the upgrade log.
+
 # [0.16.5] - 2025-11-05
 ### Fixed
 - Added a canonical notification template lookup to prevent duplicate email rules and aligned database schema updates with the new index.
