@@ -2,43 +2,21 @@
 
 namespace SmoothBooking\Tests\Unit\Admin;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use SmoothBooking\Admin\CalendarPage;
+use SmoothBooking\Domain\Appointments\Appointment;
 use SmoothBooking\Domain\Calendar\CalendarService;
-use SmoothBooking\Domain\Customers\CustomerService;
 use SmoothBooking\Domain\Employees\Employee;
-use SmoothBooking\Domain\Employees\EmployeeService;
 use SmoothBooking\Domain\Locations\LocationService;
-use SmoothBooking\Domain\Services\Service;
-use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Infrastructure\Logging\Logger;
-use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 
 /**
  * @covers \SmoothBooking\Admin\CalendarPage
  */
 class CalendarPageTest extends TestCase {
-    public function test_unique_services_removes_duplicates(): void {
-        $page = $this->make_page();
-
-        $first     = $this->createConfiguredMock( Service::class, [ 'get_id' => 1 ] );
-        $second    = $this->createConfiguredMock( Service::class, [ 'get_id' => 2 ] );
-        $duplicate = $this->createConfiguredMock( Service::class, [ 'get_id' => 1 ] );
-
-        /** @var Service[] $result */
-        $result = $this->invoke_private_method( $page, 'unique_services', [ [ $first, $duplicate, $second ] ] );
-
-        $this->assertCount( 2, $result );
-        $ids = array_map(
-            static function ( Service $service ): int {
-                return $service->get_id();
-            },
-            $result
-        );
-        $this->assertSame( [ 1, 2 ], $ids );
-    }
-
     public function test_unique_employees_removes_duplicates(): void {
         $page = $this->make_page();
 
@@ -50,23 +28,54 @@ class CalendarPageTest extends TestCase {
         $result = $this->invoke_private_method( $page, 'unique_employees', [ [ $first, $duplicate, $second ] ] );
 
         $this->assertCount( 2, $result );
-        $ids = array_map(
-            static function ( Employee $employee ): int {
-                return $employee->get_id();
-            },
-            $result
+        $this->assertSame( [ 5, 9 ], array_map( static fn ( Employee $employee ): int => $employee->get_id(), $result ) );
+    }
+
+    public function test_build_events_maps_service_colour_and_customer(): void {
+        $page = $this->make_page();
+        $timezone = new DateTimeZone( 'Europe/Budapest' );
+
+        $appointment = $this->createConfiguredMock(
+            Appointment::class,
+            [
+                'get_id'                     => 21,
+                'get_employee_id'            => 7,
+                'get_service_name'           => 'Haircut',
+                'get_service_color'          => 'ff0066',
+                'get_employee_name'          => 'Jane Doe',
+                'get_status'                 => 'confirmed',
+                'get_customer_first_name'    => 'Alex',
+                'get_customer_last_name'     => 'Taylor',
+                'get_customer_account_name'  => null,
+                'get_scheduled_start'        => new DateTimeImmutable( '2024-04-12 09:00:00', new DateTimeZone( 'UTC' ) ),
+                'get_scheduled_end'          => new DateTimeImmutable( '2024-04-12 10:00:00', new DateTimeZone( 'UTC' ) ),
+            ]
         );
-        $this->assertSame( [ 5, 9 ], $ids );
+
+        $events = $this->invoke_private_method( $page, 'build_events', [ [ $appointment ], $timezone ] );
+
+        $this->assertCount( 1, $events );
+        $event = $events[0];
+
+        $this->assertSame( 7, $event['resourceId'] );
+        $this->assertSame( '#ff0066', $event['color'] );
+        $this->assertSame( 'Haircut', $event['title'] );
+        $this->assertSame( '2024-04-12 11:00', $event['end'] );
+        $this->assertSame( 'Alex Taylor', $event['extendedProps']['customer'] );
+    }
+
+    public function test_format_slot_duration_builds_hours_and_minutes(): void {
+        $page = $this->make_page();
+
+        $result = $this->invoke_private_method( $page, 'format_slot_duration', [ 95 ] );
+
+        $this->assertSame( '01:35', $result );
     }
 
     private function make_page(): CalendarPage {
         return new CalendarPage(
             $this->createMock( CalendarService::class ),
             $this->createMock( LocationService::class ),
-            $this->createMock( EmployeeService::class ),
-            $this->createMock( ServiceService::class ),
-            $this->createMock( CustomerService::class ),
-            $this->createMock( GeneralSettings::class ),
             $this->createMock( Logger::class )
         );
     }

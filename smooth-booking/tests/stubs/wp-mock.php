@@ -21,6 +21,18 @@ if ( ! function_exists( 'esc_html__' ) ) {
     }
 }
 
+if ( ! function_exists( 'esc_html' ) ) {
+    function esc_html( string $text ): string {
+        return $text;
+    }
+}
+
+if ( ! function_exists( 'esc_attr' ) ) {
+    function esc_attr( string $text ): string {
+        return $text;
+    }
+}
+
 if ( ! function_exists( '__' ) ) {
     function __( string $text, string $domain = 'default' ): string {
         return $text;
@@ -76,6 +88,12 @@ if ( ! function_exists( 'sanitize_title' ) ) {
 if ( ! function_exists( 'esc_url_raw' ) ) {
     function esc_url_raw( string $url ): string {
         return filter_var( $url, FILTER_SANITIZE_URL ) ?: '';
+    }
+}
+
+if ( ! function_exists( 'admin_url' ) ) {
+    function admin_url( string $path = '' ): string {
+        return '/wp-admin/' . ltrim( $path, '/' );
     }
 }
 
@@ -201,6 +219,43 @@ if ( ! function_exists( 'wp_timezone' ) ) {
     }
 }
 
+if ( ! function_exists( 'plugins_url' ) ) {
+    function plugins_url( string $path = '', string $plugin = '' ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        return '/wp-content/plugins/smooth-booking/' . ltrim( $path, '/' );
+    }
+}
+
+if ( ! function_exists( 'get_user_locale' ) ) {
+    function get_user_locale(): string {
+        return 'en_US';
+    }
+}
+
+if ( ! function_exists( 'wp_date' ) ) {
+    function wp_date( string $format, int $timestamp, ?\DateTimeZone $timezone = null ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        if ( null !== $timezone ) {
+            $date = new \DateTimeImmutable( '@' . $timestamp );
+            $date = $date->setTimezone( $timezone );
+
+            return $date->format( $format );
+        }
+
+        return gmdate( $format, $timestamp );
+    }
+}
+
+if ( ! function_exists( 'selected' ) ) {
+    function selected( $value, $current, bool $echo = true ) {
+        $result = (string) $value === (string) $current ? 'selected="selected"' : '';
+
+        if ( $echo ) {
+            echo $result; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
+
+        return $result;
+    }
+}
+
 if ( ! function_exists( 'wpautop' ) ) {
     function wpautop( string $text ): string {
         return '<p>' . $text . '</p>';
@@ -222,6 +277,18 @@ if ( ! function_exists( 'wp_strip_all_tags' ) ) {
 if ( ! function_exists( 'wp_json_encode' ) ) {
     function wp_json_encode( $data, int $options = 0, int $depth = 512 ) {
         return json_encode( $data, $options | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES, $depth );
+    }
+}
+
+if ( ! function_exists( 'wp_enqueue_style' ) ) {
+    function wp_enqueue_style( string $handle, string $src = '', array $deps = [], $ver = false, string $media = 'all' ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        // Intentionally left blank for tests.
+    }
+}
+
+if ( ! function_exists( 'wp_enqueue_script' ) ) {
+    function wp_enqueue_script( string $handle, string $src = '', array $deps = [], $ver = false, bool $in_footer = false ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        // Intentionally left blank for tests.
     }
 }
 
@@ -248,6 +315,18 @@ if ( ! function_exists( 'current_time' ) ) {
         unset( $type );
 
         return gmdate( 'Y-m-d H:i:s' );
+    }
+}
+
+if ( ! function_exists( 'current_user_can' ) ) {
+    function current_user_can( string $capability ): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        return true;
+    }
+}
+
+if ( ! function_exists( 'wp_die' ) ) {
+    function wp_die( $message = '' ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+        throw new \RuntimeException( is_string( $message ) ? $message : 'wp_die' );
     }
 }
 
