@@ -80,6 +80,7 @@
                 center: 'title',
                 end: ''
             },
+            timeZone: data.timezone || 'local',
             resources: ensureArray(data.resources),
             events: ensureArray(data.events),
             nowIndicator: true,

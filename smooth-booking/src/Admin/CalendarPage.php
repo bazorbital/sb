@@ -397,8 +397,11 @@ class CalendarPage {
                 continue;
             }
 
-            $start = $appointment->get_scheduled_start()->setTimezone( $timezone )->format( 'Y-m-d H:i' );
-            $end   = $appointment->get_scheduled_end()->setTimezone( $timezone )->format( 'Y-m-d H:i' );
+            $start_time = $appointment->get_scheduled_start()->setTimezone( $timezone );
+            $end_time   = $appointment->get_scheduled_end()->setTimezone( $timezone );
+
+            $start = $start_time->format( DateTimeInterface::ATOM );
+            $end   = $end_time->format( DateTimeInterface::ATOM );
 
             $events[] = [
                 'id'            => $appointment->get_id(),
@@ -409,7 +412,7 @@ class CalendarPage {
                 'color'         => $this->normalize_color( $appointment->get_service_color() ),
                 'extendedProps' => [
                     'customer'   => $this->format_customer_name( $appointment ),
-                    'timeRange'  => sprintf( '%s – %s', $appointment->get_scheduled_start()->setTimezone( $timezone )->format( 'H:i' ), $appointment->get_scheduled_end()->setTimezone( $timezone )->format( 'H:i' ) ),
+                    'timeRange'  => sprintf( '%s – %s', $start_time->format( 'H:i' ), $end_time->format( 'H:i' ) ),
                     'service'    => $appointment->get_service_name(),
                     'employee'   => $appointment->get_employee_name(),
                     'status'     => $appointment->get_status(),
