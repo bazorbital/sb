@@ -350,10 +350,6 @@ class ServiceProvider {
             return new CalendarPage(
                 $container->get( CalendarService::class ),
                 $container->get( LocationService::class ),
-                $container->get( EmployeeService::class ),
-                $container->get( ServiceService::class ),
-                $container->get( CustomerService::class ),
-                $container->get( GeneralSettings::class ),
                 $container->get( Logger::class )
             );
         } );

@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.17.0] - 2025-12-01
+### Changed
+- Rebuilt the Calendar admin screen to use a resource-based EventCalendar day view that defaults to the current date, mapping employees to resources and colouring appointments with their service palette.
+- Simplified the calendar filters to native location and date inputs while exposing locale, slot duration, and schedule window metadata to the JavaScript bootstrapper.
+
+### Fixed
+- Normalised calendar payload injection to keep the inline script global consistent for the new EventCalendar integration and ensure empty-day messaging reflects the current dataset.
+
 # [0.16.6] - 2025-11-06
 ### Fixed
 - Refactored database migrations to remove unsupported dbDelta foreign key statements, preventing SQL syntax errors during upgrades and ensuring schema changes complete inside the execution window.
