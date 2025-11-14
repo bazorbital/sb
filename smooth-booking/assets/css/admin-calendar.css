@@ -34,6 +34,8 @@
 
 .smooth-booking-calendar-board {
     position: relative;
+    display: flex;
+    flex-direction: column;
     background: var(--sba-cl-white);
     border-radius: var(--sbc-border-radius);
     box-shadow: var(--sbc-shadow);
@@ -60,6 +62,7 @@
 #smooth-booking-calendar {
     min-height: 620px;
     padding: 12px 12px 0;
+    flex: 1 1 auto;
 }
 
 .smooth-booking-calendar-board .notice {
@@ -67,14 +70,11 @@
 }
 
 .smooth-booking-calendar-empty {
-    position: absolute;
-    inset: 0 0 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.92);
+    margin: 0 24px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--sba-gt-gray-200);
+    background: rgba(255, 255, 255, 0.9);
     text-align: center;
-    padding: 32px;
     font-size: 16px;
     color: var(--sba-dt-black-200);
 }
