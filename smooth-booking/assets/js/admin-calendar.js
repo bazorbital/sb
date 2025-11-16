@@ -57,6 +57,34 @@
         return { domNodes: [container] };
     }
 
+    function submitCalendarFilters() {
+        var form = document.querySelector('.smooth-booking-calendar-filters');
+
+        if (form) {
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+            return;
+        }
+
+        var params = new URLSearchParams(window.location.search || '');
+        var dateInput = document.querySelector('input[name="calendar_date"]');
+        var locationField = document.querySelector('select[name="location_id"]');
+
+        if (dateInput && dateInput.value) {
+            params.set('calendar_date', dateInput.value);
+        }
+
+        if (locationField && locationField.value) {
+            params.set('location_id', locationField.value);
+        }
+
+        var query = params.toString();
+        window.location.search = query ? '?' + query : '';
+    }
+
     function createCalendar() {
         var settings = window.SmoothBookingCalendar || {};
         var data = window.SmoothBookingCalendarData || settings.data || {};
@@ -106,6 +134,8 @@
             return;
         }
 
+        var initialised = false;
+
         calendar.on('datesSet', function (payload) {
             if (!payload || !payload.start) {
                 return;
@@ -117,6 +147,18 @@
             if (dateInput && dateInput.value !== iso) {
                 dateInput.value = iso;
             }
+
+            if (!initialised) {
+                initialised = true;
+                return;
+            }
+
+            if (iso === data.selectedDate) {
+                return;
+            }
+
+            data.selectedDate = iso;
+            submitCalendarFilters();
         });
     }
 

@@ -400,8 +400,8 @@ class CalendarPage {
             $start_time = $appointment->get_scheduled_start()->setTimezone( $timezone );
             $end_time   = $appointment->get_scheduled_end()->setTimezone( $timezone );
 
-            $start = $start_time->format( DateTimeInterface::ATOM );
-            $end   = $end_time->format( DateTimeInterface::ATOM );
+            $start = $start_time->format( 'Y-m-d H:i:s' );
+            $end   = $end_time->format( 'Y-m-d H:i:s' );
 
             $events[] = [
                 'id'            => $appointment->get_id(),
