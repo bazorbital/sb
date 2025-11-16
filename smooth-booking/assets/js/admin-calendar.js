@@ -141,7 +141,8 @@
                 return;
             }
 
-            var iso = payload.start.toISOString().slice(0, 10);
+            var startStr = payload.startStr || payload.start.toISOString();
+            var iso = startStr.slice(0, 10);
             var dateInput = document.querySelector('input[name="calendar_date"]');
 
             if (dateInput && dateInput.value !== iso) {
