@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SmoothBooking\Tests\Unit\Domain\Calendar;
 
+use DateInterval;
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use SmoothBooking\Domain\Appointments\Appointment;
@@ -20,7 +22,7 @@ use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use WP_Error;
 
 class CalendarServiceTest extends TestCase {
-    private function build_location(int $location_id = 5): Location {
+    private function build_location(int $location_id = 5, string $timezone = 'Europe/Budapest'): Location {
         return new Location(
             $location_id,
             'HQ',
@@ -30,7 +32,7 @@ class CalendarServiceTest extends TestCase {
             null,
             null,
             0,
-            'Europe/Budapest',
+            $timezone,
             false,
             false,
             null,
@@ -63,7 +65,8 @@ class CalendarServiceTest extends TestCase {
 
     public function test_get_daily_schedule_returns_calendar_payload(): void {
         $date         = new DateTimeImmutable('2025-05-01');
-        $location     = $this->build_location();
+        $location_timezone = new DateTimeZone('America/New_York');
+        $location     = $this->build_location(5, $location_timezone->getName());
         $employee     = $this->build_employee(11, [ $location->get_id() ]);
         $otherEmployee = $this->build_employee(99, [ 99 ]);
 
@@ -99,13 +102,28 @@ class CalendarServiceTest extends TestCase {
 
         /** @var AppointmentService|MockObject $appointmentService */
         $appointmentService = $this->createMock(AppointmentService::class);
+        $expected_window_start = ( new DateTimeImmutable('2025-05-01', $location_timezone ) )
+            ->setTime(0, 0)
+            ->sub(new DateInterval('P7D'))
+            ->setTimezone(new DateTimeZone('UTC'));
+        $expected_window_end = ( new DateTimeImmutable('2025-05-01', $location_timezone ) )
+            ->setTime(23, 59, 59)
+            ->add(new DateInterval('P7D'))
+            ->setTimezone(new DateTimeZone('UTC'));
+
         $appointmentService
             ->expects($this->once())
             ->method('get_appointments_for_employees')
             ->with(
                 [ $employee->get_id() ],
-                $this->isInstanceOf(DateTimeImmutable::class),
-                $this->isInstanceOf(DateTimeImmutable::class)
+                $this->callback(function (DateTimeImmutable $start) use ($expected_window_start): bool {
+                    return $start->getTimezone()->getName() === 'UTC'
+                        && $start->format('Y-m-d H:i:s') === $expected_window_start->format('Y-m-d H:i:s');
+                }),
+                $this->callback(function (DateTimeImmutable $end) use ($expected_window_end): bool {
+                    return $end->getTimezone()->getName() === 'UTC'
+                        && $end->format('Y-m-d H:i:s') === $expected_window_end->format('Y-m-d H:i:s');
+                })
             )
             ->willReturn([ $appointment ]);
 

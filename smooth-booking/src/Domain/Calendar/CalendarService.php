@@ -138,6 +138,11 @@ class CalendarService {
 
         $appointments        = [];
         $window_appointments = [];
+
+        $site_timezone = wp_timezone();
+        if ( ! $site_timezone instanceof DateTimeZone ) {
+            $site_timezone = new DateTimeZone( 'UTC' );
+        }
         if ( ! empty( $employees ) ) {
             $employee_ids = array_map(
                 static function ( Employee $employee ): int {
@@ -146,7 +151,10 @@ class CalendarService {
                 $employees
             );
 
-            $window_appointments = $this->appointments->get_appointments_for_employees( $employee_ids, $window_start, $window_end );
+            $storage_window_start = $window_start->setTimezone( $site_timezone );
+            $storage_window_end   = $window_end->setTimezone( $site_timezone );
+
+            $window_appointments = $this->appointments->get_appointments_for_employees( $employee_ids, $storage_window_start, $storage_window_end );
             $appointments        = $this->filter_daily_appointments( $window_appointments, $day_start, $day_end );
         }
 
