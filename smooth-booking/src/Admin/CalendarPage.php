@@ -99,16 +99,24 @@ class CalendarPage {
             );
         }
 
-        $employees   = [];
-        $events      = [];
-        $open_time   = $selected_date->setTime( 8, 0 );
-        $close_time  = $open_time->add( new DateInterval( 'PT10H' ) );
-        $slot_length = 30;
-        $is_closed   = false;
+        $employees         = [];
+        $day_events        = [];
+        $events            = [];
+        $open_time         = $selected_date->setTime( 8, 0 );
+        $close_time        = $open_time->add( new DateInterval( 'PT10H' ) );
+        $slot_length       = 30;
+        $is_closed         = false;
+        $has_day_events    = false;
+        $range_start       = $selected_date->sub( new DateInterval( 'P7D' ) );
+        $range_end         = $selected_date->add( new DateInterval( 'P7D' ) );
 
         if ( ! is_wp_error( $schedule_result ) ) {
             $employees   = $this->unique_employees( $schedule_result['employees'] ?? [] );
-            $events      = $this->build_events( $schedule_result['appointments'] ?? [], $timezone );
+            $day_events  = $this->build_events( $schedule_result['appointments'] ?? [], $timezone );
+            $events      = $this->build_events(
+                $schedule_result['window_appointments'] ?? ( $schedule_result['appointments'] ?? [] ),
+                $timezone
+            );
             $open_time   = isset( $schedule_result['open'] ) && $schedule_result['open'] instanceof DateTimeImmutable
                 ? $schedule_result['open']->setTimezone( $timezone )
                 : $open_time;
@@ -117,6 +125,14 @@ class CalendarPage {
                 : $close_time;
             $slot_length = isset( $schedule_result['slot_length'] ) ? (int) $schedule_result['slot_length'] : $slot_length;
             $is_closed   = ! empty( $schedule_result['is_closed'] );
+            $has_day_events = ! empty( $day_events );
+            if ( isset( $schedule_result['window_start'] ) && $schedule_result['window_start'] instanceof DateTimeImmutable ) {
+                $range_start = $schedule_result['window_start']->setTimezone( $timezone );
+            }
+
+            if ( isset( $schedule_result['window_end'] ) && $schedule_result['window_end'] instanceof DateTimeImmutable ) {
+                $range_end = $schedule_result['window_end']->setTimezone( $timezone );
+            }
         }
 
         $resources = $this->build_resources( $employees );
@@ -133,6 +149,9 @@ class CalendarPage {
                 'locale'          => $this->get_locale_code(),
                 'timezone'        => $timezone->getName(),
                 'hasEvents'       => ! empty( $events ),
+                'hasSelectedDayEvents' => $has_day_events,
+                'rangeStart'      => $range_start->setTimezone( $timezone )->format( 'Y-m-d' ),
+                'rangeEnd'        => $range_end->setTimezone( $timezone )->format( 'Y-m-d' ),
                 'isClosed'        => $is_closed,
                 'locationName'    => $location ? $location->get_name() : '',
                 'selectedDateIso' => $selected_date->setTimezone( $timezone )->format( DateTimeInterface::ATOM ),
@@ -239,6 +258,8 @@ class CalendarPage {
             'i18n' => [
                 'resourceColumn'    => __( 'Employees', 'smooth-booking' ),
                 'customerLabel'     => __( 'Customer', 'smooth-booking' ),
+                'emailLabel'        => __( 'Email', 'smooth-booking' ),
+                'phoneLabel'        => __( 'Phone', 'smooth-booking' ),
                 'timeRangeTemplate' => __( '%1$s – %2$s', 'smooth-booking' ),
                 'noEvents'          => __( 'No appointments scheduled for this day.', 'smooth-booking' ),
                 'loading'           => __( 'Loading calendar…', 'smooth-booking' ),
@@ -416,6 +437,8 @@ class CalendarPage {
                     'service'    => $appointment->get_service_name(),
                     'employee'   => $appointment->get_employee_name(),
                     'status'     => $appointment->get_status(),
+                    'customerEmail' => $appointment->get_customer_email(),
+                    'customerPhone' => $appointment->get_customer_phone(),
                     'appointmentId' => $appointment->get_id(),
                 ],
             ];

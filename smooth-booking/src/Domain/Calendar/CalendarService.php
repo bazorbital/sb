@@ -9,10 +9,13 @@ namespace SmoothBooking\Domain\Calendar;
 
 use DateInterval;
 use DateTimeImmutable;
+use DateTimeZone;
+use SmoothBooking\Domain\Appointments\Appointment;
 use SmoothBooking\Domain\Appointments\AppointmentService;
 use SmoothBooking\Domain\BusinessHours\BusinessHoursService;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Employees\EmployeeService;
+use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
@@ -24,8 +27,8 @@ use function array_map;
 use function in_array;
 use function count;
 use function is_wp_error;
-use function wp_timezone;
 use function sprintf;
+use function wp_timezone;
 
 /**
  * Provides structured calendar data for the admin interface.
@@ -87,6 +90,8 @@ class CalendarService {
         }
 
         $location = $location_result;
+        $timezone = $this->resolve_timezone( $location );
+        $date     = $date->setTimezone( $timezone );
         $employees = $this->filter_employees_for_location( $location_id );
 
         $this->logger->info(
@@ -114,7 +119,6 @@ class CalendarService {
         $day_hours   = $hours_result[ $day_index ] ?? [ 'open' => '', 'close' => '', 'is_closed' => true ];
         $slot_length = $this->settings->get_time_slot_length();
 
-        $timezone    = wp_timezone();
         $open_string = $day_hours['open'] ?: '08:00';
         $close_string = $day_hours['close'] ?: '18:00';
 
@@ -129,8 +133,11 @@ class CalendarService {
 
         $day_start = $date->setTime( 0, 0 );
         $day_end   = $date->setTime( 23, 59, 59 );
+        $window_start = $day_start->sub( new DateInterval( 'P7D' ) );
+        $window_end   = $day_end->add( new DateInterval( 'P7D' ) );
 
-        $appointments = [];
+        $appointments        = [];
+        $window_appointments = [];
         if ( ! empty( $employees ) ) {
             $employee_ids = array_map(
                 static function ( Employee $employee ): int {
@@ -139,7 +146,8 @@ class CalendarService {
                 $employees
             );
 
-            $appointments = $this->appointments->get_appointments_for_employees( $employee_ids, $day_start, $day_end );
+            $window_appointments = $this->appointments->get_appointments_for_employees( $employee_ids, $window_start, $window_end );
+            $appointments        = $this->filter_daily_appointments( $window_appointments, $day_start, $day_end );
         }
 
         $this->logger->info(
@@ -161,11 +169,63 @@ class CalendarService {
             'slots'        => $slots,
             'slot_length'  => $slot_length,
             'appointments' => $appointments,
+            'window_appointments' => $window_appointments,
+            'window_start' => $window_start,
+            'window_end'   => $window_end,
             'is_closed'    => ! empty( $day_hours['is_closed'] ),
             'open'         => $open_datetime,
             'close'        => $close_datetime,
             'date'         => $date,
         ];
+    }
+
+    /**
+     * Restrict appointments to the selected day.
+     *
+     * @param Appointment[]     $appointments Full window appointments.
+     * @param DateTimeImmutable $day_start    Day start boundary.
+     * @param DateTimeImmutable $day_end      Day end boundary.
+     *
+     * @return Appointment[]
+     */
+    private function filter_daily_appointments( array $appointments, DateTimeImmutable $day_start, DateTimeImmutable $day_end ): array {
+        return array_values(
+            array_filter(
+                $appointments,
+                static function ( $appointment ) use ( $day_start, $day_end ): bool {
+                    if ( ! $appointment instanceof Appointment ) {
+                        return false;
+                    }
+
+                    $start = $appointment->get_scheduled_start()->setTimezone( $day_start->getTimezone() );
+
+                    return $start->getTimestamp() >= $day_start->getTimestamp() && $start->getTimestamp() <= $day_end->getTimestamp();
+                }
+            )
+        );
+    }
+
+    /**
+     * Determine the timezone for a location, falling back to the site default when invalid.
+     */
+    private function resolve_timezone( Location $location ): DateTimeZone {
+        $location_timezone = $location->get_timezone();
+
+        if ( $location_timezone ) {
+            try {
+                return new DateTimeZone( $location_timezone );
+            } catch ( \Exception $exception ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+                $this->logger->warning(
+                    sprintf(
+                        'Invalid timezone "%s" for location #%d, falling back to site timezone.',
+                        $location_timezone,
+                        $location->get_id()
+                    )
+                );
+            }
+        }
+
+        return wp_timezone();
     }
 
     /**

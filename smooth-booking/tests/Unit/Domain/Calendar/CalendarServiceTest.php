@@ -166,10 +166,13 @@ class CalendarServiceTest extends TestCase {
         $this->assertSame($employee->get_id(), $result['employees'][0]->get_id());
         $this->assertSame(['09:00', '09:30', '10:00', '10:30'], $result['slots']);
         $this->assertSame([ $appointment ], $result['appointments']);
+        $this->assertSame([ $appointment ], $result['window_appointments']);
         $this->assertFalse($result['is_closed']);
         $this->assertInstanceOf(DateTimeImmutable::class, $result['open']);
         $this->assertSame('09:00', $result['open']->format('H:i'));
         $this->assertSame('11:00', $result['close']->format('H:i'));
+        $this->assertSame('2025-04-24', $result['window_start']->format('Y-m-d'));
+        $this->assertSame('2025-05-08', $result['window_end']->format('Y-m-d'));
     }
 
     public function test_get_daily_schedule_returns_error_for_missing_location(): void {

@@ -13,6 +13,52 @@
         return Array.isArray(value) ? value : [];
     }
 
+    function normalizeDate(value) {
+        if (!value) {
+            return '';
+        }
+
+        if (value instanceof Date && typeof value.toISOString === 'function') {
+            return value.toISOString().slice(0, 10);
+        }
+
+        return String(value).slice(0, 10);
+    }
+
+    function hasEventsForDate(events, dateStr) {
+        var normalized = normalizeDate(dateStr);
+
+        if (!normalized) {
+            return ensureArray(events).length > 0;
+        }
+
+        return ensureArray(events).some(function (event) {
+            if (!event || !event.start) {
+                return false;
+            }
+
+            return normalizeDate(event.start) === normalized;
+        });
+    }
+
+    function isWithinRange(dateStr, start, end) {
+        var value = normalizeDate(dateStr);
+
+        if (!value) {
+            return false;
+        }
+
+        if (start && value < normalizeDate(start)) {
+            return false;
+        }
+
+        if (end && value > normalizeDate(end)) {
+            return false;
+        }
+
+        return true;
+    }
+
     function renderEmptyState(wrapper, hasEvents) {
         if (!wrapper) {
             return;
@@ -51,6 +97,20 @@
                 customer.className = 'smooth-booking-calendar-event__customer';
                 customer.textContent = (i18n.customerLabel || 'Customer') + ': ' + props.customer;
                 container.appendChild(customer);
+            }
+
+            if (props.customerEmail) {
+                var email = document.createElement('div');
+                email.className = 'smooth-booking-calendar-event__contact';
+                email.textContent = (i18n.emailLabel || 'Email') + ': ' + props.customerEmail;
+                container.appendChild(email);
+            }
+
+            if (props.customerPhone) {
+                var phone = document.createElement('div');
+                phone.className = 'smooth-booking-calendar-event__contact';
+                phone.textContent = (i18n.phoneLabel || 'Phone') + ': ' + props.customerPhone;
+                container.appendChild(phone);
             }
         }
 
@@ -100,6 +160,8 @@
             return;
         }
 
+        var events = ensureArray(data.events);
+
         var options = {
             view: 'resourceTimeGridDay',
             initialDate: data.selectedDate || new Date().toISOString().slice(0, 10),
@@ -110,7 +172,7 @@
             },
             timeZone: data.timezone || 'local',
             resources: ensureArray(data.resources),
-            events: ensureArray(data.events),
+            events: events,
             nowIndicator: true,
             locale: data.locale || 'en',
             slotMinTime: data.openTime || '08:00:00',
@@ -128,7 +190,7 @@
         var calendar = EventCalendar.create(target, options);
 
         var wrapper = target.closest('.smooth-booking-calendar-board');
-        renderEmptyState(wrapper, ensureArray(data.events).length > 0);
+        renderEmptyState(wrapper, data.hasSelectedDayEvents || hasEventsForDate(events, data.selectedDate));
 
         if (!calendar || typeof calendar.on !== 'function') {
             return;
@@ -155,6 +217,13 @@
             }
 
             if (iso === data.selectedDate) {
+                return;
+            }
+
+            if (isWithinRange(iso, data.rangeStart, data.rangeEnd)) {
+                data.selectedDate = iso;
+                data.hasSelectedDayEvents = hasEventsForDate(events, iso);
+                renderEmptyState(wrapper, data.hasSelectedDayEvents);
                 return;
             }
 
