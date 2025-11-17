@@ -1,0 +1,19 @@
+{
+"apiVersion": 2,
+"name": "smooth-booking/calendar",
+"title": "Smooth Booking Calendar",
+"category": "widgets",
+"icon": "calendar-alt",
+"description": "Displays the Smooth Booking calendar powered by the js-year-calendar integration.",
+"attributes": {
+"employee": {
+"type": "number",
+"default": 0
+}
+},
+"editorScript": "smooth-booking-calendar-block",
+"style": "file:../../assets/css/calendar.css",
+"supports": {
+"html": false
+}
+}
