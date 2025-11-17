@@ -1,8 +1,9 @@
 (function ($) {
 'use strict';
 
-function formatDate(date) {
-return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0') + ' 00:00:00';
+function formatDate(date, endOfDay) {
+var time = endOfDay ? ' 23:59:59' : ' 00:00:00';
+return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0') + time;
 }
 
 $(function () {
@@ -27,7 +28,7 @@ var data = {
 action: 'smooth_booking_calendar',
 nonce: SmoothBookingCalendar.nonce,
 start: formatDate(range.startDate),
-end: formatDate(range.endDate),
+end: formatDate(range.endDate, true),
 employee: parseInt(employeeField.val(), 10) || 0,
 };
 

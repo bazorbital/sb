@@ -1,13 +1,14 @@
 (function () {
 'use strict';
 
-function parseDate(date) {
-return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0') + ' 00:00:00';
+function parseDate(date, endOfDay) {
+var time = endOfDay ? ' 23:59:59' : ' 00:00:00';
+return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0') + time;
 }
 
 function fetchEvents(range, employeeId) {
 return window.wp.apiFetch({
-path: '/smooth-booking/v1/calendar?start=' + encodeURIComponent(parseDate(range.startDate)) + '&end=' + encodeURIComponent(parseDate(range.endDate)) + '&employee=' + employeeId,
+path: '/smooth-booking/v1/calendar?start=' + encodeURIComponent(parseDate(range.startDate)) + '&end=' + encodeURIComponent(parseDate(range.endDate, true)) + '&employee=' + employeeId,
 headers: {
 'X-WP-Nonce': SmoothBookingFrontend.nonce,
 },
