@@ -1,0 +1,24 @@
+/*
+ * Calendar styles.
+ */
+
+#smooth-booking-calendar {
+min-height: 600px;
+margin-top: 1rem;
+background: #fff;
+border: 1px solid #ccd0d4;
+padding: 1rem;
+}
+
+#smooth-booking-calendar .sb-calendar-event {
+font-weight: 600;
+}
+
+.smooth-booking-employee {
+min-width: 220px;
+}
+
+.sb-calendar-empty {
+margin-top: 1rem;
+font-style: italic;
+}

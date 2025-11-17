@@ -1,36 +1,31 @@
 <?php
 /**
- * Uninstall handler for Smooth Booking.
+ * Fired when the plugin is uninstalled.
  *
  * @package SmoothBooking
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-    exit;
+exit;
 }
 
-require_once __DIR__ . '/smooth-booking.php';
+require_once __DIR__ . '/src/Infrastructure/CacheRepository.php';
 
-use SmoothBooking\Infrastructure\Database\SchemaManager;
-use SmoothBooking\Plugin;
+SmoothBooking\Infrastructure\CacheRepository::flush();
 
-if ( is_multisite() ) {
-    $sites = get_sites( [ 'fields' => 'ids' ] );
-    foreach ( $sites as $site_id ) {
-        switch_to_blog( (int) $site_id );
-        smooth_booking_drop_schema();
-        restore_current_blog();
-    }
-} else {
-    smooth_booking_drop_schema();
-}
+delete_option( 'smooth_booking_options' );
+delete_option( 'smooth_booking_version' );
+delete_option( 'smooth_booking_cached_calendars' );
 
-/**
- * Drop Smooth Booking schema for current site.
- */
-function smooth_booking_drop_schema(): void {
-    $plugin        = Plugin::instance();
-    $schema        = $plugin->getContainer()->get( SchemaManager::class );
+$bookings = get_posts(
+[
+'post_type'      => 'sb_booking',
+'post_status'    => 'any',
+'posts_per_page' => -1,
+'fields'         => 'ids',
+]
+);
 
-    $schema->drop_schema();
+foreach ( $bookings as $booking_id ) {
+wp_delete_post( $booking_id, true );
 }
