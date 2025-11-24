@@ -291,7 +291,8 @@ class ServicesController {
         return [
             'name'                         => $params['name'] ?? '',
             'profile_image_id'             => $params['profile_image_id'] ?? 0,
-            'default_color'                => $params['default_color'] ?? '',
+            'default_background_color'     => $params['default_background_color'] ?? ( $params['default_color'] ?? '' ),
+            'default_text_color'           => $params['default_text_color'] ?? '',
             'visibility'                   => $params['visibility'] ?? 'public',
             'price'                        => $params['price'] ?? '',
             'payment_methods_mode'         => $params['payment_methods_mode'] ?? 'default',

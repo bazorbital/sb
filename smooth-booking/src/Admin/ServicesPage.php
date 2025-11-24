@@ -350,7 +350,8 @@ class ServicesPage {
         $data = [
             'name'                         => isset( $_POST['service_name'] ) ? wp_unslash( (string) $_POST['service_name'] ) : '',
             'profile_image_id'             => isset( $_POST['service_profile_image_id'] ) ? wp_unslash( (string) $_POST['service_profile_image_id'] ) : '0',
-            'default_color'                => isset( $_POST['service_default_color'] ) ? wp_unslash( (string) $_POST['service_default_color'] ) : '',
+            'default_background_color'     => isset( $_POST['service_background_color'] ) ? wp_unslash( (string) $_POST['service_background_color'] ) : '',
+            'default_text_color'           => isset( $_POST['service_text_color'] ) ? wp_unslash( (string) $_POST['service_text_color'] ) : '',
             'visibility'                   => isset( $_POST['service_visibility'] ) ? wp_unslash( (string) $_POST['service_visibility'] ) : 'public',
             'price'                        => isset( $_POST['service_price'] ) ? wp_unslash( (string) $_POST['service_price'] ) : '',
             'payment_methods_mode'         => isset( $_POST['service_payment_methods_mode'] ) ? wp_unslash( (string) $_POST['service_payment_methods_mode'] ) : 'default',
@@ -561,7 +562,8 @@ class ServicesPage {
 
         $visibility   = $is_edit ? $service->get_visibility() : 'public';
         $price        = $is_edit && null !== $service->get_price() ? number_format( (float) $service->get_price(), 2, '.', '' ) : '';
-        $color        = $is_edit ? ( $service->get_color() ?? '' ) : '';
+        $background_color = $is_edit ? ( $service->get_background_color() ?? '' ) : '';
+        $text_color   = $is_edit ? ( $service->get_text_color() ?? '' ) : '';
         $info         = $is_edit ? ( $service->get_info() ?? '' ) : '';
         $payment_mode = $is_edit ? $service->get_payment_methods_mode() : 'default';
         $duration     = $is_edit ? $service->get_duration_key() : '15_minutes';
@@ -673,9 +675,15 @@ class ServicesPage {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th scope='row'><label for='smooth-booking-service-default-color'><?php esc_html_e( 'Color', 'smooth-booking' ); ?></label></th>
+                                    <th scope='row'><label for='smooth-booking-service-background-color'><?php esc_html_e( 'Background color', 'smooth-booking' ); ?></label></th>
                                     <td>
-                                        <input type='text' id='smooth-booking-service-default-color' name='service_default_color' value='<?php echo esc_attr( $color ); ?>' class='smooth-booking-color-field' />
+                                        <input type='text' id='smooth-booking-service-background-color' name='service_background_color' value='<?php echo esc_attr( $background_color ); ?>' class='smooth-booking-color-field' />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope='row'><label for='smooth-booking-service-text-color'><?php esc_html_e( 'Text color', 'smooth-booking' ); ?></label></th>
+                                    <td>
+                                        <input type='text' id='smooth-booking-service-text-color' name='service_text_color' value='<?php echo esc_attr( $text_color ); ?>' class='smooth-booking-color-field' />
                                     </td>
                                 </tr>
                                 <tr>

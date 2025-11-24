@@ -438,8 +438,17 @@ class ServiceService {
             }
         }
 
-        $color = isset( $data['default_color'] ) ? sanitize_hex_color( (string) $data['default_color'] ) : '';
-        $color = $color ?: null;
+        $background_color = '';
+        if ( isset( $data['default_background_color'] ) ) {
+            $background_color = sanitize_hex_color( (string) $data['default_background_color'] );
+        } elseif ( isset( $data['default_color'] ) ) {
+            $background_color = sanitize_hex_color( (string) $data['default_color'] );
+        }
+
+        $background_color = $background_color ?: null;
+
+        $text_color = isset( $data['default_text_color'] ) ? sanitize_hex_color( (string) $data['default_text_color'] ) : '';
+        $text_color = $text_color ?: null;
 
         $visibility = isset( $data['visibility'] ) ? sanitize_key( (string) $data['visibility'] ) : 'public';
 
@@ -539,7 +548,8 @@ class ServiceService {
         $record = [
             'name'                         => $name,
             'profile_image_id'             => $image_id > 0 ? $image_id : null,
-            'default_color'                => $color,
+            'default_color'                => $background_color,
+            'default_text_color'           => $text_color,
             'visibility'                   => $visibility,
             'price'                        => $price,
             'payment_methods_mode'         => $payment_method,

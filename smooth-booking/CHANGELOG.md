@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.17.1] - 2025-12-10
+### Changed
+- Replaced the single service colour picker with separate background and text colour controls while keeping backward-compatible defaults for existing records.
+- Extended REST, WP-CLI, and admin service forms to capture and persist both colour values, updating calendar event payloads to honour the new text colour.
+
+### Added
+- Added `default_text_color` storage to the `smooth_services` table and propagated it through the service and appointment repositories.
+
 # [0.17.0] - 2025-12-01
 ### Changed
 - Rebuilt the Calendar admin screen to use a resource-based EventCalendar day view that defaults to the current date, mapping employees to resources and colouring appointments with their service palette.
