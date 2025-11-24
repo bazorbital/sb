@@ -177,7 +177,8 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
                     c.email AS customer_email,
                     e.name AS employee_name,
                     s.name AS service_name,
-                    s.default_color AS service_color
+                    s.default_color AS service_background_color,
+                    s.default_text_color AS service_text_color
                 FROM {$table} AS b
                 LEFT JOIN {$customers} AS c ON b.customer_id = c.customer_id
                 LEFT JOIN {$employees} AS e ON b.employee_id = e.employee_id
@@ -241,7 +242,9 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
                     c.phone AS customer_phone,
                     c.email AS customer_email,
                     e.name AS employee_name,
-                    s.name AS service_name
+                    s.name AS service_name,
+                    s.default_color AS service_background_color,
+                    s.default_text_color AS service_text_color
              FROM {$table} AS b
              LEFT JOIN {$customers} AS c ON b.customer_id = c.customer_id
              LEFT JOIN {$employees} AS e ON b.employee_id = e.employee_id
@@ -451,7 +454,7 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
 
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-        $sql = "SELECT b.*,\n                    c.name AS customer_account_name,\n                    c.first_name AS customer_first_name,\n                    c.last_name AS customer_last_name,\n                    c.phone AS customer_phone,\n                    c.email AS customer_email,\n                    e.name AS employee_name,\n                    s.name AS service_name,\n                    s.default_color AS service_color\n                FROM {$table} AS b\n                LEFT JOIN {$customers} AS c ON b.customer_id = c.customer_id\n                LEFT JOIN {$employees} AS e ON b.employee_id = e.employee_id\n                LEFT JOIN {$services} AS s ON b.service_id = s.service_id\n                WHERE b.booking_type = 'appointment'\n                    AND b.is_deleted = %d\n                    AND b.employee_id IN ({$placeholders})\n                    AND b.scheduled_start >= %s\n                    AND b.scheduled_end <= %s\n                ORDER BY b.scheduled_start ASC";
+        $sql = "SELECT b.*,\n                    c.name AS customer_account_name,\n                    c.first_name AS customer_first_name,\n                    c.last_name AS customer_last_name,\n                    c.phone AS customer_phone,\n                    c.email AS customer_email,\n                    e.name AS employee_name,\n                    s.name AS service_name,\n                    s.default_color AS service_background_color,\n                    s.default_text_color AS service_text_color\n                FROM {$table} AS b\n                LEFT JOIN {$customers} AS c ON b.customer_id = c.customer_id\n                LEFT JOIN {$employees} AS e ON b.employee_id = e.employee_id\n                LEFT JOIN {$services} AS s ON b.service_id = s.service_id\n                WHERE b.booking_type = 'appointment'\n                    AND b.is_deleted = %d\n                    AND b.employee_id IN ({$placeholders})\n                    AND b.scheduled_start >= %s\n                    AND b.scheduled_end <= %s\n                ORDER BY b.scheduled_start ASC";
 
         $params = array_merge( [ 0 ], $ids, [ $from, $to ] );
 

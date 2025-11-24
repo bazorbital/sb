@@ -33,9 +33,14 @@ class Appointment {
     private ?string $service_name = null;
 
     /**
-     * Service color hex code.
+     * Service background color hex code.
      */
-    private ?string $service_color = null;
+    private ?string $service_background_color = null;
+
+    /**
+     * Service text color hex code.
+     */
+    private ?string $service_text_color = null;
 
     /**
      * Provider (employee) identifier.
@@ -150,9 +155,13 @@ class Appointment {
     public static function from_row( array $row ): self {
         $self = new self();
         $self->id                   = (int) $row['booking_id'];
-        $self->service_id           = isset( $row['service_id'] ) ? (int) $row['service_id'] : null;
-        $self->service_name         = isset( $row['service_name'] ) ? (string) $row['service_name'] : null;
-        $self->service_color        = isset( $row['service_color'] ) && '' !== $row['service_color'] ? (string) $row['service_color'] : null;
+        $self->service_id                 = isset( $row['service_id'] ) ? (int) $row['service_id'] : null;
+        $self->service_name               = isset( $row['service_name'] ) ? (string) $row['service_name'] : null;
+        $self->service_background_color   = isset( $row['service_background_color'] ) && '' !== $row['service_background_color'] ? (string) $row['service_background_color'] : null;
+        $self->service_text_color         = isset( $row['service_text_color'] ) && '' !== $row['service_text_color'] ? (string) $row['service_text_color'] : null;
+        if ( isset( $row['service_color'] ) && '' !== $row['service_color'] && null === $self->service_background_color ) {
+            $self->service_background_color = (string) $row['service_color'];
+        }
         $self->employee_id          = isset( $row['employee_id'] ) ? (int) $row['employee_id'] : null;
         $self->employee_name        = isset( $row['employee_name'] ) ? (string) $row['employee_name'] : null;
         $self->customer_id          = isset( $row['customer_id'] ) && '' !== $row['customer_id'] ? (int) $row['customer_id'] : null;
@@ -188,7 +197,9 @@ class Appointment {
             'id'                     => $this->id,
             'service_id'             => $this->service_id,
             'service_name'           => $this->service_name,
-            'service_color'          => $this->service_color,
+            'service_color'          => $this->service_background_color,
+            'service_background_color' => $this->service_background_color,
+            'service_text_color'     => $this->service_text_color,
             'employee_id'            => $this->employee_id,
             'employee_name'          => $this->employee_name,
             'customer_id'            => $this->customer_id,
@@ -235,8 +246,25 @@ class Appointment {
         return $this->service_name;
     }
 
+    /**
+     * Service background color.
+     */
+    public function get_service_background_color(): ?string {
+        return $this->service_background_color;
+    }
+
+    /**
+     * Service text color.
+     */
+    public function get_service_text_color(): ?string {
+        return $this->service_text_color;
+    }
+
+    /**
+     * Backward compatible alias for background color.
+     */
     public function get_service_color(): ?string {
-        return $this->service_color;
+        return $this->service_background_color;
     }
 
     /**

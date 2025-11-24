@@ -31,7 +31,12 @@ class Service {
     /**
      * @var string|null
      */
-    private ?string $color;
+    private ?string $background_color;
+
+    /**
+     * @var string|null
+     */
+    private ?string $text_color;
 
     /**
      * @var string
@@ -163,7 +168,8 @@ class Service {
         $service->id                         = (int) $row['service_id'];
         $service->name                       = (string) $row['name'];
         $service->image_id                   = isset( $row['profile_image_id'] ) && '' !== $row['profile_image_id'] ? (int) $row['profile_image_id'] : null;
-        $service->color                      = isset( $row['default_color'] ) && '' !== $row['default_color'] ? (string) $row['default_color'] : null;
+        $service->background_color           = isset( $row['default_color'] ) && '' !== $row['default_color'] ? (string) $row['default_color'] : null;
+        $service->text_color                 = isset( $row['default_text_color'] ) && '' !== $row['default_text_color'] ? (string) $row['default_text_color'] : null;
         $service->visibility                 = (string) $row['visibility'];
         $service->price                      = isset( $row['price'] ) ? (float) $row['price'] : null;
         $service->payment_methods_mode       = (string) $row['payment_methods_mode'];
@@ -211,10 +217,24 @@ class Service {
     }
 
     /**
-     * Get color hex.
+     * Get background color hex.
+     */
+    public function get_background_color(): ?string {
+        return $this->background_color;
+    }
+
+    /**
+     * Get text color hex.
+     */
+    public function get_text_color(): ?string {
+        return $this->text_color;
+    }
+
+    /**
+     * Backward compatible color getter.
      */
     public function get_color(): ?string {
-        return $this->color;
+        return $this->get_background_color();
     }
 
     /**
@@ -433,7 +453,9 @@ class Service {
             'id'                           => $this->get_id(),
             'name'                         => $this->get_name(),
             'profile_image_id'             => $this->get_image_id(),
-            'default_color'                => $this->get_color(),
+            'default_color'                => $this->get_background_color(),
+            'default_background_color'     => $this->get_background_color(),
+            'default_text_color'           => $this->get_text_color(),
             'visibility'                   => $this->get_visibility(),
             'price'                        => $this->get_price(),
             'payment_methods_mode'         => $this->get_payment_methods_mode(),

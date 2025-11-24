@@ -98,8 +98,11 @@ class ServicesCommand extends WP_CLI_Command {
      * [--profile-image-id=<id>]
      * : Attachment ID of the service image.
      *
-     * [--default-color=<hex>]
-     * : HEX color code used in calendars.
+     * [--default-background-color=<hex>]
+     * : HEX background color code used in calendars.
+     *
+     * [--default-text-color=<hex>]
+     * : HEX text color code used in calendars.
      *
      * [--payment-methods-mode=<default|custom>]
      * : Payment methods mode.
@@ -292,7 +295,8 @@ class ServicesCommand extends WP_CLI_Command {
         return [
             'name'                         => $assoc_args['name'] ?? ( $existing ? $existing->get_name() : '' ),
             'profile_image_id'             => $assoc_args['profile-image-id'] ?? ( $existing ? ( $existing->get_image_id() ?? 0 ) : 0 ),
-            'default_color'                => $assoc_args['default-color'] ?? ( $existing ? ( $existing->get_color() ?? '' ) : '' ),
+            'default_background_color'     => $assoc_args['default-background-color'] ?? $assoc_args['default-color'] ?? ( $existing ? ( $existing->get_background_color() ?? '' ) : '' ),
+            'default_text_color'           => $assoc_args['default-text-color'] ?? ( $existing ? ( $existing->get_text_color() ?? '' ) : '' ),
             'visibility'                   => $assoc_args['visibility'] ?? ( $existing ? $existing->get_visibility() : 'public' ),
             'price'                        => $assoc_args['price'] ?? ( $existing ? ( $existing->get_price() ?? '' ) : '' ),
             'payment_methods_mode'         => $assoc_args['payment-methods-mode'] ?? ( $existing ? $existing->get_payment_methods_mode() : 'default' ),

@@ -186,6 +186,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
                 'name'                         => $data['name'],
                 'profile_image_id'             => $data['profile_image_id'],
                 'default_color'                => $data['default_color'],
+                'default_text_color'           => $data['default_text_color'],
                 'visibility'                   => $data['visibility'],
                 'price'                        => null === $data['price'] ? null : number_format( (float) $data['price'], 2, '.', '' ),
                 'payment_methods_mode'         => $data['payment_methods_mode'],
@@ -208,7 +209,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
                 'updated_at'                   => current_time( 'mysql' ),
             ],
             [
-                '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s'
+                '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s'
             ]
         );
 
@@ -241,6 +242,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
                 'name'                         => $data['name'],
                 'profile_image_id'             => $data['profile_image_id'],
                 'default_color'                => $data['default_color'],
+                'default_text_color'           => $data['default_text_color'],
                 'visibility'                   => $data['visibility'],
                 'price'                        => null === $data['price'] ? null : number_format( (float) $data['price'], 2, '.', '' ),
                 'payment_methods_mode'         => $data['payment_methods_mode'],
@@ -263,7 +265,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
             ],
             [ 'service_id' => $service_id ],
             [
-                '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s'
+                '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s'
             ],
             [ '%d' ]
         );

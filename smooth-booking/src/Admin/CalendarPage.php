@@ -430,7 +430,8 @@ class CalendarPage {
                 'title'         => $appointment->get_service_name() ?: __( 'Appointment', 'smooth-booking' ),
                 'start'         => $start,
                 'end'           => $end,
-                'color'         => $this->normalize_color( $appointment->get_service_color() ),
+                'color'         => $this->normalize_color( $appointment->get_service_background_color() ),
+                'textColor'     => $this->normalize_color( $appointment->get_service_text_color(), '#ffffff' ),
                 'extendedProps' => [
                     'customer'   => $this->format_customer_name( $appointment ),
                     'timeRange'  => sprintf( '%s – %s', $start_time->format( 'H:i' ), $end_time->format( 'H:i' ) ),
@@ -490,14 +491,14 @@ class CalendarPage {
     /**
      * Normalise a colour value into a valid hex code.
      */
-    private function normalize_color( ?string $color ): string {
+    private function normalize_color( ?string $color, string $fallback = '#1d4ed8' ): string {
         if ( empty( $color ) ) {
-            return '#1d4ed8';
+            return $fallback;
         }
 
         $sanitized = sanitize_hex_color( $color );
 
-        return $sanitized ?: '#1d4ed8';
+        return $sanitized ?: $fallback;
     }
 
     /**

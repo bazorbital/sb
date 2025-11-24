@@ -138,6 +138,7 @@ class SchemaDefinitionBuilder {
                 name VARCHAR(150) NOT NULL,
                 profile_image_id BIGINT UNSIGNED NULL,
                 default_color CHAR(7) NULL,
+                default_text_color CHAR(7) NULL,
                 visibility ENUM(\'public\',\'private\') NOT NULL DEFAULT \'public\',
                 price DECIMAL(12,2) NULL,
                 payment_methods_mode ENUM(\'default\',\'custom\') NOT NULL DEFAULT \'default\',
