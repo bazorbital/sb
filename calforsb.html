@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8" />
+    <title>EventCalendar – resourceTimeGridDay demo (simplified)</title>
+
+    <!-- EventCalendar CSS (standalone bundle, tartalmaz minden plugint) -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@event-calendar/build@4.7.1/dist/event-calendar.min.css">
+
+    <!-- jQuery + Select2 a resource és szolgáltatás szűrőkhöz -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f3f4f6;
+        }
+
+        body.ec-auto-dark {}
+
+        .page-wrapper {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 16px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.4rem;
+        }
+
+        .subtitle {
+            margin-bottom: 16px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .demo-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .demo-toolbar button {
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.05s;
+        }
+
+        .demo-toolbar button:hover {
+            background: #e5e7eb;
+        }
+
+        .demo-toolbar button:active {
+            transform: translateY(1px);
+        }
+
+        /* Esemény tartalom */
+        .ec-event-title-custom {
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .ec-event-location {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .ec-event-comment {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        /* Timeline view finomhangolás */
+        .ec-timeline .ec-time,
+        .ec-timeline .ec-line {
+            width: 16px;
+        }
+        .ec-timeline .ec-time {
+            overflow: visible;
+        }
+        .ec-timeline .ec-time time {
+            display: inline-block;
+            width: 64px;
+            text-align: center;
+        }
+
+        /* Select2 a toolbarban */
+        .resource-filter-wrapper,
+        .service-filter-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 220px;
+        }
+        .resource-filter-wrapper label,
+        .service-filter-wrapper label {
+            font-size: 0.85rem;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+        .select2-container--default .select2-selection--multiple {
+            min-height: 32px;
+            border-radius: 999px;
+            border-color: #d1d5db;
+            padding: 2px 6px;
+            font-size: 0.85rem;
+        }
+
+        /* MODAL (dialog) form styling */
+        dialog#dialog {
+            border: none;
+            border-radius: 12px;
+            padding: 20px 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+        }
+        dialog::backdrop {
+            background: rgba(15, 23, 42, 0.35);
+        }
+        #form h2 {
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+        #form h3 {
+            margin: 2px 0;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        #form .row {
+            display: flex;
+            flex-direction: column;
+            margin-top: 8px;
+            gap: 4px;
+        }
+        #form label {
+            font-size: 0.85rem;
+        }
+        #form input[type="time"],
+        #form input[type="text"],
+        #form textarea,
+        #form select {
+            font-size: 0.9rem;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+        #form textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        #form menu {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 0;
+        }
+        #form button {
+            border-radius: 999px;
+            padding: 6px 14px;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+        }
+        #cancel {
+            background: #f3f4f6;
+        }
+        #confirm {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="ec-auto-dark">
+<div class="page-wrapper">
+    <h1>EventCalendar – resourceTimeGridDay demo</h1>
+    <div class="subtitle">
+        Resource-nézet (nap), timeline, Select2 resource + szolgáltatás szűrő, foglalás modál szolgáltatás sablonokkal & színekkel.
+    </div>
+
+    <div class="demo-toolbar">
+        <button id="btn-today">Ugrás ma</button>
+        <button id="btn-toggle-theme">Dark / Light váltás</button>
+
+        <!-- Erőforrás szűrő -->
+        <div class="resource-filter-wrapper">
+            <label for="resourceFilter">Erőforrás:</label>
+            <select id="resourceFilter" multiple="multiple" style="min-width: 200px;"></select>
+        </div>
+
+        <!-- Szolgáltatás szűrő -->
+        <div class="service-filter-wrapper">
+            <label for="serviceFilter">Szolgáltatás:</label>
+            <select id="serviceFilter" multiple="multiple" style="min-width: 200px;"></select>
+        </div>
+    </div>
+
+    <div id="ec"></div>
+</div>
+
+<!-- Foglalás modál dialog + resource + szolgáltatás -->
+<dialog id="dialog">
+    <form id="form" method="dialog">
+        <h2>Foglalás hozzáadása</h2>
+        <h3 id="room-name"></h3>
+        <h3 id="date"></h3>
+
+        <div class="row">
+            <label for="resourceSelect">Erőforrás:</label>
+            <select id="resourceSelect" name="resource-select"></select>
+        </div>
+
+        <div class="row">
+            <label for="serviceTemplate">Szolgáltatás sablon:</label>
+            <select id="serviceTemplate" name="service-template">
+                <option value="">-- Válassz sablont (nem kötelező) --</option>
+                <option value="men_haircut">Férfi hajvágás 30perc</option>
+                <option value="women_haircut">Női hajvágás 45perc</option>
+                <option value="hair_coloring">Hajfestés 90perc</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label for="service">Szolgáltatás neve:</label>
+            <input type="text" id="service" name="service-name" placeholder="Pl. Hajvágás, Konzultáció...">
+        </div>
+
+        <div class="row">
+            <label for="start">Kezdete:</label>
+            <input type="time" id="start" name="start-time">
+        </div>
+        <div class="row">
+            <label for="end">Vége:</label>
+            <input type="time" id="end" name="end-time">
+        </div>
+        <div class="row">
+            <label for="comment">Megjegyzés:</label>
+            <textarea id="comment" name="comment"></textarea>
+        </div>
+        <menu>
+            <button id="cancel" type="reset">Mégsem</button>
+            <button id="confirm" type="submit">Rögzít</button>
+        </menu>
+    </form>
+</dialog>
+
+<!-- EventCalendar JS (standalone bundle) -->
+<script src="https://cdn.jsdelivr.net/npm/@event-calendar/build@4.7.1/dist/event-calendar.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('ec');
+
+        // MODAL elemek
+        const dialog = document.getElementById('dialog');
+        const form = document.getElementById('form');
+        const roomNameEl = document.getElementById('room-name');
+        const dateEl = document.getElementById('date');
+        const startInput = document.getElementById('start');
+        const endInput = document.getElementById('end');
+        const commentInput = document.getElementById('comment');
+        const cancelBtn = document.getElementById('cancel');
+        const resourceSelect = document.getElementById('resourceSelect');
+        const serviceInput = document.getElementById('service');
+        const serviceTemplateSelect = document.getElementById('serviceTemplate');
+
+        /**
+         * Szolgáltatás időtartam sablonok definíciója.
+         * key: belső azonosító
+         * minutes: időtartam percekben
+         * color: esemény háttérszín
+         * textColor: esemény szövegszín
+         */
+        const SERVICE_TEMPLATES = {
+            men_haircut: {
+                label: 'Férfi hajvágás 30perc',
+                minutes: 30,
+                name: 'Férfi hajvágás',
+                color: '#bfdbfe',
+                textColor: '#1e3a8a'
+            },
+            women_haircut: {
+                label: 'Női hajvágás 45perc',
+                minutes: 45,
+                name: 'Női hajvágás',
+                color: '#fbcfe8',
+                textColor: '#9d174d'
+            },
+            hair_coloring: {
+                label: 'Hajfestés 90perc',
+                minutes: 90,
+                name: 'Hajfestés',
+                color: '#fed7aa',
+                textColor: '#92400e'
+            }
+        };
+
+        /** Szolgáltatás szűrő "összes" értéke */
+        const SERVICE_FILTER_ALL_VALUE = 'ALL_SERVICES';
+
+        /** Start–end automata szinkron lock flag */
+        let timeSyncLock = false;
+
+        /** Resource lista (minden nézethez ugyanaz) */
+        const baseSimpleResources = [
+            {id: 1, title: 'Resource A'},
+            {id: 2, title: 'Resource B'},
+            {id: 3, title: 'Resource C'},
+            {id: 4, title: 'Resource D'},
+            {id: 5, title: 'Resource E'}
+        ];
+        const baseTimelineResources = [...baseSimpleResources];
+
+        const ALL_RESOURCE_IDS = [1, 2, 3, 4, 5];
+
+        const flatResourcesForSelect = [
+            {id: 1, text: 'Resource A'},
+            {id: 2, text: 'Resource B'},
+            {id: 3, text: 'Resource C'},
+            {id: 4, text: 'Resource D'},
+            {id: 5, text: 'Resource E'}
+        ];
+
+        /**
+         * Kiinduló esemény lista, a SERVICE_TEMPLATES-hez igazítva.
+         */
+        const baseEvents = [
+            {
+                id: 'ev-men-1',
+                title: SERVICE_TEMPLATES.men_haircut.name,
+                start: '2025-03-24 09:00:00',
+                end: '2025-03-24 09:30:00',
+                resourceId: 1,
+                resourceIds: [1],
+                backgroundColor: SERVICE_TEMPLATES.men_haircut.color,
+                textColor: SERVICE_TEMPLATES.men_haircut.textColor,
+                extendedProps: {
+                    type: 'booking',
+                    location: 'Szalon 1',
+                    serviceName: SERVICE_TEMPLATES.men_haircut.name,
+                    serviceKey: 'men_haircut',
+                    comment: 'Új vendég'
+                }
+            },
+            {
+                id: 'ev-women-1',
+                title: SERVICE_TEMPLATES.women_haircut.name,
+                start: '2025-03-24 10:00:00',
+                end: '2025-03-24 10:45:00',
+                resourceId: 2,
+                resourceIds: [2],
+                backgroundColor: SERVICE_TEMPLATES.women_haircut.color,
+                textColor: SERVICE_TEMPLATES.women_haircut.textColor,
+                extendedProps: {
+                    type: 'booking',
+                    location: 'Szalon 1',
+                    serviceName: SERVICE_TEMPLATES.women_haircut.name,
+                    serviceKey: 'women_haircut',
+                    comment: 'Törzsvendég'
+                }
+            },
+            {
+                id: 'ev-color-1',
+                title: SERVICE_TEMPLATES.hair_coloring.name,
+                start: '2025-03-24 11:00:00',
+                end: '2025-03-24 12:30:00',
+                resourceId: 3,
+                resourceIds: [3],
+                backgroundColor: SERVICE_TEMPLATES.hair_coloring.color,
+                textColor: SERVICE_TEMPLATES.hair_coloring.textColor,
+                extendedProps: {
+                    type: 'booking',
+                    location: 'Szalon 2',
+                    serviceName: SERVICE_TEMPLATES.hair_coloring.name,
+                    serviceKey: 'hair_coloring',
+                    comment: 'Teljes festés'
+                }
+            },
+            {
+                id: 'ev-men-2',
+                title: SERVICE_TEMPLATES.men_haircut.name,
+                start: '2025-03-25 14:00:00',
+                end: '2025-03-25 14:30:00',
+                resourceId: 4,
+                resourceIds: [4],
+                backgroundColor: SERVICE_TEMPLATES.men_haircut.color,
+                textColor: SERVICE_TEMPLATES.men_haircut.textColor,
+                extendedProps: {
+                    type: 'booking',
+                    location: 'Szalon 3',
+                    serviceName: SERVICE_TEMPLATES.men_haircut.name,
+                    serviceKey: 'men_haircut',
+                    comment: 'Gyors vágás'
+                }
+            },
+            {
+                id: 'work-hours',
+                title: 'Munkaidő',
+                start: '2025-03-24 08:00:00',
+                end: '2025-03-24 18:00:00',
+                resourceId: 1,
+                resourceIds: [1],
+                display: 'background',
+                backgroundColor: '#eff6ff'
+            }
+        ];
+
+        /** Az összes esemény master store-ja */
+        let allEventsStore = baseEvents.map(ev => ({...ev}));
+
+        /** Aktív resource szűrő halmaz */
+        let currentSelectedResourceIds = new Set(ALL_RESOURCE_IDS);
+
+        /**
+         * Aktív szolgáltatás szűrő:
+         *  - null: nincs szűrés
+         *  - Set<string>: kiválasztott serviceKey-k
+         */
+        let currentSelectedServiceKeys = null;
+
+        /** Kijelölésből indított foglalás */
+        let selectionBasedBookingActive = false;
+
+        /** Aktuális foglalási kontextus (modálhoz) */
+        let currentBookingContext = null;
+
+        const initialDate = new Date('2025-03-24T00:00:00');
+
+        /**
+         * Helper: EventCalendar event objektumból resourceId kinyerése.
+         * @param {any} ecEvent
+         * @returns {number|undefined}
+         */
+        function getEventResourceIdFromECEvent(ecEvent) {
+            if (!ecEvent) return undefined;
+            if (ecEvent.resource && ecEvent.resource.id != null) {
+                return parseInt(ecEvent.resource.id, 10);
+            }
+            if (ecEvent.resourceIds && ecEvent.resourceIds.length) {
+                return parseInt(ecEvent.resourceIds[0], 10);
+            }
+            if (ecEvent._def && ecEvent._def.resourceIds && ecEvent._def.resourceIds.length) {
+                return parseInt(ecEvent._def.resourceIds[0], 10);
+            }
+            if (ecEvent.resourceId != null) {
+                return parseInt(ecEvent.resourceId, 10);
+            }
+            return undefined;
+        }
+
+        const ec = EventCalendar.create(calendarEl, {
+            view: 'resourceTimeGridDay',
+            date: initialDate,
+            locale: 'hu',
+            height: 'auto',
+            firstDay: 1,
+            nowIndicator: true,
+            pointer: true,
+            allDaySlot: true,
+            slotMinTime: '06:00:00',
+            slotMaxTime: '22:00:00',
+            slotDuration: '00:30:00',
+            scrollTime: '08:00:00',
+            validRange: {
+                start: '2025-01-01',
+                end: '2025-12-31'
+            },
+            highlightedDates: [
+                '2025-03-15',
+                initialDate
+            ],
+
+            editable: true,
+            eventStartEditable: true,
+            eventDurationEditable: true,
+            eventResourceEditable: true,
+
+            selectable: true,
+            selectMirror: true,
+            selectBackgroundColor: '#bfdbfe',
+
+            /**
+             * Custom header gomb: Új foglalás
+             */
+            customButtons: {
+                newBooking: {
+                    text: 'Új foglalás',
+                    click: function () {
+                        const baseDate = ec.getOption('date') || new Date();
+                        const resourceId = getFirstSelectedResourceId();
+                        const roomTitle = getResourceTitleById(resourceId) || ('Resource #' + resourceId);
+
+                        openBookingDialog({
+                            mode: 'manual',
+                            baseDate,
+                            resourceId,
+                            roomTitle,
+                            startTime: '09:00',
+                            endTime: '10:00'
+                        });
+                    }
+                }
+            },
+
+            headerToolbar: {
+                start: 'prev,next today',
+                center: 'title',
+                end: 'dayGridMonth,timeGridWeek,timeGridDay,listDay resourceTimeGridDay,resourceTimeGridWeek,resourceTimelineWeek newBooking'
+            },
+
+            buttonText: function (defaults) {
+                return {
+                    ...defaults,
+                    today: 'Ma',
+                    dayGridMonth: 'Hónap',
+                    timeGridWeek: 'Hét',
+                    timeGridDay: 'Nap',
+                    listDay: 'Lista'
+                };
+            },
+
+            resources: baseSimpleResources,
+
+            views: {
+                timeGridWeek: {pointer: true},
+                resourceTimeGridDay: {pointer: true},
+                resourceTimeGridWeek: {pointer: true},
+                resourceTimelineWeek: {
+                    slotDuration: '00:15',
+                    slotLabelInterval: '01:00',
+                    slotMinTime: '09:00',
+                    slotMaxTime: '21:00',
+                    slotWidth: 16,
+                    resources: baseTimelineResources
+                }
+            },
+
+            events: baseEvents,
+
+            /**
+             * Esemény megjelenítés testreszabása (DOM node-okkal).
+             */
+            eventContent: function (info) {
+                const event = info.event;
+                const timeText = info.timeText;
+
+                const title = document.createElement('div');
+                title.className = 'ec-event-title-custom';
+                title.innerHTML = (timeText ? `<strong>${timeText}</strong> – ` : '') +
+                    event.title;
+
+                const nodes = [title];
+
+                if (event.extendedProps && event.extendedProps.location) {
+                    const loc = document.createElement('div');
+                    loc.className = 'ec-event-location';
+                    loc.textContent = event.extendedProps.location;
+                    nodes.push(loc);
+                }
+
+                if (event.extendedProps && event.extendedProps.comment) {
+                    const comment = document.createElement('div');
+                    comment.className = 'ec-event-comment';
+                    comment.textContent = event.extendedProps.comment;
+                    nodes.push(comment);
+                }
+
+                return { domNodes: nodes };
+            },
+
+            /**
+             * Esemény kattintás – egyszerű átnevezés / törlés prompttal.
+             */
+            eventClick: function (info) {
+                const event = info.event;
+                const ext = event.extendedProps || {};
+                const details = [
+                    `Cím: ${event.title}`,
+                    `Kezdés: ${event.start.toLocaleString()}`,
+                    event.end ? `Vége: ${event.end.toLocaleString()}` : '',
+                    ext.location ? `Helyszín: ${ext.location}` : '',
+                    ext.type ? `Típus: ${ext.type}` : '',
+                    ext.comment ? `Megjegyzés: ${ext.comment}` : '',
+                    ext.serviceName ? `Szolgáltatás: ${ext.serviceName}` : ''
+                ].filter(Boolean).join('\n');
+
+                const action = window.prompt(
+                    details + '\n\nÍrj új címet a módosításhoz, "del" a törléshez, vagy hagyd üresen a semmihez:',
+                    event.title
+                );
+
+                if (action === null) return;
+
+                if (action.toLowerCase() === 'del') {
+                    ec.removeEventById(event.id);
+                    allEventsStore = allEventsStore.filter(e => e.id !== event.id);
+                    applyCombinedFilters();
+                } else if (action.trim() !== '' && action !== event.title) {
+                    ec.updateEvent({ id: event.id, title: action });
+                    const storeItem = allEventsStore.find(e => e.id === event.id);
+                    if (storeItem) storeItem.title = action;
+                    applyCombinedFilters();
+                }
+            },
+
+            /**
+             * Idősáv kijelölése – modál nyitása előkitöltött időponttal.
+             */
+            select: function (info) {
+                selectionBasedBookingActive = true;
+
+                const baseDate = info.start;
+                let resourceId = getFirstSelectedResourceId();
+                if (info.resource && info.resource.id != null) {
+                    resourceId = Number(info.resource.id);
+                }
+
+                const roomTitle = getResourceTitleById(resourceId) || ('Resource #' + resourceId);
+
+                openBookingDialog({
+                    mode: 'select',
+                    baseDate,
+                    resourceId,
+                    roomTitle,
+                    startDate: info.start,
+                    endDate: info.end
+                });
+            },
+
+            /**
+             * Resource közötti drag & drop kezelése.
+             * Itt NEM rajzoljuk újra az egész event-listát, csak akkor,
+             * ha az új resource ki van szűrve – különben az első drop is azonnal látszik.
+             */
+            eventDrop: function (info) {
+                const newResourceId = getEventResourceIdFromECEvent(info.event);
+
+                if (newResourceId != null) {
+                    info.event.resourceId = newResourceId;
+                    info.event.resourceIds = [newResourceId];
+                }
+
+                syncEventToStore(info.event);
+
+                if (newResourceId != null && !currentSelectedResourceIds.has(newResourceId)) {
+                    applyCombinedFilters();
+                }
+            },
+
+            /**
+             * Időtartam módosítás (resize) – store szinkron + szűrők alkalmazása.
+             */
+            eventResize: function (info) {
+                syncEventToStore(info.event);
+                applyCombinedFilters();
+            },
+
+            eventMouseEnter: function (info) {
+                info.el.style.boxShadow = '0 0 0 2px rgba(37,99,235,0.5)';
+            },
+
+            eventMouseLeave: function (info) {
+                info.el.style.boxShadow = '';
+            }
+        });
+
+        /**
+         * Esemény szinkronizálása az allEventsStore-ba.
+         * @param {any} eventObj - EventCalendar Event példány.
+         */
+        function syncEventToStore(eventObj) {
+            const storeItem = allEventsStore.find(e => e.id === eventObj.id);
+            if (!storeItem) return;
+
+            storeItem.title = eventObj.title;
+            storeItem.start = eventObj.start;
+            storeItem.end = eventObj.end;
+
+            if (eventObj.extendedProps) {
+                storeItem.extendedProps = storeItem.extendedProps || {};
+                if (eventObj.extendedProps.comment != null) {
+                    storeItem.extendedProps.comment = eventObj.extendedProps.comment;
+                }
+                if (eventObj.extendedProps.serviceName != null) {
+                    storeItem.extendedProps.serviceName = eventObj.extendedProps.serviceName;
+                }
+                if (eventObj.extendedProps.serviceKey != null) {
+                    storeItem.extendedProps.serviceKey = eventObj.extendedProps.serviceKey;
+                }
+            }
+
+            const rId = getEventResourceIdFromECEvent(eventObj);
+            if (rId != null) {
+                storeItem.resourceId = rId;
+                storeItem.resourceIds = [rId];
+            }
+
+            if (eventObj.backgroundColor) {
+                storeItem.backgroundColor = eventObj.backgroundColor;
+            }
+            if (eventObj.textColor) {
+                storeItem.textColor = eventObj.textColor;
+            }
+        }
+
+        /**
+         * Resource fa (timeline) szűrése a kiválasztott ID-k alapján.
+         */
+        function filterResourceTree(resourcesTree, selectedIds) {
+            return resourcesTree
+                .map(res => {
+                    const children = res.children ? filterResourceTree(res.children, selectedIds) : [];
+                    const selfIncluded = selectedIds.has(res.id);
+                    if (!selfIncluded && children.length === 0) {
+                        return null;
+                    }
+                    return {
+                        ...res,
+                        children: children.length ? children : undefined
+                    };
+                })
+                .filter(Boolean);
+        }
+
+        /**
+         * Resource szűrő alkalmazása + timeline resource frissítés + esemény szűrés.
+         */
+        function applyResourceFilter(selectedIds) {
+            currentSelectedResourceIds = new Set(selectedIds);
+
+            const filteredSimpleResources = baseSimpleResources.filter(r => selectedIds.has(r.id));
+            ec.setOption('resources', filteredSimpleResources);
+
+            const currentViews = ec.getOption('views') || {};
+            const filteredTimelineResources = filterResourceTree(baseTimelineResources, selectedIds);
+            ec.setOption('views', {
+                ...currentViews,
+                resourceTimelineWeek: {
+                    ...(currentViews.resourceTimelineWeek || {}),
+                    slotDuration: '00:15',
+                    slotLabelInterval: '01:00',
+                    slotMinTime: '09:00',
+                    slotMaxTime: '21:00',
+                    slotWidth: 16,
+                    resources: filteredTimelineResources
+                }
+            });
+
+            applyCombinedFilters();
+        }
+
+        /**
+         * Resource + szolgáltatás szűrők alkalmazása az eseményekre,
+         * majd resourceId/resourceIds normalizálás a naptár számára.
+         */
+        function applyCombinedFilters() {
+            const resIds = currentSelectedResourceIds;
+            const serviceKeys = currentSelectedServiceKeys;
+
+            const filteredEvents = allEventsStore.filter(ev => {
+                if (ev.resourceId != null && !resIds.has(ev.resourceId)) {
+                    return false;
+                }
+
+                if (!serviceKeys || serviceKeys.size === 0) {
+                    return true;
+                }
+
+                const ext = ev.extendedProps || {};
+                const key = ext.serviceKey || null;
+
+                if (!key) {
+                    return true;
+                }
+                return serviceKeys.has(key);
+            });
+
+            const normalizedEvents = filteredEvents.map(ev => {
+                const rId = ev.resourceId != null
+                    ? ev.resourceId
+                    : (Array.isArray(ev.resourceIds) && ev.resourceIds.length ? ev.resourceIds[0] : undefined);
+
+                return {
+                    ...ev,
+                    resourceId: rId,
+                    resourceIds: rId != null ? [rId] : undefined
+                };
+            });
+
+            ec.setOption('events', normalizedEvents);
+        }
+
+        /** Első kiválasztott resource ID (vagy az első összes közül) */
+        function getFirstSelectedResourceId() {
+            const arr = Array.from(currentSelectedResourceIds);
+            return arr.length ? arr[0] : ALL_RESOURCE_IDS[0];
+        }
+
+        /** Resource cím lekérdezése ID alapján. */
+        function getResourceTitleById(id) {
+            const foundSimple = baseSimpleResources.find(r => r.id === id);
+            if (foundSimple) return foundSimple.title;
+
+            function searchTree(tree) {
+                for (const r of tree) {
+                    if (r.id === id) return r.title;
+                    if (r.children) {
+                        const res = searchTree(r.children);
+                        if (res) return res;
+                    }
+                }
+                return undefined;
+            }
+            return searchTree(baseTimelineResources);
+        }
+
+        function formatDateYMD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatTimeHM(date) {
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function parseTimeToDate(baseDate, timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            const d = new Date(baseDate.getTime());
+            d.setHours(h, m || 0, 0, 0);
+            return d;
+        }
+
+        function calcEndTimeFromDuration(startTimeStr, minutes) {
+            const [h, m] = startTimeStr.split(':').map(Number);
+            if (Number.isNaN(h) || Number.isNaN(m)) {
+                return startTimeStr;
+            }
+            const base = new Date();
+            base.setHours(h, m, 0, 0);
+            base.setMinutes(base.getMinutes() + minutes);
+            return formatTimeHM(base);
+        }
+
+        function calcStartTimeFromDuration(endTimeStr, minutes) {
+            const [h, m] = endTimeStr.split(':').map(Number);
+            if (Number.isNaN(h) || Number.isNaN(m)) {
+                return endTimeStr;
+            }
+            const base = new Date();
+            base.setHours(h, m, 0, 0);
+            base.setMinutes(base.getMinutes() - minutes);
+            return formatTimeHM(base);
+        }
+
+        /**
+         * Modál resource dropdown feltöltése a flatResourcesForSelect alapján.
+         */
+        function initDialogResourceOptions() {
+            resourceSelect.innerHTML = '';
+            flatResourcesForSelect.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = String(r.id);
+                opt.textContent = r.text;
+                resourceSelect.appendChild(opt);
+            });
+        }
+
+        /**
+         * Modál címkék frissítése a resourceSelect alapján.
+         */
+        function updateRoomNameFromSelect() {
+            const id = parseInt(resourceSelect.value, 10);
+            if (!Number.isNaN(id)) {
+                const title = getResourceTitleById(id) || ('Resource #' + id);
+                roomNameEl.textContent = 'Erőforrás: ' + title;
+            }
+        }
+
+        /**
+         * Modál megnyitása foglalás rögzítéséhez.
+         * @param {Object} opts
+         * @param {'select'|'manual'} opts.mode
+         * @param {Date} opts.baseDate
+         * @param {number} opts.resourceId
+         * @param {string} opts.roomTitle
+         * @param {Date} [opts.startDate]
+         * @param {Date} [opts.endDate]
+         * @param {string} [opts.startTime]
+         * @param {string} [opts.endTime]
+         */
+        function openBookingDialog(opts) {
+            currentBookingContext = {
+                mode: opts.mode,
+                baseDate: new Date(opts.baseDate.getTime()),
+                resourceId: opts.resourceId,
+                roomTitle: opts.roomTitle
+            };
+
+            dateEl.textContent = 'Dátum: ' + formatDateYMD(opts.baseDate);
+
+            if (opts.startDate && opts.endDate) {
+                startInput.value = formatTimeHM(opts.startDate);
+                endInput.value = formatTimeHM(opts.endDate);
+            } else {
+                startInput.value = opts.startTime || '09:00';
+                endInput.value = opts.endTime || '10:00';
+            }
+
+            serviceInput.value = '';
+            commentInput.value = '';
+            serviceTemplateSelect.value = '';
+
+            resourceSelect.value = String(opts.resourceId);
+            updateRoomNameFromSelect();
+
+            if (typeof dialog.showModal === 'function') {
+                dialog.showModal();
+            } else {
+                dialog.setAttribute('open', 'open');
+            }
+        }
+
+        /**
+         * Modál bezárása.
+         * @param {boolean} cancelSelection - ha true, a naptári kijelölést is törli.
+         */
+        function closeBookingDialog(cancelSelection = false) {
+            if (dialog.open) {
+                dialog.close();
+            } else {
+                dialog.removeAttribute('open');
+            }
+            if (cancelSelection && selectionBasedBookingActive) {
+                ec.unselect();
+                selectionBasedBookingActive = false;
+            }
+        }
+
+        cancelBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeBookingDialog(true);
+        });
+
+        resourceSelect.addEventListener('change', function () {
+            updateRoomNameFromSelect();
+        });
+
+        /**
+         * Szolgáltatás sablon választáskor:
+         *  - beírja a szolgáltatás nevét,
+         *  - a végidőt igazítja a sablon időtartamához.
+         */
+        serviceTemplateSelect.addEventListener('change', function () {
+            const key = serviceTemplateSelect.value;
+            if (!key || !SERVICE_TEMPLATES[key]) {
+                return;
+            }
+            const tpl = SERVICE_TEMPLATES[key];
+
+            serviceInput.value = tpl.name;
+
+            if (!startInput.value) {
+                startInput.value = '09:00';
+            }
+
+            const newEnd = calcEndTimeFromDuration(startInput.value, tpl.minutes);
+            endInput.value = newEnd;
+        });
+
+        /**
+         * Kezdő idő változásakor (ha van sablon),
+         * a végidőt a sablon időtartamához igazítjuk.
+         */
+        startInput.addEventListener('change', function () {
+            const key = serviceTemplateSelect.value;
+            if (!key || !SERVICE_TEMPLATES[key]) {
+                return;
+            }
+            if (!startInput.value) {
+                return;
+            }
+            if (timeSyncLock) return;
+
+            const tpl = SERVICE_TEMPLATES[key];
+            timeSyncLock = true;
+            endInput.value = calcEndTimeFromDuration(startInput.value, tpl.minutes);
+            timeSyncLock = false;
+        });
+
+        /**
+         * Vég idő változásakor (ha van sablon),
+         * a kezdőt a sablon időtartamához igazítjuk.
+         */
+        endInput.addEventListener('change', function () {
+            const key = serviceTemplateSelect.value;
+            if (!key || !SERVICE_TEMPLATES[key]) {
+                return;
+            }
+            if (!endInput.value) {
+                return;
+            }
+            if (timeSyncLock) return;
+
+            const tpl = SERVICE_TEMPLATES[key];
+            timeSyncLock = true;
+            startInput.value = calcStartTimeFromDuration(endInput.value, tpl.minutes);
+            timeSyncLock = false;
+        });
+
+        /**
+         * Modál submit: új esemény létrehozása a naptárban + store-ban.
+         */
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!currentBookingContext) {
+                closeBookingDialog(true);
+                return;
+            }
+
+            const startVal = startInput.value;
+            const endVal = endInput.value;
+
+            if (!startVal || !endVal) {
+                alert('A kezdő és vég időpont megadása kötelező.');
+                return;
+            }
+
+            const startDate = parseTimeToDate(currentBookingContext.baseDate, startVal);
+            const endDate = parseTimeToDate(currentBookingContext.baseDate, endVal);
+
+            if (endDate <= startDate) {
+                alert('A vég időpontnak későbbinek kell lennie, mint a kezdő időpont.');
+                return;
+            }
+
+            const comment = commentInput.value.trim();
+            const serviceName = serviceInput.value.trim();
+
+            const resIdStr = resourceSelect.value;
+            const resourceId = resIdStr ? parseInt(resIdStr, 10) : currentBookingContext.resourceId;
+
+            const title = serviceName || 'Foglalás';
+
+            const templateKey = serviceTemplateSelect.value;
+            let serviceColor;
+            let serviceTextColor;
+            if (templateKey && SERVICE_TEMPLATES[templateKey]) {
+                serviceColor = SERVICE_TEMPLATES[templateKey].color;
+                serviceTextColor = SERVICE_TEMPLATES[templateKey].textColor;
+            }
+
+            const newEventDef = {
+                title: title,
+                start: startDate,
+                end: endDate,
+                resourceId: resourceId,
+                resourceIds: [resourceId],
+                backgroundColor: serviceColor || undefined,
+                textColor: serviceTextColor || undefined,
+                extendedProps: {
+                    type: 'booking',
+                    comment: comment || undefined,
+                    serviceName: serviceName || undefined,
+                    serviceKey: templateKey || undefined
+                }
+            };
+
+            const ev = ec.addEvent(newEventDef);
+
+            if (ev) {
+                allEventsStore.push({
+                    ...newEventDef,
+                    id: ev.id
+                });
+                applyCombinedFilters();
+            }
+
+            closeBookingDialog(true);
+        });
+
+        /**
+         * Resource szűrő (Select2) inicializálása.
+         */
+        (function initResourceFilter() {
+            const $filter = $('#resourceFilter');
+            const ALL_VALUE = 'ALL';
+
+            $filter.append($('<option>', {value: ALL_VALUE, text: 'Mind (összes)', selected: true}));
+
+            flatResourcesForSelect.forEach(r => {
+                $filter.append($('<option>', {value: String(r.id), text: r.text}));
+            });
+
+            $filter.select2({
+                placeholder: 'Válassz erőforrásokat…',
+                closeOnSelect: false,
+                width: 'resolve'
+            });
+
+            $filter.on('change', function () {
+                const values = $(this).val();
+                if (!values || values.length === 0 || values.includes(ALL_VALUE)) {
+                    applyResourceFilter(new Set(ALL_RESOURCE_IDS));
+                    return;
+                }
+                const selectedIds = new Set(
+                    values.map(v => parseInt(v, 10)).filter(n => !Number.isNaN(n))
+                );
+                applyResourceFilter(selectedIds);
+            });
+
+            applyResourceFilter(new Set(ALL_RESOURCE_IDS));
+        })();
+
+        /**
+         * Szolgáltatás szűrő (Select2) inicializálása.
+         */
+        (function initServiceFilter() {
+            const $serviceFilter = $('#serviceFilter');
+
+            $serviceFilter.append($('<option>', {
+                value: SERVICE_FILTER_ALL_VALUE,
+                text: 'Összes szolgáltatás',
+                selected: true
+            }));
+
+            Object.entries(SERVICE_TEMPLATES).forEach(([key, tpl]) => {
+                $serviceFilter.append($('<option>', {
+                    value: key,
+                    text: tpl.name
+                }));
+            });
+
+            $serviceFilter.select2({
+                placeholder: 'Válassz szolgáltatásokat…',
+                closeOnSelect: false,
+                width: 'resolve'
+            });
+
+            $serviceFilter.on('change', function () {
+                const values = $(this).val();
+                if (!values || values.length === 0 || values.includes(SERVICE_FILTER_ALL_VALUE)) {
+                    currentSelectedServiceKeys = null;
+                } else {
+                    currentSelectedServiceKeys = new Set(
+                        values.filter(v => v !== SERVICE_FILTER_ALL_VALUE)
+                    );
+                }
+                applyCombinedFilters();
+            });
+
+            currentSelectedServiceKeys = null;
+        })();
+
+        initDialogResourceOptions();
+
+        /**
+         * Ugrás a mai napra (külső gomb).
+         */
+        document.getElementById('btn-today').addEventListener('click', function () {
+            ec.setOption('date', new Date());
+        });
+
+        /**
+         * Dark / Light mód váltása a body class-szal.
+         */
+        document.getElementById('btn-toggle-theme').addEventListener('click', function () {
+            if (document.body.classList.contains('ec-auto-dark')) {
+                document.body.classList.remove('ec-auto-dark');
+                document.body.classList.add('ec-dark');
+            } else if (document.body.classList.contains('ec-dark')) {
+                document.body.classList.remove('ec-dark');
+                document.body.classList.add('ec-auto-dark');
+            } else {
+                document.body.classList.add('ec-dark');
+            }
+        });
+    });
+</script>
+</body>
+</html>
