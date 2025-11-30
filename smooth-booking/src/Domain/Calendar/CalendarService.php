@@ -19,6 +19,7 @@ use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
+use SmoothBooking\Support\CalendarEventFormatterTrait;
 use WP_Error;
 
 use function absint;
@@ -34,6 +35,8 @@ use function wp_timezone;
  * Provides structured calendar data for the admin interface.
  */
 class CalendarService {
+    use CalendarEventFormatterTrait;
+
     private AppointmentService $appointments;
 
     private EmployeeService $employees;
@@ -60,6 +63,38 @@ class CalendarService {
         $this->locations      = $locations;
         $this->settings       = $settings;
         $this->logger         = $logger;
+    }
+
+    /**
+     * Build EventCalendar resources payload for provided employees.
+     *
+     * @param Employee[] $employees Employees assigned to the day.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function build_resources_payload( array $employees ): array {
+        $resources = [];
+
+        foreach ( $employees as $employee ) {
+            if ( ! $employee instanceof Employee ) {
+                continue;
+            }
+
+            $services = array_map(
+                static function ( array $service ): int {
+                    return isset( $service['service_id'] ) ? absint( $service['service_id'] ) : 0;
+                },
+                $employee->get_services()
+            );
+
+            $resources[] = [
+                'id'         => $employee->get_id(),
+                'title'      => $employee->get_name(),
+                'serviceIds' => array_values( array_filter( $services ) ),
+            ];
+        }
+
+        return $resources;
     }
 
     /**
@@ -185,6 +220,53 @@ class CalendarService {
             'close'        => $close_datetime,
             'date'         => $date,
         ];
+    }
+
+    /**
+     * Determine the view window with padding before open and after close.
+     *
+     * @param DateTimeImmutable $open_time Opening time for the location.
+     * @param DateTimeImmutable $close_time Closing time for the location.
+     *
+     * @return array<string,string>
+     */
+    public function build_view_window( DateTimeImmutable $open_time, DateTimeImmutable $close_time ): array {
+        $day_start = $open_time->setTime( 0, 0 );
+        $day_end   = $open_time->setTime( 23, 59, 59 );
+
+        $slot_min = $open_time->sub( new DateInterval( 'PT2H' ) );
+        if ( $slot_min < $day_start ) {
+            $slot_min = $day_start;
+        }
+
+        $slot_max = $close_time->add( new DateInterval( 'PT2H' ) );
+        if ( $slot_max > $day_end ) {
+            $slot_max = $day_end;
+        }
+
+        if ( $slot_max < $slot_min ) {
+            $slot_max = $slot_min->add( new DateInterval( 'PT16H' ) );
+            if ( $slot_max > $day_end ) {
+                $slot_max = $day_end;
+            }
+        }
+
+        return [
+            'slotMinTime' => $slot_min->format( 'H:i:s' ),
+            'slotMaxTime' => $slot_max->format( 'H:i:s' ),
+            'scrollTime'  => $open_time->format( 'H:i:s' ),
+        ];
+    }
+
+    /**
+     * Convert the slot length to a HH:MM:SS format string.
+     */
+    public function format_slot_duration( int $slot_length ): string {
+        $minutes = max( 1, $slot_length );
+        $hours   = intdiv( $minutes, 60 );
+        $mins    = $minutes % 60;
+
+        return str_pad( (string) $hours, 2, '0', STR_PAD_LEFT ) . ':' . str_pad( (string) $mins, 2, '0', STR_PAD_LEFT ) . ':00';
     }
 
     /**
