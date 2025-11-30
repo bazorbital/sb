@@ -34,6 +34,7 @@ use SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar;
 use SmoothBooking\Infrastructure\Database\SchemaManager;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Infrastructure\Settings\GeneralSettings;
+use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
@@ -334,6 +335,10 @@ class Plugin {
         /** @var AppointmentsController $appointments */
         $appointments = $this->container->get( AppointmentsController::class );
         $appointments->register_routes();
+
+        /** @var CalendarController $calendar */
+        $calendar = $this->container->get( CalendarController::class );
+        $calendar->register_routes();
     }
 
     /**

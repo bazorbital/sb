@@ -11,12 +11,12 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use SmoothBooking\Domain\Appointments\Appointment;
 use SmoothBooking\Domain\Calendar\CalendarService;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Support\CalendarEventFormatterTrait;
 use function __;
 use function absint;
 use function admin_url;
@@ -25,20 +25,19 @@ use function esc_attr;
 use function esc_html;
 use function esc_html__;
 use function get_user_locale;
-use function implode;
 use function is_wp_error;
 use function plugins_url;
-use function sanitize_hex_color;
 use function sanitize_text_field;
 use function selected;
 use function sprintf;
-use function str_pad;
 use function strtolower;
+use function rest_url;
 use function wp_add_inline_script;
 use function wp_date;
 use function wp_die;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
+use function wp_create_nonce;
 use function wp_json_encode;
 use function wp_timezone;
 use function wp_unslash;
@@ -48,6 +47,7 @@ use function wp_unslash;
  */
 class CalendarPage {
     use AdminStylesTrait;
+    use CalendarEventFormatterTrait;
 
     /** Capability required to view the screen. */
     public const CAPABILITY = 'manage_options';
@@ -109,22 +109,23 @@ class CalendarPage {
         $has_day_events    = false;
         $range_start       = $selected_date->sub( new DateInterval( 'P7D' ) );
         $range_end         = $selected_date->add( new DateInterval( 'P7D' ) );
+        $view_window       = $this->calendar->build_view_window( $open_time, $close_time );
 
         if ( ! is_wp_error( $schedule_result ) ) {
-            $employees   = $this->unique_employees( $schedule_result['employees'] ?? [] );
-            $day_events  = $this->build_events( $schedule_result['appointments'] ?? [], $timezone );
-            $events      = $this->build_events(
+            $employees      = $this->unique_employees( $schedule_result['employees'] ?? [] );
+            $day_events     = $this->build_events( $schedule_result['appointments'] ?? [], $timezone );
+            $events         = $this->build_events(
                 $schedule_result['window_appointments'] ?? ( $schedule_result['appointments'] ?? [] ),
                 $timezone
             );
-            $open_time   = isset( $schedule_result['open'] ) && $schedule_result['open'] instanceof DateTimeImmutable
+            $open_time      = isset( $schedule_result['open'] ) && $schedule_result['open'] instanceof DateTimeImmutable
                 ? $schedule_result['open']->setTimezone( $timezone )
                 : $open_time;
-            $close_time  = isset( $schedule_result['close'] ) && $schedule_result['close'] instanceof DateTimeImmutable
+            $close_time     = isset( $schedule_result['close'] ) && $schedule_result['close'] instanceof DateTimeImmutable
                 ? $schedule_result['close']->setTimezone( $timezone )
                 : $close_time;
-            $slot_length = isset( $schedule_result['slot_length'] ) ? (int) $schedule_result['slot_length'] : $slot_length;
-            $is_closed   = ! empty( $schedule_result['is_closed'] );
+            $slot_length    = isset( $schedule_result['slot_length'] ) ? (int) $schedule_result['slot_length'] : $slot_length;
+            $is_closed      = ! empty( $schedule_result['is_closed'] );
             $has_day_events = ! empty( $day_events );
             if ( isset( $schedule_result['window_start'] ) && $schedule_result['window_start'] instanceof DateTimeImmutable ) {
                 $range_start = $schedule_result['window_start']->setTimezone( $timezone );
@@ -133,9 +134,24 @@ class CalendarPage {
             if ( isset( $schedule_result['window_end'] ) && $schedule_result['window_end'] instanceof DateTimeImmutable ) {
                 $range_end = $schedule_result['window_end']->setTimezone( $timezone );
             }
+
+            $view_window = $this->calendar->build_view_window( $open_time, $close_time );
         }
 
-        $resources = $this->build_resources( $employees );
+        $resources = $this->calendar->build_resources_payload( $employees );
+
+        $locations_payload = array_values(
+            array_filter(
+                array_map(
+                    static function ( $item ) {
+                        return $item instanceof Location
+                            ? [ 'id' => $item->get_id(), 'name' => $item->get_name() ]
+                            : null;
+                    },
+                    $locations
+                )
+            )
+        );
 
         $this->inject_calendar_payload(
             [
@@ -144,8 +160,10 @@ class CalendarPage {
                 'selectedDate'    => $selected_date->setTimezone( $timezone )->format( 'Y-m-d' ),
                 'openTime'        => $open_time->format( 'H:i:s' ),
                 'closeTime'       => $close_time instanceof DateTimeImmutable ? $close_time->format( 'H:i:s' ) : null,
-                'scrollTime'      => $this->determine_scroll_time( $open_time ),
-                'slotDuration'    => $this->format_slot_duration( $slot_length ),
+                'scrollTime'      => $view_window['scrollTime'] ?? $open_time->format( 'H:i:s' ),
+                'slotDuration'    => $this->calendar->format_slot_duration( $slot_length ),
+                'slotMinTime'     => $view_window['slotMinTime'] ?? '06:00:00',
+                'slotMaxTime'     => $view_window['slotMaxTime'] ?? '22:00:00',
                 'locale'          => $this->get_locale_code(),
                 'timezone'        => $timezone->getName(),
                 'hasEvents'       => ! empty( $events ),
@@ -155,6 +173,11 @@ class CalendarPage {
                 'isClosed'        => $is_closed,
                 'locationName'    => $location ? $location->get_name() : '',
                 'selectedDateIso' => $selected_date->setTimezone( $timezone )->format( DateTimeInterface::ATOM ),
+                'endpoint'        => rest_url( 'smooth-booking/v1/calendar/schedule' ),
+                'nonce'           => wp_create_nonce( 'wp_rest' ),
+                'locations'       => $locations_payload,
+                'locationId'      => $location_id,
+                'services'        => [],
             ]
         );
 
@@ -172,7 +195,7 @@ class CalendarPage {
                     <input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>" />
                     <label>
                         <span><?php echo esc_html__( 'Location', 'smooth-booking' ); ?></span>
-                        <select name="location_id">
+                        <select name="location_id" id="smooth-booking-calendar-location">
                             <?php foreach ( $locations as $location_item ) : ?>
                                 <?php if ( ! $location_item instanceof Location ) { continue; } ?>
                                 <option value="<?php echo esc_attr( (string) $location_item->get_id() ); ?>" <?php selected( $location_item->get_id(), $location_id ); ?>><?php echo esc_html( $location_item->get_name() ); ?></option>
@@ -181,7 +204,20 @@ class CalendarPage {
                     </label>
                     <label>
                         <span><?php echo esc_html__( 'Date', 'smooth-booking' ); ?></span>
-                        <input type="date" name="calendar_date" value="<?php echo esc_attr( $selected_date->setTimezone( $timezone )->format( 'Y-m-d' ) ); ?>" />
+                        <input type="date" name="calendar_date" id="smooth-booking-calendar-date" value="<?php echo esc_attr( $selected_date->setTimezone( $timezone )->format( 'Y-m-d' ) ); ?>" />
+                    </label>
+                    <label>
+                        <span><?php echo esc_html__( 'Employees', 'smooth-booking' ); ?></span>
+                        <select name="resource_filter[]" id="smooth-booking-resource-filter" multiple="multiple">
+                            <?php foreach ( $resources as $resource ) : ?>
+                                <?php if ( empty( $resource['id'] ) ) { continue; } ?>
+                                <option value="<?php echo esc_attr( (string) $resource['id'] ); ?>"><?php echo esc_html( $resource['title'] ?? '' ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>
+                        <span><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></span>
+                        <select id="smooth-booking-service-filter" multiple="multiple"></select>
                     </label>
                     <button type="submit" class="button button-primary"><?php echo esc_html__( 'Show day', 'smooth-booking' ); ?></button>
                 </form>
@@ -373,82 +409,6 @@ class CalendarPage {
     }
 
     /**
-     * Build EventCalendar resources array.
-     *
-     * @param Employee[] $employees Employees assigned to the day.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function build_resources( array $employees ): array {
-        $resources = [];
-
-        foreach ( $employees as $employee ) {
-            if ( ! $employee instanceof Employee ) {
-                continue;
-            }
-
-            $resources[] = [
-                'id'    => $employee->get_id(),
-                'title' => $employee->get_name(),
-            ];
-        }
-
-        return $resources;
-    }
-
-    /**
-     * Convert appointments into EventCalendar event payloads.
-     *
-     * @param Appointment[] $appointments Appointments scheduled for the day.
-     * @param DateTimeZone   $timezone    Display timezone.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function build_events( array $appointments, DateTimeZone $timezone ): array {
-        $events = [];
-
-        foreach ( $appointments as $appointment ) {
-            if ( ! $appointment instanceof Appointment ) {
-                continue;
-            }
-
-            $employee_id = $appointment->get_employee_id();
-
-            if ( null === $employee_id ) {
-                continue;
-            }
-
-            $start_time = $appointment->get_scheduled_start()->setTimezone( $timezone );
-            $end_time   = $appointment->get_scheduled_end()->setTimezone( $timezone );
-
-            $start = $start_time->format( 'Y-m-d H:i:s' );
-            $end   = $end_time->format( 'Y-m-d H:i:s' );
-
-            $events[] = [
-                'id'            => $appointment->get_id(),
-                'resourceId'    => $employee_id,
-                'title'         => $appointment->get_service_name() ?: __( 'Appointment', 'smooth-booking' ),
-                'start'         => $start,
-                'end'           => $end,
-                'color'         => $this->normalize_color( $appointment->get_service_background_color() ),
-                'textColor'     => $this->normalize_color( $appointment->get_service_text_color(), '#ffffff' ),
-                'extendedProps' => [
-                    'customer'   => $this->format_customer_name( $appointment ),
-                    'timeRange'  => sprintf( '%s – %s', $start_time->format( 'H:i' ), $end_time->format( 'H:i' ) ),
-                    'service'    => $appointment->get_service_name(),
-                    'employee'   => $appointment->get_employee_name(),
-                    'status'     => $appointment->get_status(),
-                    'customerEmail' => $appointment->get_customer_email(),
-                    'customerPhone' => $appointment->get_customer_phone(),
-                    'appointmentId' => $appointment->get_id(),
-                ],
-            ];
-        }
-
-        return $events;
-    }
-
-    /**
      * Inject payload for the JavaScript calendar bootstrapping.
      *
      * @param array<string,mixed> $payload Data passed to the front-end script.
@@ -489,41 +449,6 @@ class CalendarPage {
     }
 
     /**
-     * Normalise a colour value into a valid hex code.
-     */
-    private function normalize_color( ?string $color, string $fallback = '#1d4ed8' ): string {
-        if ( empty( $color ) ) {
-            return $fallback;
-        }
-
-        $sanitized = sanitize_hex_color( $color );
-
-        return $sanitized ?: $fallback;
-    }
-
-    /**
-     * Format the displayed customer name.
-     */
-    private function format_customer_name( Appointment $appointment ): string {
-        $parts = array_filter(
-            [
-                $appointment->get_customer_first_name(),
-                $appointment->get_customer_last_name(),
-            ]
-        );
-
-        if ( ! empty( $parts ) ) {
-            return implode( ' ', $parts );
-        }
-
-        if ( $appointment->get_customer_account_name() ) {
-            return $appointment->get_customer_account_name();
-        }
-
-        return '';
-    }
-
-    /**
      * Derive the locale code used by EventCalendar.
      */
     private function get_locale_code(): string {
@@ -532,21 +457,4 @@ class CalendarPage {
         return strtolower( str_replace( '_', '-', $locale ) );
     }
 
-    /**
-     * Convert the slot length to a HH:MM format string.
-     */
-    private function format_slot_duration( int $slot_length ): string {
-        $minutes = max( 1, $slot_length );
-        $hours   = intdiv( $minutes, 60 );
-        $mins    = $minutes % 60;
-
-        return str_pad( (string) $hours, 2, '0', STR_PAD_LEFT ) . ':' . str_pad( (string) $mins, 2, '0', STR_PAD_LEFT );
-    }
-
-    /**
-     * Determine the scroll time used by the timeline view.
-     */
-    private function determine_scroll_time( DateTimeImmutable $open_time ): string {
-        return $open_time->format( 'H:i:s' );
-    }
 }
