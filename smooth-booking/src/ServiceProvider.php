@@ -66,6 +66,7 @@ use SmoothBooking\Infrastructure\Repository\LocationRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceCategoryRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceRepository;
 use SmoothBooking\Infrastructure\Repository\ServiceTagRepository;
+use SmoothBooking\Rest\CalendarController;
 use SmoothBooking\Rest\AppointmentsController;
 use SmoothBooking\Rest\CustomersController;
 use SmoothBooking\Rest\EmployeesController;
@@ -351,6 +352,14 @@ class ServiceProvider {
                 $container->get( CalendarService::class ),
                 $container->get( LocationService::class ),
                 $container->get( Logger::class )
+            );
+        } );
+
+        $container->singleton( CalendarController::class, static function ( ServiceContainer $container ): CalendarController {
+            return new CalendarController(
+                $container->get( CalendarService::class ),
+                $container->get( ServiceService::class ),
+                $container->get( LocationService::class )
             );
         } );
 

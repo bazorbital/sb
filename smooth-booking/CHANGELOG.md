@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.0] - 2026-01-20
+### Added
+- New REST endpoint at `/wp-json/smooth-booking/v1/calendar/schedule` exposing per-location EventCalendar payloads with business-hour aware time windows, service colour metadata, and resource-scoped booking details.
+- AJAX-powered admin calendar toolbar with location, employee, and service filters that refetch bookings via EventCalendar `eventSources`/`refetchEvents`, defaulting to the current day and respecting per-location opening hours with two-hour padding.
+
+### Changed
+- Rebuilt `admin-calendar.js` from the `calforsb.html` reference to a reusable, JSDoc-documented module that renders service names plus customer contact details and honours service colour palettes from the database.
+
 # [0.17.1] - 2025-12-10
 ### Changed
 - Replaced the single service colour picker with separate background and text colour controls while keeping backward-compatible defaults for existing records.
