@@ -634,10 +634,11 @@
 
             setBookingError('');
 
+            bookingDialog.removeAttribute('hidden');
+
             if (typeof bookingDialog.showModal === 'function') {
                 bookingDialog.showModal();
             } else {
-                bookingDialog.removeAttribute('hidden');
                 bookingDialog.setAttribute('open', 'open');
             }
         }
