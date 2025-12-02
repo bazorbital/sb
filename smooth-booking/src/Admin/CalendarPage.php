@@ -268,6 +268,13 @@ class CalendarPage {
         );
 
         wp_enqueue_style(
+            'smooth-booking-select2',
+            'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
+            [],
+            '4.1.0-rc.0'
+        );
+
+        wp_enqueue_style(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/css/admin-calendar.css', SMOOTH_BOOKING_PLUGIN_FILE ),
             [ 'smooth-booking-event-calendar', 'smooth-booking-admin-shared' ],
@@ -283,9 +290,17 @@ class CalendarPage {
         );
 
         wp_enqueue_script(
+            'smooth-booking-select2',
+            'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
+            [ 'jquery' ],
+            '4.1.0-rc.0',
+            true
+        );
+
+        wp_enqueue_script(
             'smooth-booking-admin-calendar',
             plugins_url( 'assets/js/admin-calendar.js', SMOOTH_BOOKING_PLUGIN_FILE ),
-            [ 'smooth-booking-event-calendar' ],
+            [ 'jquery', 'smooth-booking-event-calendar', 'smooth-booking-select2' ],
             SMOOTH_BOOKING_VERSION,
             true
         );
@@ -299,6 +314,8 @@ class CalendarPage {
                 'timeRangeTemplate' => __( '%1$s – %2$s', 'smooth-booking' ),
                 'noEvents'          => __( 'No appointments scheduled for this day.', 'smooth-booking' ),
                 'loading'           => __( 'Loading calendar…', 'smooth-booking' ),
+                'resourcesView'     => __( 'Resources', 'smooth-booking' ),
+                'timelineView'      => __( 'Timeline', 'smooth-booking' ),
             ],
         ];
 
