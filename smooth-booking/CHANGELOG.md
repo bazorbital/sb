@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.1] - 2026-02-20
+### Added
+- Calendar toolbar now surfaces **Resources** and **Timeline** view buttons based on the `calforsb.html` reference, enabling on-demand switching between resource grid and timeline layouts without reloading the screen.
+- Calendar filters use CDN-loaded Select2 styling for employee and service dropdowns to mirror the sample implementation while keeping native multi-select behaviour when Select2 is unavailable.
+
+### Changed
+- EventCalendar view configuration now keeps timeline resources in sync with employee filters and slot boundaries exposed by the schedule payload.
+
 # [0.18.0] - 2026-01-20
 ### Added
 - New REST endpoint at `/wp-json/smooth-booking/v1/calendar/schedule` exposing per-location EventCalendar payloads with business-hour aware time windows, service colour metadata, and resource-scoped booking details.

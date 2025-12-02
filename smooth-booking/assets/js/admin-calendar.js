@@ -148,6 +148,28 @@
     }
 
     /**
+     * Enhance a native select with Select2 when available.
+     *
+     * @param {HTMLSelectElement|null} select Target select element.
+     * @returns {void}
+     */
+    function enhanceSelect(select) {
+        if (!select || !window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.select2 !== 'function') {
+            return;
+        }
+
+        var $select = window.jQuery(select);
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.select2('destroy');
+        }
+
+        $select.select2({
+            width: 'resolve',
+            dropdownAutoWidth: true,
+        });
+    }
+
+    /**
      * Apply service filter to the events collection.
      *
      * @param {Array} events Events payload.
@@ -227,6 +249,15 @@
             timezone: data.timezone || 'local',
         };
 
+        var viewOptions = {
+            resourceTimelineDay: {
+                slotMinTime: state.slotMinTime,
+                slotMaxTime: state.slotMaxTime,
+                slotDuration: state.slotDuration,
+                resources: ensureArray(state.resources),
+            },
+        };
+
         if (!state.locationId && locationSelect && locationSelect.value) {
             state.locationId = parseInt(locationSelect.value, 10) || null;
         }
@@ -241,6 +272,7 @@
                 text: resource.title || '',
             };
         }));
+        enhanceSelect(resourceFilter);
 
         /**
          * Filter resources based on the current selection.
@@ -272,6 +304,7 @@
             });
 
             populateSelect(serviceFilter, options);
+            enhanceSelect(serviceFilter);
         }
 
         /**
@@ -287,21 +320,26 @@
             if (payload.slotMinTime) {
                 state.slotMinTime = payload.slotMinTime;
                 calendarInstance.setOption('slotMinTime', payload.slotMinTime);
+                viewOptions.resourceTimelineDay.slotMinTime = payload.slotMinTime;
             }
 
             if (payload.slotMaxTime) {
                 state.slotMaxTime = payload.slotMaxTime;
                 calendarInstance.setOption('slotMaxTime', payload.slotMaxTime);
+                viewOptions.resourceTimelineDay.slotMaxTime = payload.slotMaxTime;
             }
 
             if (payload.slotDuration) {
                 state.slotDuration = payload.slotDuration;
                 calendarInstance.setOption('slotDuration', payload.slotDuration);
+                viewOptions.resourceTimelineDay.slotDuration = payload.slotDuration;
             }
 
             if (payload.scrollTime) {
                 calendarInstance.setOption('scrollTime', payload.scrollTime);
             }
+
+            calendarInstance.setOption('views', viewOptions);
         }
 
         /**
@@ -366,11 +404,14 @@
                             selected: state.resourceFilterIds.has(parseInt(resource.id, 10)),
                         };
                     }));
+                    enhanceSelect(resourceFilter);
 
                     refreshServiceFilter();
 
                     if (calendarInstance) {
                         calendarInstance.setOption('resources', getVisibleResources());
+                        viewOptions.resourceTimelineDay.resources = getVisibleResources();
+                        calendarInstance.setOption('views', viewOptions);
                         updateSlotOptions(payload);
                     }
 
@@ -420,6 +461,7 @@
             state.resourceFilterIds.clear();
             state.serviceFilterIds.clear();
             populateSelect(resourceFilter, []);
+            enhanceSelect(resourceFilter);
             refreshServiceFilter();
             if (calendarInstance) {
                 calendarInstance.refetchEvents();
@@ -432,7 +474,9 @@
         function onResourceChange() {
             state.resourceFilterIds = new Set(getSelectedIds(resourceFilter));
             if (calendarInstance) {
+                viewOptions.resourceTimelineDay.resources = getVisibleResources();
                 calendarInstance.setOption('resources', getVisibleResources());
+                calendarInstance.setOption('views', viewOptions);
                 calendarInstance.refetchEvents();
             }
         }
@@ -469,10 +513,11 @@
             headerToolbar: {
                 start: 'prev,next today',
                 center: 'title',
-                end: '',
+                end: 'resourceTimeGridDay,resourceTimelineDay',
             },
             timeZone: config.timezone,
             resources: getVisibleResources(),
+            views: viewOptions,
             eventSources: [
                 {
                     events: fetchSchedule,
@@ -486,6 +531,10 @@
             resourceAreaHeaderContent: i18n.resourceColumn || 'Employees',
             dayMaxEvents: true,
             selectable: false,
+            buttonText: {
+                resourceTimeGridDay: i18n.resourcesView || 'Resources',
+                resourceTimelineDay: i18n.timelineView || 'Timeline',
+            },
             eventContent: function (arg) {
                 return buildEventContent(arg, i18n);
             },

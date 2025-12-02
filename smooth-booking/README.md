@@ -13,7 +13,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - REST API endpoint suite at `/wp-json/smooth-booking/v1/services` for listing, creating, updating, deleting, and restoring services
 - Shortcode `[smooth_booking_schema_status]` and Gutenberg block “Smooth Booking Schema Status”
 - Top-level Smooth Booking admin menu with the **Locations**, **Appointments**, **Employees**, **Customers**, and **Services** screens
-- Calendar workspace powered by the EventCalendar library, defaulting to today's bookings in a resource-based day view with employee columns, service-coloured appointments, native location and date filters, and automatic locale-aware slot rendering
+- Calendar workspace powered by the EventCalendar library, defaulting to today's bookings in a resource-based day view with employee columns, service-coloured appointments, native location and date filters, Select2-enhanced employee/service filters, and automatic locale-aware slot rendering plus quick **Resources**/**Timeline** view buttons
 - REST-backed calendar schedule endpoint that feeds EventCalendar via AJAX, honouring per-location business hours with two-hour padding, service colour palettes, and customer contact details
 - Email notifications workspace with list view, drawer-based creation/editing, recipient scoping, placeholder reference table, and soft delete/disable flows plus SMTP-aware delivery settings
 - Daily cron health check
@@ -106,7 +106,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Run unit tests with `composer test` (PHPUnit bootstrap in `tests/bootstrap.php`).
 - REST controllers reside in `src/Rest/` and register routes on `rest_api_init`.
 - Admin calendar data is exposed via the `window.SmoothBookingCalendarData` global before `admin-calendar.js` runs to prevent WordPress localisation helpers from overwriting the schedule payload that feeds the EventCalendar grid.
-- Select2 assets are registered through `SmoothBooking\Infrastructure\Assets\Select2AssetRegistrar`, which aliases WordPress' bundled SelectWoo library to guarantee the enhanced multi-select UI without shipping duplicate vendor scripts.
+- Select2 assets for calendar filters are pulled from the CDN and hydrated on load, while falling back to native multi-selects when the dependency is unavailable.
 - Calendar aggregation, SelectWoo asset registration, and booking repository operations log to the WordPress debug log when the General → Debug logging option is enabled. Toggle the setting off for production.
 
 ## Hooks
