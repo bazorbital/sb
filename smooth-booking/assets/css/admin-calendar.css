@@ -123,6 +123,112 @@
     word-break: break-word;
 }
 
+.smooth-booking-calendar-dialog {
+    border: none;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 520px;
+    width: 92%;
+    box-shadow: 0 28px 70px rgba(17, 24, 39, 0.25);
+}
+
+.smooth-booking-calendar-dialog::backdrop {
+    background: rgba(17, 24, 39, 0.35);
+}
+
+.smooth-booking-calendar-dialog__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 24px 24px;
+    color: var(--sba-dt-black-400);
+}
+
+.smooth-booking-calendar-dialog__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.smooth-booking-calendar-dialog__eyebrow {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sba-dt-black-200);
+}
+
+.smooth-booking-calendar-dialog__title {
+    margin: 4px 0;
+    font-size: 20px;
+    color: var(--sba-dt-black-500);
+}
+
+.smooth-booking-calendar-dialog__meta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--sba-dt-black-200);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.smooth-booking-calendar-dialog__close {
+    border: 1px solid var(--sba-gt-gray-200);
+    background: var(--sba-cl-white);
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.smooth-booking-calendar-dialog__body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.smooth-booking-calendar-dialog__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.smooth-booking-calendar-dialog__field select,
+.smooth-booking-calendar-dialog__field input,
+.smooth-booking-calendar-dialog__field textarea {
+    border-radius: 10px;
+    border: 1px solid var(--sba-gt-gray-300);
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.smooth-booking-calendar-dialog__grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.smooth-booking-calendar-dialog__error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.smooth-booking-calendar-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
 @media (max-width: 782px) {
     .smooth-booking-calendar-meta {
         flex-direction: column;

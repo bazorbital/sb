@@ -2,6 +2,14 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.2] - 2026-03-10
+### Added
+- Calendar header now includes an **Add appointment** button and booking dialog styled after the `calforsb.html` reference, posting directly to the appointments REST endpoint.
+- Drag-selecting a timeslot opens the same modal with the selected staff, day, and service templates, auto-adjusting end times to match the chosen service duration.
+
+### Changed
+- Calendar payload now ships service templates alongside resources so the booking modal can prefill durations and colours without waiting for an additional REST roundtrip.
+
 # [0.18.1] - 2026-02-20
 ### Added
 - Calendar toolbar now surfaces **Resources** and **Timeline** view buttons based on the `calforsb.html` reference, enabling on-demand switching between resource grid and timeline layouts without reloading the screen.

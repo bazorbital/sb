@@ -48,6 +48,90 @@
     }
 
     /**
+     * Format a Date into HH:MM 24h time.
+     *
+     * @param {Date} date Date instance.
+     * @returns {string}
+     */
+    function formatTime(date) {
+        var hours = String(date.getHours()).padStart(2, '0');
+        var minutes = String(date.getMinutes()).padStart(2, '0');
+        return hours + ':' + minutes;
+    }
+
+    /**
+     * Normalise time-like values to HH:MM.
+     *
+     * @param {*} value Time candidate.
+     * @returns {string}
+     */
+    function normalizeTime(value) {
+        if (!value) {
+            return '';
+        }
+
+        if (value instanceof Date) {
+            return formatTime(value);
+        }
+
+        if (typeof value === 'string') {
+            if (value.indexOf('T') !== -1 || value.indexOf('Z') !== -1) {
+                var parsed = new Date(value);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return formatTime(parsed);
+                }
+            }
+
+            var parts = value.split(':');
+            if (parts.length >= 2) {
+                var hours = String(parseInt(parts[0], 10)).padStart(2, '0');
+                var minutes = String(parseInt(parts[1], 10)).padStart(2, '0');
+                return hours + ':' + minutes;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Add minutes to a HH:MM time string.
+     *
+     * @param {string} time Time string (HH:MM).
+     * @param {number} minutes Minutes to add.
+     * @returns {string}
+     */
+    function addMinutesToTime(time, minutes) {
+        if (!time) {
+            return '';
+        }
+
+        var parts = time.split(':');
+        var hours = parseInt(parts[0], 10) || 0;
+        var mins = parseInt(parts[1], 10) || 0;
+        var date = new Date();
+        date.setHours(hours);
+        date.setMinutes(mins + (minutes || 0));
+        return formatTime(date);
+    }
+
+    /**
+     * Convert HH:MM[:SS] duration to minutes.
+     *
+     * @param {string} value Duration string.
+     * @returns {number}
+     */
+    function durationToMinutes(value) {
+        if (typeof value !== 'string' || !value) {
+            return 30;
+        }
+
+        var parts = value.split(':');
+        var hours = parseInt(parts[0], 10) || 0;
+        var minutes = parseInt(parts[1], 10) || 0;
+        return (hours * 60) + minutes;
+    }
+
+    /**
      * Build custom EventCalendar event nodes displaying booking meta.
      *
      * @param {Object} arg EventCalendar argument.
@@ -228,6 +312,20 @@
         var serviceFilter = document.getElementById('smooth-booking-service-filter');
         var locationSelect = document.getElementById('smooth-booking-calendar-location');
         var dateInput = document.getElementById('smooth-booking-calendar-date');
+        var bookingDialog = document.getElementById('smooth-booking-calendar-dialog');
+        var bookingForm = document.getElementById('smooth-booking-calendar-booking-form');
+        var bookingResource = document.getElementById('smooth-booking-calendar-booking-resource');
+        var bookingService = document.getElementById('smooth-booking-calendar-booking-service');
+        var bookingStart = document.getElementById('smooth-booking-calendar-booking-start');
+        var bookingEnd = document.getElementById('smooth-booking-calendar-booking-end');
+        var bookingNote = document.getElementById('smooth-booking-calendar-booking-note');
+        var bookingDateLabel = document.getElementById('smooth-booking-calendar-booking-date');
+        var bookingResourceLabel = document.getElementById('smooth-booking-calendar-booking-resource-label');
+        var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
+        var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
+        var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
+
+        var initialSlotDuration = data.slotDuration || '00:30:00';
 
         var state = {
             selectedDate: data.selectedDate || toDateString(new Date()),
@@ -236,7 +334,8 @@
             services: data.services || {},
             slotMinTime: data.slotMinTime || '06:00:00',
             slotMaxTime: data.slotMaxTime || '22:00:00',
-            slotDuration: data.slotDuration || '00:30:00',
+            slotDuration: initialSlotDuration,
+            defaultDurationMinutes: durationToMinutes(initialSlotDuration),
             resourceFilterIds: new Set(),
             serviceFilterIds: new Set(),
             bootstrapEvents: ensureArray(data.events),
@@ -247,6 +346,7 @@
             nonce: data.nonce || '',
             locale: data.locale || 'en',
             timezone: data.timezone || 'local',
+            appointmentsEndpoint: data.appointmentsEndpoint || '',
         };
 
         var viewOptions = {
@@ -256,6 +356,15 @@
                 slotDuration: state.slotDuration,
                 resources: ensureArray(state.resources),
             },
+        };
+
+        var bookingContext = {
+            mode: 'manual',
+            date: state.selectedDate,
+            resourceId: null,
+            serviceId: null,
+            startTime: '',
+            endTime: '',
         };
 
         if (!state.locationId && locationSelect && locationSelect.value) {
@@ -308,6 +417,205 @@
         }
 
         /**
+         * Retrieve a resource by id.
+         *
+         * @param {number|string|null} id Resource identifier.
+         * @returns {Object|null}
+         */
+        function findResourceById(id) {
+            if (!id) {
+                return null;
+            }
+
+            var numericId = parseInt(id, 10);
+            return ensureArray(state.resources).find(function (resource) {
+                return parseInt(resource.id, 10) === numericId;
+            }) || null;
+        }
+
+        /**
+         * Derive duration from selected service.
+         *
+         * @param {string|number|null} serviceId Service identifier.
+         * @returns {number}
+         */
+        function getServiceDurationMinutes(serviceId) {
+            if (!serviceId || !state.services) {
+                return state.defaultDurationMinutes;
+            }
+
+            var key = typeof serviceId === 'string' ? serviceId : String(serviceId);
+            var template = state.services[key] || state.services[parseInt(serviceId, 10)];
+
+            if (template && typeof template.durationMinutes !== 'undefined') {
+                var minutes = parseInt(template.durationMinutes, 10);
+                if (!Number.isNaN(minutes) && minutes > 0) {
+                    return minutes;
+                }
+            }
+
+            return state.defaultDurationMinutes;
+        }
+
+        /**
+         * Populate booking resource selector.
+         *
+         * @param {number|null} selectedId Selected resource id.
+         */
+        function populateBookingResources(selectedId) {
+            if (!bookingResource) {
+                return;
+            }
+
+            var resources = getVisibleResources();
+            var options = resources.map(function (resource) {
+                return {
+                    value: String(resource.id),
+                    text: resource.title || '',
+                    selected: selectedId ? parseInt(resource.id, 10) === parseInt(selectedId, 10) : false,
+                };
+            });
+
+            populateSelect(bookingResource, options);
+            enhanceSelect(bookingResource);
+        }
+
+        /**
+         * Populate booking service selector.
+         *
+         * @param {number|null} selectedId Selected service id.
+         */
+        function populateBookingServices(selectedId) {
+            if (!bookingService) {
+                return;
+            }
+
+            var services = state.services || {};
+            var options = Object.keys(services).map(function (key) {
+                var service = services[key];
+                return {
+                    value: String(service.id || key),
+                    text: service.name || key,
+                    selected: selectedId ? parseInt(service.id || key, 10) === parseInt(selectedId, 10) : false,
+                };
+            });
+
+            populateSelect(bookingService, options);
+            enhanceSelect(bookingService);
+        }
+
+        /**
+         * Display or clear booking error text.
+         *
+         * @param {string} message Error message.
+         */
+        function setBookingError(message) {
+            if (!bookingError) {
+                return;
+            }
+
+            bookingError.textContent = message || '';
+            bookingError.hidden = !message;
+        }
+
+        /**
+         * Update the end time when service or start changes.
+         */
+        function syncBookingEndTime() {
+            if (!bookingStart || !bookingEnd) {
+                return;
+            }
+
+            var startValue = bookingStart.value || bookingContext.startTime;
+            var duration = getServiceDurationMinutes(bookingService ? bookingService.value : null);
+
+            if (!startValue || Number.isNaN(duration)) {
+                return;
+            }
+
+            bookingEnd.value = addMinutesToTime(startValue, duration);
+        }
+
+        /**
+         * Open the booking dialog with the provided context.
+         *
+         * @param {Object} context Booking context.
+         */
+        function openBookingDialog(context) {
+            if (!bookingDialog || !bookingForm) {
+                return;
+            }
+
+            bookingContext = Object.assign({}, bookingContext, {
+                mode: context && context.mode ? context.mode : 'manual',
+                date: context && context.date ? toDateString(context.date) || state.selectedDate : state.selectedDate,
+                resourceId: context && context.resourceId ? parseInt(context.resourceId, 10) : bookingContext.resourceId,
+                serviceId: context && context.serviceId ? parseInt(context.serviceId, 10) : bookingContext.serviceId,
+                startTime: normalizeTime((context && context.startTime) || bookingContext.startTime || state.slotMinTime),
+                endTime: normalizeTime((context && context.endTime) || bookingContext.endTime || ''),
+            });
+
+            if (!bookingContext.resourceId && getVisibleResources().length > 0) {
+                bookingContext.resourceId = parseInt(getVisibleResources()[0].id, 10);
+            }
+
+            bookingContext.date = bookingContext.date || state.selectedDate;
+
+            populateBookingResources(bookingContext.resourceId);
+            populateBookingServices(bookingContext.serviceId);
+
+            if (bookingDateLabel) {
+                bookingDateLabel.textContent = bookingContext.date;
+            }
+
+            var selectedResource = bookingContext.resourceId ? findResourceById(bookingContext.resourceId) : null;
+            if (bookingResourceLabel) {
+                bookingResourceLabel.textContent = selectedResource ? (selectedResource.title || '') : '';
+            }
+
+            if (bookingStart) {
+                bookingStart.value = bookingContext.startTime || normalizeTime(state.slotMinTime);
+            }
+
+            if (bookingEnd) {
+                var nextEnd = bookingContext.endTime;
+                if (!nextEnd) {
+                    var serviceDuration = getServiceDurationMinutes(bookingContext.serviceId || (bookingService ? bookingService.value : null));
+                    nextEnd = addMinutesToTime(bookingContext.startTime || normalizeTime(state.slotMinTime), serviceDuration);
+                }
+                bookingEnd.value = nextEnd;
+            }
+
+            if (bookingNote) {
+                bookingNote.value = context && context.note ? context.note : '';
+            }
+
+            setBookingError('');
+
+            if (typeof bookingDialog.showModal === 'function') {
+                bookingDialog.showModal();
+            } else {
+                bookingDialog.removeAttribute('hidden');
+                bookingDialog.setAttribute('open', 'open');
+            }
+        }
+
+        /**
+         * Close the booking dialog.
+         */
+        function closeBookingDialog() {
+            if (!bookingDialog) {
+                return;
+            }
+
+            if (typeof bookingDialog.close === 'function') {
+                bookingDialog.close();
+            }
+
+            bookingDialog.setAttribute('hidden', 'hidden');
+        }
+
+        /**
          * Sync slot options from the schedule payload.
          *
          * @param {Object} payload API payload.
@@ -331,6 +639,7 @@
 
             if (payload.slotDuration) {
                 state.slotDuration = payload.slotDuration;
+                state.defaultDurationMinutes = durationToMinutes(payload.slotDuration);
                 calendarInstance.setOption('slotDuration', payload.slotDuration);
                 viewOptions.resourceTimelineDay.slotDuration = payload.slotDuration;
             }
@@ -396,6 +705,7 @@
                     state.slotMinTime = payload.slotMinTime || state.slotMinTime;
                     state.slotMaxTime = payload.slotMaxTime || state.slotMaxTime;
                     state.slotDuration = payload.slotDuration || state.slotDuration;
+                    state.defaultDurationMinutes = durationToMinutes(state.slotDuration);
 
                     populateSelect(resourceFilter, state.resources.map(function (resource) {
                         return {
@@ -506,14 +816,122 @@
             }
         }
 
+        /**
+         * Handle booking form submit via REST API.
+         */
+        function onBookingSubmit(event) {
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            if (!config.appointmentsEndpoint) {
+                setBookingError(i18n.bookingEndpointMissing || 'Booking endpoint is unavailable.');
+                return;
+            }
+
+            var providerId = bookingResource ? parseInt(bookingResource.value, 10) : 0;
+            var serviceId = bookingService ? parseInt(bookingService.value, 10) : 0;
+            var startValue = bookingStart ? bookingStart.value : '';
+            var endValue = bookingEnd ? bookingEnd.value : '';
+            var dateValue = bookingContext.date || state.selectedDate;
+
+            if (!providerId || !serviceId || !dateValue || !startValue || !endValue) {
+                setBookingError(i18n.bookingValidation || 'Please complete all required fields.');
+                return;
+            }
+
+            setBookingError('');
+
+            var payload = {
+                provider_id: providerId,
+                service_id: serviceId,
+                appointment_date: dateValue,
+                appointment_start: startValue,
+                appointment_end: endValue,
+                notes: bookingNote ? bookingNote.value : '',
+            };
+
+            fetch(config.appointmentsEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-WP-Nonce': config.nonce || '',
+                },
+                body: JSON.stringify(payload),
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.json().then(function (body) {
+                            var message = body && body.message ? body.message : response.statusText;
+                            throw new Error(message || 'Request failed');
+                        });
+                    }
+
+                    return response.json();
+                })
+                .then(function () {
+                    closeBookingDialog();
+                    if (calendarInstance) {
+                        calendarInstance.refetchEvents();
+                    }
+                })
+                .catch(function (error) {
+                    setBookingError(error && error.message ? error.message : (i18n.bookingSaveError || 'Unable to save appointment.'));
+                });
+        }
+
+        /**
+         * Open modal from a calendar selection.
+         */
+        function onCalendarSelect(selectionInfo) {
+            var resourceId = selectionInfo && selectionInfo.resource ? selectionInfo.resource.id : null;
+            if (!resourceId && selectionInfo && selectionInfo.resourceId) {
+                resourceId = selectionInfo.resourceId;
+            }
+
+            bookingContext.startTime = normalizeTime(selectionInfo && selectionInfo.startStr);
+            bookingContext.endTime = normalizeTime(selectionInfo && selectionInfo.endStr);
+            bookingContext.date = toDateString(selectionInfo && selectionInfo.startStr) || state.selectedDate;
+            bookingContext.resourceId = resourceId ? parseInt(resourceId, 10) : bookingContext.resourceId;
+
+            openBookingDialog({
+                mode: 'selection',
+                resourceId: bookingContext.resourceId,
+                startTime: bookingContext.startTime,
+                endTime: bookingContext.endTime,
+                date: bookingContext.date,
+            });
+
+            if (calendarInstance && typeof calendarInstance.unselect === 'function') {
+                calendarInstance.unselect();
+            }
+        }
+
         var calendarInstance = EventCalendar.create(target, {
             view: 'resourceTimeGridDay',
             initialDate: state.selectedDate,
             date: state.selectedDate,
+            customButtons: {
+                addAppointment: {
+                    text: i18n.addAppointment || 'Add appointment',
+                    click: function () {
+                        var baseStart = normalizeTime(state.slotMinTime) || '09:00';
+                        var defaultResource = getVisibleResources().length ? getVisibleResources()[0].id : null;
+                        openBookingDialog({
+                            mode: 'manual',
+                            date: state.selectedDate,
+                            resourceId: defaultResource,
+                            startTime: baseStart,
+                            endTime: addMinutesToTime(baseStart, state.defaultDurationMinutes),
+                        });
+                    },
+                },
+            },
             headerToolbar: {
                 start: 'prev,next today',
                 center: 'title',
-                end: 'resourceTimeGridDay,resourceTimelineDay',
+                end: 'resourceTimeGridDay,resourceTimelineDay addAppointment',
             },
             timeZone: config.timezone,
             resources: getVisibleResources(),
@@ -530,7 +948,9 @@
             slotDuration: state.slotDuration,
             resourceAreaHeaderContent: i18n.resourceColumn || 'Employees',
             dayMaxEvents: true,
-            selectable: false,
+            selectable: true,
+            selectMirror: true,
+            select: onCalendarSelect,
             buttonText: {
                 resourceTimeGridDay: i18n.resourcesView || 'Resources',
                 resourceTimelineDay: i18n.timelineView || 'Timeline',
@@ -561,6 +981,61 @@
 
         if (dateInput) {
             dateInput.addEventListener('change', onDateChange);
+        }
+
+        if (bookingStart) {
+            bookingStart.addEventListener('change', function () {
+                bookingContext.startTime = bookingStart.value;
+                syncBookingEndTime();
+            });
+        }
+
+        if (bookingService) {
+            bookingService.addEventListener('change', function () {
+                bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
+                syncBookingEndTime();
+            });
+        }
+
+        if (bookingResource) {
+            bookingResource.addEventListener('change', function () {
+                bookingContext.resourceId = bookingResource.value ? parseInt(bookingResource.value, 10) : null;
+                var resource = bookingContext.resourceId ? findResourceById(bookingContext.resourceId) : null;
+                if (bookingResourceLabel) {
+                    bookingResourceLabel.textContent = resource ? (resource.title || '') : '';
+                }
+            });
+        }
+
+        if (bookingCancel) {
+            bookingCancel.addEventListener('click', function (event) {
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                closeBookingDialog();
+            });
+        }
+
+        if (bookingCancelAlt) {
+            bookingCancelAlt.addEventListener('click', function (event) {
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                closeBookingDialog();
+            });
+        }
+
+        if (bookingDialog) {
+            bookingDialog.addEventListener('cancel', function (event) {
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                closeBookingDialog();
+            });
+        }
+
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', onBookingSubmit);
         }
 
         renderEmptyState(calendarWrapper, ensureArray(state.bootstrapEvents).length > 0 || data.hasEvents);
