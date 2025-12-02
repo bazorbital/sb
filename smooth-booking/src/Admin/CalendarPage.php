@@ -15,6 +15,8 @@ use SmoothBooking\Domain\Calendar\CalendarService;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
+use SmoothBooking\Domain\Services\Service;
+use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use SmoothBooking\Support\CalendarEventFormatterTrait;
 use function __;
@@ -41,6 +43,10 @@ use function wp_create_nonce;
 use function wp_json_encode;
 use function wp_timezone;
 use function wp_unslash;
+use function array_merge;
+use function is_array;
+use function array_unique;
+use function in_array;
 
 /**
  * Renders the Smooth Booking calendar page using a resource-based day view.
@@ -59,11 +65,14 @@ class CalendarPage {
 
     private LocationService $locations;
 
+    private ServiceService $services;
+
     private Logger $logger;
 
-    public function __construct( CalendarService $calendar, LocationService $locations, Logger $logger ) {
+    public function __construct( CalendarService $calendar, LocationService $locations, ServiceService $services, Logger $logger ) {
         $this->calendar  = $calendar;
         $this->locations = $locations;
+        $this->services  = $services;
         $this->logger    = $logger;
     }
 
@@ -139,6 +148,7 @@ class CalendarPage {
         }
 
         $resources = $this->calendar->build_resources_payload( $employees );
+        $service_templates = $this->build_service_templates( $resources );
 
         $locations_payload = array_values(
             array_filter(
@@ -177,7 +187,8 @@ class CalendarPage {
                 'nonce'           => wp_create_nonce( 'wp_rest' ),
                 'locations'       => $locations_payload,
                 'locationId'      => $location_id,
-                'services'        => [],
+                'services'        => $service_templates,
+                'appointmentsEndpoint' => rest_url( 'smooth-booking/v1/appointments' ),
             ]
         );
 
@@ -245,6 +256,58 @@ class CalendarPage {
                         <p><?php echo esc_html__( 'No appointments scheduled for the selected day.', 'smooth-booking' ); ?></p>
                     </div>
                 </div>
+
+                <dialog id="smooth-booking-calendar-dialog" class="smooth-booking-calendar-dialog" hidden>
+                    <form id="smooth-booking-calendar-booking-form" class="smooth-booking-calendar-dialog__form" method="dialog">
+                        <header class="smooth-booking-calendar-dialog__header">
+                            <div>
+                                <p class="smooth-booking-calendar-dialog__eyebrow"><?php echo esc_html__( 'New appointment', 'smooth-booking' ); ?></p>
+                                <h2 class="smooth-booking-calendar-dialog__title"><?php echo esc_html__( 'Add appointment', 'smooth-booking' ); ?></h2>
+                                <p class="smooth-booking-calendar-dialog__meta">
+                                    <span id="smooth-booking-calendar-booking-resource-label"></span>
+                                    <span aria-hidden="true">·</span>
+                                    <span id="smooth-booking-calendar-booking-date"></span>
+                                </p>
+                            </div>
+                            <button type="button" class="smooth-booking-calendar-dialog__close" id="smooth-booking-calendar-booking-cancel" aria-label="<?php echo esc_attr__( 'Close', 'smooth-booking' ); ?>">×</button>
+                        </header>
+
+                        <div class="smooth-booking-calendar-dialog__body">
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Employee', 'smooth-booking' ); ?></span>
+                                <select id="smooth-booking-calendar-booking-resource" name="booking-resource"></select>
+                            </label>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Service', 'smooth-booking' ); ?></span>
+                                <select id="smooth-booking-calendar-booking-service" name="booking-service"></select>
+                            </label>
+
+                            <div class="smooth-booking-calendar-dialog__grid">
+                                <label class="smooth-booking-calendar-dialog__field">
+                                    <span><?php echo esc_html__( 'Start', 'smooth-booking' ); ?></span>
+                                    <input type="time" id="smooth-booking-calendar-booking-start" name="booking-start" />
+                                </label>
+                                <label class="smooth-booking-calendar-dialog__field">
+                                    <span><?php echo esc_html__( 'End', 'smooth-booking' ); ?></span>
+                                    <input type="time" id="smooth-booking-calendar-booking-end" name="booking-end" />
+                                </label>
+                            </div>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Internal note (optional)', 'smooth-booking' ); ?></span>
+                                <textarea id="smooth-booking-calendar-booking-note" name="booking-note" rows="3"></textarea>
+                            </label>
+
+                            <p class="smooth-booking-calendar-dialog__error" id="smooth-booking-calendar-booking-error" hidden></p>
+                        </div>
+
+                        <div class="smooth-booking-calendar-dialog__actions">
+                            <button type="button" class="button button-secondary" id="smooth-booking-calendar-booking-cancel-alt"><?php echo esc_html__( 'Cancel', 'smooth-booking' ); ?></button>
+                            <button type="submit" class="button button-primary"><?php echo esc_html__( 'Save appointment', 'smooth-booking' ); ?></button>
+                        </div>
+                    </form>
+                </dialog>
             </div>
         </div>
         <?php
@@ -316,6 +379,10 @@ class CalendarPage {
                 'loading'           => __( 'Loading calendar…', 'smooth-booking' ),
                 'resourcesView'     => __( 'Resources', 'smooth-booking' ),
                 'timelineView'      => __( 'Timeline', 'smooth-booking' ),
+                'addAppointment'    => __( 'Add appointment', 'smooth-booking' ),
+                'bookingValidation' => __( 'Please choose a staff member, service, start, and end time.', 'smooth-booking' ),
+                'bookingEndpointMissing' => __( 'Booking endpoint is unavailable. Please reload the page.', 'smooth-booking' ),
+                'bookingSaveError'  => __( 'Unable to save appointment. Please try again.', 'smooth-booking' ),
             ],
         ];
 
@@ -442,6 +509,71 @@ class CalendarPage {
             'window.SmoothBookingCalendarData = ' . $encoded . '; window.SmoothBookingCalendar = window.SmoothBookingCalendar || {}; window.SmoothBookingCalendar.data = window.SmoothBookingCalendarData;',
             'before'
         );
+    }
+
+    /**
+     * Build service templates for the booking modal from available resources.
+     *
+     * @param array<int,array<string,mixed>> $resources EventCalendar resources.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function build_service_templates( array $resources ): array {
+        $service_ids = [];
+
+        foreach ( $resources as $resource ) {
+            if ( empty( $resource['serviceIds'] ) || ! is_array( $resource['serviceIds'] ) ) {
+                continue;
+            }
+
+            $service_ids = array_merge( $service_ids, $resource['serviceIds'] );
+        }
+
+        $service_ids = array_values( array_unique( array_map( 'absint', $service_ids ) ) );
+
+        if ( empty( $service_ids ) ) {
+            return [];
+        }
+
+        $templates = [];
+        $services  = $this->services->list_services();
+
+        foreach ( $services as $service ) {
+            if ( ! $service instanceof Service || ! in_array( $service->get_id(), $service_ids, true ) ) {
+                continue;
+            }
+
+            $templates[ $service->get_id() ] = [
+                'id'              => $service->get_id(),
+                'name'            => $service->get_name(),
+                'durationMinutes' => $this->duration_to_minutes( $service->get_duration_key() ),
+                'color'           => $this->normalize_color( $service->get_background_color() ),
+                'textColor'       => $this->normalize_color( $service->get_text_color(), '#111827' ),
+            ];
+        }
+
+        return $templates;
+    }
+
+    /**
+     * Convert duration keys into minute values.
+     */
+    private function duration_to_minutes( string $key ): int {
+        if ( preg_match( '/^(\d+)_minutes$/', $key, $matches ) ) {
+            return (int) $matches[1];
+        }
+
+        $map = [
+            'one_day'    => 1440,
+            'two_days'   => 2880,
+            'three_days' => 4320,
+            'four_days'  => 5760,
+            'five_days'  => 7200,
+            'six_days'   => 8640,
+            'one_week'   => 10080,
+        ];
+
+        return $map[ $key ] ?? 30;
     }
 
     /**
