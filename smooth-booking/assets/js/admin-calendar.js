@@ -60,25 +60,67 @@
     }
 
     /**
+     * Format a Date to HH:MM using an optional IANA timezone.
+     *
+     * @param {Date} date Date instance.
+     * @param {string} [timeZone] IANA timezone name or 'local'.
+     * @returns {string}
+     */
+    function formatTimeWithZone(date, timeZone) {
+        if (!date || !(date instanceof Date)) {
+            return '';
+        }
+
+        if (!timeZone || timeZone === 'local') {
+            return formatTime(date);
+        }
+
+        try {
+            var formatter = new Intl.DateTimeFormat('en-GB', {
+                timeZone: timeZone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
+
+            var parts = formatter.formatToParts(date);
+            var hours = '00';
+            var minutes = '00';
+
+            parts.forEach(function (part) {
+                if (part.type === 'hour') {
+                    hours = part.value.padStart(2, '0');
+                } else if (part.type === 'minute') {
+                    minutes = part.value.padStart(2, '0');
+                }
+            });
+
+            return hours + ':' + minutes;
+        } catch (error) {
+            return formatTime(date);
+        }
+    }
+
+    /**
      * Normalise time-like values to HH:MM.
      *
      * @param {*} value Time candidate.
      * @returns {string}
      */
-    function normalizeTime(value) {
+    function normalizeTime(value, timeZone) {
         if (!value) {
             return '';
         }
 
         if (value instanceof Date) {
-            return formatTime(value);
+            return formatTimeWithZone(value, timeZone);
         }
 
         if (typeof value === 'string') {
             if (value.indexOf('T') !== -1 || value.indexOf('Z') !== -1) {
                 var parsed = new Date(value);
                 if (!Number.isNaN(parsed.getTime())) {
-                    return formatTime(parsed);
+                    return formatTimeWithZone(parsed, timeZone);
                 }
             }
 
@@ -890,8 +932,8 @@
                 resourceId = selectionInfo.resourceId;
             }
 
-            bookingContext.startTime = normalizeTime(selectionInfo && selectionInfo.startStr);
-            bookingContext.endTime = normalizeTime(selectionInfo && selectionInfo.endStr);
+            bookingContext.startTime = normalizeTime(selectionInfo && selectionInfo.startStr, config.timezone);
+            bookingContext.endTime = normalizeTime(selectionInfo && selectionInfo.endStr, config.timezone);
             bookingContext.date = toDateString(selectionInfo && selectionInfo.startStr) || state.selectedDate;
             bookingContext.resourceId = resourceId ? parseInt(resourceId, 10) : bookingContext.resourceId;
 
