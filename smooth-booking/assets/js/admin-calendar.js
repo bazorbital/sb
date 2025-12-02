@@ -651,10 +651,11 @@
                 return;
             }
 
-            if (typeof bookingDialog.close === 'function') {
+            if (typeof bookingDialog.close === 'function' && bookingDialog.open) {
                 bookingDialog.close();
             }
 
+            bookingDialog.removeAttribute('open');
             bookingDialog.setAttribute('hidden', 'hidden');
         }
 
