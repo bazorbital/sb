@@ -207,6 +207,17 @@
     width: 100%;
 }
 
+.smooth-booking-calendar-dialog__checkbox {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.smooth-booking-calendar-dialog__checkbox input {
+    width: auto;
+    margin-left: 8px;
+}
+
 .smooth-booking-calendar-dialog__grid {
     display: grid;
     gap: 12px;

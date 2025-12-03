@@ -189,6 +189,7 @@ class CalendarPage {
                 'locationId'      => $location_id,
                 'services'        => $service_templates,
                 'appointmentsEndpoint' => rest_url( 'smooth-booking/v1/appointments' ),
+                'customersEndpoint'    => rest_url( 'smooth-booking/v1/customers' ),
             ]
         );
 
@@ -283,6 +284,11 @@ class CalendarPage {
                                 <select id="smooth-booking-calendar-booking-service" name="booking-service"></select>
                             </label>
 
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Date', 'smooth-booking' ); ?></span>
+                                <input type="date" id="smooth-booking-calendar-booking-date-input" name="booking-date" />
+                            </label>
+
                             <div class="smooth-booking-calendar-dialog__grid">
                                 <label class="smooth-booking-calendar-dialog__field">
                                     <span><?php echo esc_html__( 'Start', 'smooth-booking' ); ?></span>
@@ -295,8 +301,57 @@ class CalendarPage {
                             </div>
 
                             <label class="smooth-booking-calendar-dialog__field">
-                                <span><?php echo esc_html__( 'Internal note (optional)', 'smooth-booking' ); ?></span>
+                                <span><?php echo esc_html__( 'Customer', 'smooth-booking' ); ?></span>
+                                <select id="smooth-booking-calendar-booking-customer" name="booking-customer"></select>
+                            </label>
+
+                            <div class="smooth-booking-calendar-dialog__grid">
+                                <label class="smooth-booking-calendar-dialog__field">
+                                    <span><?php echo esc_html__( 'Status', 'smooth-booking' ); ?></span>
+                                    <select id="smooth-booking-calendar-booking-status" name="booking-status">
+                                        <option value="pending"><?php echo esc_html__( 'Pending', 'smooth-booking' ); ?></option>
+                                        <option value="confirmed"><?php echo esc_html__( 'Confirmed', 'smooth-booking' ); ?></option>
+                                        <option value="completed"><?php echo esc_html__( 'Completed', 'smooth-booking' ); ?></option>
+                                        <option value="canceled"><?php echo esc_html__( 'Canceled', 'smooth-booking' ); ?></option>
+                                    </select>
+                                </label>
+                                <label class="smooth-booking-calendar-dialog__field">
+                                    <span><?php echo esc_html__( 'Payment status', 'smooth-booking' ); ?></span>
+                                    <select id="smooth-booking-calendar-booking-payment" name="booking-payment">
+                                        <option value=""><?php echo esc_html__( 'Not set', 'smooth-booking' ); ?></option>
+                                        <option value="pending"><?php echo esc_html__( 'Pending', 'smooth-booking' ); ?></option>
+                                        <option value="authorized"><?php echo esc_html__( 'Authorized', 'smooth-booking' ); ?></option>
+                                        <option value="paid"><?php echo esc_html__( 'Paid', 'smooth-booking' ); ?></option>
+                                        <option value="refunded"><?php echo esc_html__( 'Refunded', 'smooth-booking' ); ?></option>
+                                        <option value="failed"><?php echo esc_html__( 'Failed', 'smooth-booking' ); ?></option>
+                                        <option value="canceled"><?php echo esc_html__( 'Canceled', 'smooth-booking' ); ?></option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Customer email', 'smooth-booking' ); ?></span>
+                                <input type="email" id="smooth-booking-calendar-booking-customer-email" name="booking-customer-email" />
+                            </label>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Customer phone', 'smooth-booking' ); ?></span>
+                                <input type="text" id="smooth-booking-calendar-booking-customer-phone" name="booking-customer-phone" />
+                            </label>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Internal note', 'smooth-booking' ); ?></span>
+                                <textarea id="smooth-booking-calendar-booking-internal-note" name="booking-internal-note" rows="3"></textarea>
+                            </label>
+
+                            <label class="smooth-booking-calendar-dialog__field">
+                                <span><?php echo esc_html__( 'Customer notes', 'smooth-booking' ); ?></span>
                                 <textarea id="smooth-booking-calendar-booking-note" name="booking-note" rows="3"></textarea>
+                            </label>
+
+                            <label class="smooth-booking-calendar-dialog__field smooth-booking-calendar-dialog__checkbox">
+                                <span><?php echo esc_html__( 'Send notifications', 'smooth-booking' ); ?></span>
+                                <input type="checkbox" id="smooth-booking-calendar-booking-notify" name="booking-notify" value="1" />
                             </label>
 
                             <p class="smooth-booking-calendar-dialog__error" id="smooth-booking-calendar-booking-error" hidden></p>

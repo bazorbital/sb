@@ -60,25 +60,67 @@
     }
 
     /**
+     * Format a Date to HH:MM using an optional IANA timezone.
+     *
+     * @param {Date} date Date instance.
+     * @param {string} [timeZone] IANA timezone name or 'local'.
+     * @returns {string}
+     */
+    function formatTimeWithZone(date, timeZone) {
+        if (!date || !(date instanceof Date)) {
+            return '';
+        }
+
+        if (!timeZone || timeZone === 'local') {
+            return formatTime(date);
+        }
+
+        try {
+            var formatter = new Intl.DateTimeFormat('en-GB', {
+                timeZone: timeZone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
+
+            var parts = formatter.formatToParts(date);
+            var hours = '00';
+            var minutes = '00';
+
+            parts.forEach(function (part) {
+                if (part.type === 'hour') {
+                    hours = part.value.padStart(2, '0');
+                } else if (part.type === 'minute') {
+                    minutes = part.value.padStart(2, '0');
+                }
+            });
+
+            return hours + ':' + minutes;
+        } catch (error) {
+            return formatTime(date);
+        }
+    }
+
+    /**
      * Normalise time-like values to HH:MM.
      *
      * @param {*} value Time candidate.
      * @returns {string}
      */
-    function normalizeTime(value) {
+    function normalizeTime(value, timeZone) {
         if (!value) {
             return '';
         }
 
         if (value instanceof Date) {
-            return formatTime(value);
+            return formatTimeWithZone(value, timeZone);
         }
 
         if (typeof value === 'string') {
             if (value.indexOf('T') !== -1 || value.indexOf('Z') !== -1) {
                 var parsed = new Date(value);
                 if (!Number.isNaN(parsed.getTime())) {
-                    return formatTime(parsed);
+                    return formatTimeWithZone(parsed, timeZone);
                 }
             }
 
@@ -316,9 +358,17 @@
         var bookingForm = document.getElementById('smooth-booking-calendar-booking-form');
         var bookingResource = document.getElementById('smooth-booking-calendar-booking-resource');
         var bookingService = document.getElementById('smooth-booking-calendar-booking-service');
+        var bookingDateInput = document.getElementById('smooth-booking-calendar-booking-date-input');
         var bookingStart = document.getElementById('smooth-booking-calendar-booking-start');
         var bookingEnd = document.getElementById('smooth-booking-calendar-booking-end');
+        var bookingCustomer = document.getElementById('smooth-booking-calendar-booking-customer');
+        var bookingStatus = document.getElementById('smooth-booking-calendar-booking-status');
+        var bookingPayment = document.getElementById('smooth-booking-calendar-booking-payment');
+        var bookingCustomerEmail = document.getElementById('smooth-booking-calendar-booking-customer-email');
+        var bookingCustomerPhone = document.getElementById('smooth-booking-calendar-booking-customer-phone');
+        var bookingInternalNote = document.getElementById('smooth-booking-calendar-booking-internal-note');
         var bookingNote = document.getElementById('smooth-booking-calendar-booking-note');
+        var bookingNotify = document.getElementById('smooth-booking-calendar-booking-notify');
         var bookingDateLabel = document.getElementById('smooth-booking-calendar-booking-date');
         var bookingResourceLabel = document.getElementById('smooth-booking-calendar-booking-resource-label');
         var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
@@ -339,6 +389,7 @@
             resourceFilterIds: new Set(),
             serviceFilterIds: new Set(),
             bootstrapEvents: ensureArray(data.events),
+            customers: ensureArray(data.customers),
         };
 
         var config = {
@@ -347,6 +398,7 @@
             locale: data.locale || 'en',
             timezone: data.timezone || 'local',
             appointmentsEndpoint: data.appointmentsEndpoint || '',
+            customersEndpoint: data.customersEndpoint || '',
         };
 
         var viewOptions = {
@@ -358,14 +410,24 @@
             },
         };
 
-        var bookingContext = {
+        var bookingDefaults = {
             mode: 'manual',
             date: state.selectedDate,
             resourceId: null,
             serviceId: null,
             startTime: '',
             endTime: '',
+            customerId: null,
+            status: 'pending',
+            paymentStatus: '',
+            customerEmail: '',
+            customerPhone: '',
+            notes: '',
+            internalNote: '',
+            sendNotifications: false,
         };
+
+        var bookingContext = Object.assign({}, bookingDefaults);
 
         if (!state.locationId && locationSelect && locationSelect.value) {
             state.locationId = parseInt(locationSelect.value, 10) || null;
@@ -505,6 +567,81 @@
         }
 
         /**
+         * Populate booking customer selector.
+         *
+         * @param {number|null} selectedId Selected customer id.
+         */
+        function populateBookingCustomers(selectedId) {
+            if (!bookingCustomer) {
+                return;
+            }
+
+            var customers = ensureArray(state.customers).map(function (customer) {
+                if (!customer) {
+                    return null;
+                }
+
+                var labelParts = [];
+                if (customer.name) {
+                    labelParts.push(customer.name);
+                } else if (customer.first_name || customer.last_name) {
+                    labelParts.push([customer.first_name || '', customer.last_name || ''].join(' ').trim());
+                }
+
+                if (labelParts.length === 0 && customer.email) {
+                    labelParts.push(customer.email);
+                }
+
+                if (labelParts.length === 0) {
+                    labelParts.push('Customer #' + (customer.id || ''));
+                }
+
+                return {
+                    value: String(customer.id || ''),
+                    text: labelParts.join(' '),
+                    selected: selectedId ? parseInt(customer.id, 10) === parseInt(selectedId, 10) : false,
+                };
+            }).filter(function (item) { return !!item; });
+
+            customers.unshift({
+                value: '',
+                text: i18n.selectCustomer || 'Select customer',
+                selected: !selectedId,
+            });
+
+            populateSelect(bookingCustomer, customers);
+            enhanceSelect(bookingCustomer);
+        }
+
+        /**
+         * Fetch customers from the REST API.
+         *
+         * @param {number|null} selectedId Selected customer id.
+         */
+        function fetchCustomers(selectedId) {
+            if (!config.customersEndpoint || !bookingCustomer) {
+                populateBookingCustomers(selectedId || null);
+                return;
+            }
+
+            fetch(config.customersEndpoint + '?per_page=100', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-WP-Nonce': config.nonce || '',
+                },
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (body) {
+                    state.customers = ensureArray(body && (body.customers || body));
+                    populateBookingCustomers(selectedId || null);
+                })
+                .catch(function () {
+                    populateBookingCustomers(selectedId || null);
+                });
+        }
+
+        /**
          * Display or clear booking error text.
          *
          * @param {string} message Error message.
@@ -546,13 +683,25 @@
                 return;
             }
 
-            bookingContext = Object.assign({}, bookingContext, {
+            var baseDefaults = Object.assign({}, bookingDefaults, { date: state.selectedDate });
+
+            bookingContext = Object.assign({}, baseDefaults, bookingContext, {
                 mode: context && context.mode ? context.mode : 'manual',
                 date: context && context.date ? toDateString(context.date) || state.selectedDate : state.selectedDate,
                 resourceId: context && context.resourceId ? parseInt(context.resourceId, 10) : bookingContext.resourceId,
                 serviceId: context && context.serviceId ? parseInt(context.serviceId, 10) : bookingContext.serviceId,
-                startTime: normalizeTime((context && context.startTime) || bookingContext.startTime || state.slotMinTime),
-                endTime: normalizeTime((context && context.endTime) || bookingContext.endTime || ''),
+                startTime: normalizeTime((context && context.startTime) || bookingContext.startTime || state.slotMinTime, config.timezone),
+                endTime: normalizeTime((context && context.endTime) || bookingContext.endTime || '', config.timezone),
+                customerId: context && context.customerId ? parseInt(context.customerId, 10) : bookingContext.customerId,
+                status: context && context.status ? context.status : bookingContext.status || 'pending',
+                paymentStatus: context && context.paymentStatus ? context.paymentStatus : bookingContext.paymentStatus || '',
+                customerEmail: context && context.customerEmail ? context.customerEmail : bookingContext.customerEmail,
+                customerPhone: context && context.customerPhone ? context.customerPhone : bookingContext.customerPhone,
+                notes: context && context.notes ? context.notes : bookingContext.notes,
+                internalNote: context && context.internalNote ? context.internalNote : bookingContext.internalNote,
+                sendNotifications: context && typeof context.sendNotifications !== 'undefined'
+                    ? !!context.sendNotifications
+                    : bookingContext.sendNotifications,
             });
 
             if (!bookingContext.resourceId && getVisibleResources().length > 0) {
@@ -561,11 +710,22 @@
 
             bookingContext.date = bookingContext.date || state.selectedDate;
 
+            fetchCustomers(bookingContext.customerId || null);
+
             populateBookingResources(bookingContext.resourceId);
             populateBookingServices(bookingContext.serviceId);
 
+            if (bookingCustomer) {
+                populateBookingCustomers(bookingContext.customerId);
+                bookingCustomer.value = bookingContext.customerId ? String(bookingContext.customerId) : '';
+            }
+
             if (bookingDateLabel) {
                 bookingDateLabel.textContent = bookingContext.date;
+            }
+
+            if (bookingDateInput) {
+                bookingDateInput.value = bookingContext.date;
             }
 
             var selectedResource = bookingContext.resourceId ? findResourceById(bookingContext.resourceId) : null;
@@ -586,16 +746,42 @@
                 bookingEnd.value = nextEnd;
             }
 
+            if (bookingStatus) {
+                bookingStatus.value = bookingContext.status || 'pending';
+            }
+
+            if (bookingPayment) {
+                bookingPayment.value = typeof bookingContext.paymentStatus === 'string' ? bookingContext.paymentStatus : '';
+            }
+
+            if (bookingCustomerEmail) {
+                bookingCustomerEmail.value = bookingContext.customerEmail || '';
+            }
+
+            if (bookingCustomerPhone) {
+                bookingCustomerPhone.value = bookingContext.customerPhone || '';
+            }
+
+            if (bookingInternalNote) {
+                bookingInternalNote.value = bookingContext.internalNote || '';
+            }
+
             if (bookingNote) {
-                bookingNote.value = context && context.note ? context.note : '';
+                bookingNote.value = bookingContext.notes || '';
+            }
+
+            if (bookingNotify) {
+                bookingNotify.checked = !!bookingContext.sendNotifications;
             }
 
             setBookingError('');
 
+            bookingDialog.removeAttribute('hidden');
+            bookingDialog.hidden = false;
+
             if (typeof bookingDialog.showModal === 'function') {
                 bookingDialog.showModal();
             } else {
-                bookingDialog.removeAttribute('hidden');
                 bookingDialog.setAttribute('open', 'open');
             }
         }
@@ -608,11 +794,13 @@
                 return;
             }
 
-            if (typeof bookingDialog.close === 'function') {
+            if (typeof bookingDialog.close === 'function' && bookingDialog.open) {
                 bookingDialog.close();
             }
 
+            bookingDialog.removeAttribute('open');
             bookingDialog.setAttribute('hidden', 'hidden');
+            bookingDialog.hidden = true;
         }
 
         /**
@@ -831,9 +1019,20 @@
 
             var providerId = bookingResource ? parseInt(bookingResource.value, 10) : 0;
             var serviceId = bookingService ? parseInt(bookingService.value, 10) : 0;
+            var customerId = bookingCustomer ? parseInt(bookingCustomer.value, 10) : 0;
             var startValue = bookingStart ? bookingStart.value : '';
             var endValue = bookingEnd ? bookingEnd.value : '';
-            var dateValue = bookingContext.date || state.selectedDate;
+            var dateValue = bookingDateInput ? toDateString(bookingDateInput.value) : (bookingContext.date || state.selectedDate);
+
+            bookingContext.date = dateValue || bookingContext.date;
+            bookingContext.customerId = customerId || null;
+            bookingContext.status = bookingStatus ? bookingStatus.value : bookingContext.status;
+            bookingContext.paymentStatus = bookingPayment ? bookingPayment.value : bookingContext.paymentStatus;
+            bookingContext.customerEmail = bookingCustomerEmail ? bookingCustomerEmail.value : bookingContext.customerEmail;
+            bookingContext.customerPhone = bookingCustomerPhone ? bookingCustomerPhone.value : bookingContext.customerPhone;
+            bookingContext.internalNote = bookingInternalNote ? bookingInternalNote.value : bookingContext.internalNote;
+            bookingContext.notes = bookingNote ? bookingNote.value : bookingContext.notes;
+            bookingContext.sendNotifications = bookingNotify ? !!bookingNotify.checked : bookingContext.sendNotifications;
 
             if (!providerId || !serviceId || !dateValue || !startValue || !endValue) {
                 setBookingError(i18n.bookingValidation || 'Please complete all required fields.');
@@ -848,7 +1047,14 @@
                 appointment_date: dateValue,
                 appointment_start: startValue,
                 appointment_end: endValue,
-                notes: bookingNote ? bookingNote.value : '',
+                notes: bookingContext.notes || '',
+                internal_note: bookingContext.internalNote || '',
+                customer_id: customerId,
+                status: bookingContext.status || 'pending',
+                payment_status: bookingContext.paymentStatus || '',
+                send_notifications: bookingContext.sendNotifications,
+                customer_email: bookingContext.customerEmail || '',
+                customer_phone: bookingContext.customerPhone || '',
             };
 
             fetch(config.appointmentsEndpoint, {
@@ -890,8 +1096,17 @@
                 resourceId = selectionInfo.resourceId;
             }
 
-            bookingContext.startTime = normalizeTime(selectionInfo && selectionInfo.startStr);
-            bookingContext.endTime = normalizeTime(selectionInfo && selectionInfo.endStr);
+            bookingContext.customerId = null;
+            bookingContext.status = 'pending';
+            bookingContext.paymentStatus = '';
+            bookingContext.customerEmail = '';
+            bookingContext.customerPhone = '';
+            bookingContext.notes = '';
+            bookingContext.internalNote = '';
+            bookingContext.sendNotifications = false;
+
+            bookingContext.startTime = normalizeTime(selectionInfo && selectionInfo.startStr, config.timezone);
+            bookingContext.endTime = normalizeTime(selectionInfo && selectionInfo.endStr, config.timezone);
             bookingContext.date = toDateString(selectionInfo && selectionInfo.startStr) || state.selectedDate;
             bookingContext.resourceId = resourceId ? parseInt(resourceId, 10) : bookingContext.resourceId;
 
@@ -912,21 +1127,29 @@
             view: 'resourceTimeGridDay',
             initialDate: state.selectedDate,
             date: state.selectedDate,
-            customButtons: {
-                addAppointment: {
-                    text: i18n.addAppointment || 'Add appointment',
-                    click: function () {
-                        var baseStart = normalizeTime(state.slotMinTime) || '09:00';
-                        var defaultResource = getVisibleResources().length ? getVisibleResources()[0].id : null;
-                        openBookingDialog({
-                            mode: 'manual',
-                            date: state.selectedDate,
-                            resourceId: defaultResource,
-                            startTime: baseStart,
-                            endTime: addMinutesToTime(baseStart, state.defaultDurationMinutes),
-                        });
-                    },
-                },
+                    customButtons: {
+                        addAppointment: {
+                            text: i18n.addAppointment || 'Add appointment',
+                            click: function () {
+                                var baseStart = normalizeTime(state.slotMinTime) || '09:00';
+                                var defaultResource = getVisibleResources().length ? getVisibleResources()[0].id : null;
+                                openBookingDialog({
+                                    mode: 'manual',
+                                    date: state.selectedDate,
+                                    resourceId: defaultResource,
+                                    startTime: baseStart,
+                                    endTime: addMinutesToTime(baseStart, state.defaultDurationMinutes),
+                                    status: 'pending',
+                                    paymentStatus: '',
+                                    customerId: null,
+                                    customerEmail: '',
+                                    customerPhone: '',
+                                    notes: '',
+                                    internalNote: '',
+                                    sendNotifications: false,
+                                });
+                            },
+                        },
             },
             headerToolbar: {
                 start: 'prev,next today',
@@ -997,6 +1220,60 @@
             });
         }
 
+        if (bookingDateInput) {
+            bookingDateInput.addEventListener('change', function () {
+                bookingContext.date = toDateString(bookingDateInput.value) || bookingContext.date;
+            });
+        }
+
+        if (bookingCustomer) {
+            bookingCustomer.addEventListener('change', function () {
+                bookingContext.customerId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+            });
+        }
+
+        if (bookingStatus) {
+            bookingStatus.addEventListener('change', function () {
+                bookingContext.status = bookingStatus.value || 'pending';
+            });
+        }
+
+        if (bookingPayment) {
+            bookingPayment.addEventListener('change', function () {
+                bookingContext.paymentStatus = bookingPayment.value || '';
+            });
+        }
+
+        if (bookingCustomerEmail) {
+            bookingCustomerEmail.addEventListener('change', function () {
+                bookingContext.customerEmail = bookingCustomerEmail.value || '';
+            });
+        }
+
+        if (bookingCustomerPhone) {
+            bookingCustomerPhone.addEventListener('change', function () {
+                bookingContext.customerPhone = bookingCustomerPhone.value || '';
+            });
+        }
+
+        if (bookingInternalNote) {
+            bookingInternalNote.addEventListener('change', function () {
+                bookingContext.internalNote = bookingInternalNote.value || '';
+            });
+        }
+
+        if (bookingNote) {
+            bookingNote.addEventListener('change', function () {
+                bookingContext.notes = bookingNote.value || '';
+            });
+        }
+
+        if (bookingNotify) {
+            bookingNotify.addEventListener('change', function () {
+                bookingContext.sendNotifications = !!bookingNotify.checked;
+            });
+        }
+
         if (bookingResource) {
             bookingResource.addEventListener('change', function () {
                 bookingContext.resourceId = bookingResource.value ? parseInt(bookingResource.value, 10) : null;
@@ -1031,6 +1308,12 @@
                     event.preventDefault();
                 }
                 closeBookingDialog();
+            });
+
+            bookingDialog.addEventListener('close', function () {
+                bookingDialog.removeAttribute('open');
+                bookingDialog.setAttribute('hidden', 'hidden');
+                bookingDialog.hidden = true;
             });
         }
 
