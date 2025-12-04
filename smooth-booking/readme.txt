@@ -4,7 +4,7 @@ Tags: booking, appointments, scheduling
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 8.1
-Stable tag: 0.18.5
+Stable tag: 0.18.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Administrators can now configure per-location holidays from a yearly calendar, i
 Administrators gain a dedicated **Locations** workspace to capture physical or virtual venues with media-powered profile images, address/phone/email/website fields, industry selection, event toggles, company details, and soft delete/restore workflows powering business hours, holidays, REST, and CLI automation.
 Administrators can assign employees to one or more locations, toggle service availability with custom price overrides, and configure per-day working hours with optional breaks directly inside the Employees drawer.
 Administrators can manage booking-related email notifications, choose recipients, restrict by services, attach ICS files, and design HTML/Text content with placeholder codes. Email delivery preferences are configurable under **Smooth Booking → Settings → Email**, including SMTP credentials, retry periods, and test-sending.
-Administrators gain a dedicated **Calendar** view under **Smooth Booking → Calendar** to inspect each location's day-at-a-glance schedule using an EventCalendar-powered day view. The screen defaults to today's bookings, renders employee resources as columns, applies service colours to every appointment, offers lightweight location and date filters so teams can jump between venues without losing context, and exposes **Resources**/**Timeline** view buttons inspired by the `calforsb.html` demo. Employee and service filters are Select2-enhanced from CDN assets while gracefully falling back to native multi-selects when unavailable.
+Administrators gain a dedicated **Calendar** view under **Smooth Booking → Calendar** to inspect each location's day-at-a-glance schedule using an EventCalendar-powered day view. The screen defaults to today's bookings, renders employee resources as columns, applies service colours to every appointment, offers lightweight location and date filters so teams can jump between venues without losing context, and exposes **Resources**/**Timeline** view buttons inspired by the `calforsb.html` demo. Employee and service filters are Select2-enhanced with branded placeholders and chips, gracefully falling back to native multi-selects when assets are unavailable.
 
 == Installation ==
 1. Upload the `smooth-booking` folder to the `/wp-content/plugins/` directory or install via Composer.
