@@ -220,7 +220,13 @@ class CalendarPage {
                     </label>
                     <label>
                         <span><?php echo esc_html__( 'Employees', 'smooth-booking' ); ?></span>
-                        <select name="resource_filter[]" id="smooth-booking-resource-filter" multiple="multiple">
+                        <select
+                            name="resource_filter[]"
+                            id="smooth-booking-resource-filter"
+                            multiple="multiple"
+                            data-placeholder="<?php echo esc_attr__( 'All employees', 'smooth-booking' ); ?>"
+                            data-close-on-select="false"
+                        >
                             <?php foreach ( $resources as $resource ) : ?>
                                 <?php if ( empty( $resource['id'] ) ) { continue; } ?>
                                 <option value="<?php echo esc_attr( (string) $resource['id'] ); ?>"><?php echo esc_html( $resource['title'] ?? '' ); ?></option>
@@ -229,9 +235,15 @@ class CalendarPage {
                     </label>
                     <label>
                         <span><?php echo esc_html__( 'Services', 'smooth-booking' ); ?></span>
-                        <select id="smooth-booking-service-filter" multiple="multiple"></select>
+                        <select
+                            name="service_filter[]"
+                            id="smooth-booking-service-filter"
+                            multiple="multiple"
+                            data-placeholder="<?php echo esc_attr__( 'All services', 'smooth-booking' ); ?>"
+                            data-close-on-select="false"
+                        ></select>
                     </label>
-                    <button type="submit" class="button button-primary"><?php echo esc_html__( 'Show day', 'smooth-booking' ); ?></button>
+                    <button type="submit" class="sba-btn sba-btn--primary sba-btn__medium smooth-booking-calendar-submit"><?php echo esc_html__( 'Show day', 'smooth-booking' ); ?></button>
                 </form>
 
                 <?php if ( is_wp_error( $schedule_result ) ) : ?>

@@ -291,9 +291,15 @@
             dropdownParent = select.closest('.smooth-booking-calendar-dialog') || select.closest('dialog');
         }
 
+        var dataset = select.dataset || {};
         var select2Options = {
-            width: 'resolve',
-            dropdownAutoWidth: true,
+            width: '100%',
+            dropdownAutoWidth: false,
+            placeholder: dataset.placeholder || '',
+            closeOnSelect: dataset.closeOnSelect ? dataset.closeOnSelect === 'true' : !select.multiple,
+            allowClear: dataset.allowClear === 'true' || !select.multiple,
+            selectionCssClass: 'smooth-booking-calendar-select2',
+            dropdownCssClass: 'smooth-booking-calendar-select2__dropdown',
         };
 
         if (dropdownParent) {

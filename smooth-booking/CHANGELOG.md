@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.6] - 2026-04-12
+### Fixed
+- Restyled calendar employee and service filters to consistently render Select2-powered multi-select dropdowns with plugin-branded tokens and placeholders instead of legacy HTML list boxes, and aligned the submit control with standard Smooth Booking button sizing.
+
 # [0.18.5] - 2026-04-01
 ### Fixed
 - Eliminated missing font requests in the admin calendar by sourcing Inter and Material Icons from Google-hosted stylesheets instead of nonexistent local assets.
