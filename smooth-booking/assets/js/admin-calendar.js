@@ -675,14 +675,43 @@
                 return;
             }
 
-            var startValue = bookingStart.value || bookingContext.startTime;
+            var startValue = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
             var duration = getServiceDurationMinutes(bookingService ? bookingService.value : null);
 
             if (!startValue || Number.isNaN(duration)) {
                 return;
             }
 
-            bookingEnd.value = addMinutesToTime(startValue, duration);
+            var nextEnd = addMinutesToTime(startValue, duration);
+            bookingEnd.value = nextEnd;
+            bookingContext.endTime = nextEnd;
+        }
+
+        /**
+         * Update the start time when the end time changes to preserve duration.
+         */
+        function syncBookingStartTime() {
+            if (!bookingStart || !bookingEnd) {
+                return;
+            }
+
+            var endValue = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
+            var duration = getServiceDurationMinutes(bookingService ? bookingService.value : null);
+
+            if (!endValue || Number.isNaN(duration)) {
+                return;
+            }
+
+            var parts = endValue.split(':');
+            var hours = parseInt(parts[0], 10) || 0;
+            var minutes = parseInt(parts[1], 10) || 0;
+            var date = new Date();
+            date.setHours(hours);
+            date.setMinutes(minutes - duration);
+
+            var nextStart = formatTime(date);
+            bookingStart.value = nextStart;
+            bookingContext.startTime = nextStart;
         }
 
         /**
@@ -747,6 +776,7 @@
 
             if (bookingStart) {
                 bookingStart.value = bookingContext.startTime || normalizeTime(state.slotMinTime);
+                bookingContext.startTime = bookingStart.value;
             }
 
             if (bookingEnd) {
@@ -756,6 +786,7 @@
                     nextEnd = addMinutesToTime(bookingContext.startTime || normalizeTime(state.slotMinTime), serviceDuration);
                 }
                 bookingEnd.value = nextEnd;
+                bookingContext.endTime = nextEnd;
             }
 
             if (bookingStatus) {
@@ -806,13 +837,17 @@
                 return;
             }
 
-            if (typeof bookingDialog.close === 'function' && bookingDialog.open) {
+            if (typeof bookingDialog.close === 'function') {
                 bookingDialog.close();
             }
 
             bookingDialog.removeAttribute('open');
             bookingDialog.setAttribute('hidden', 'hidden');
             bookingDialog.hidden = true;
+
+            if (bookingForm && typeof bookingForm.reset === 'function') {
+                bookingForm.reset();
+            }
         }
 
         /**
@@ -1029,6 +1064,17 @@
                 return;
             }
 
+            if (bookingStart) {
+                bookingContext.startTime = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
+                bookingStart.value = bookingContext.startTime;
+            }
+
+            if (bookingEnd) {
+                bookingContext.endTime = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
+            }
+
+            syncBookingEndTime();
+
             var providerId = bookingResource ? parseInt(bookingResource.value, 10) : 0;
             var serviceId = bookingService ? parseInt(bookingService.value, 10) : 0;
             var customerId = bookingCustomer ? parseInt(bookingCustomer.value, 10) : 0;
@@ -1229,6 +1275,13 @@
             bookingService.addEventListener('change', function () {
                 bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
                 syncBookingEndTime();
+            });
+        }
+
+        if (bookingEnd) {
+            bookingEnd.addEventListener('change', function () {
+                bookingContext.endTime = bookingEnd.value;
+                syncBookingStartTime();
             });
         }
 
