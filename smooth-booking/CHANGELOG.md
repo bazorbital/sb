@@ -5,6 +5,8 @@ All notable changes to Smooth Booking will be documented here.
 # [0.18.3] - 2026-03-15
 ### Fixed
 - Scoped calendar booking dialog Select2 dropdowns to the modal container so they open reliably and expose the full service list inside the dialog.
+- Restored close affordances on the calendar booking dialog so the header X, Cancel button, and native dialog dismissal hide the form consistently and reset its fields.
+- Synced booking start/end fields with the selected service duration on every change and normalised booking submissions to reach the appointments REST endpoint again.
 
 # [0.18.2] - 2026-03-10
 ### Added
