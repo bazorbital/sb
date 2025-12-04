@@ -285,14 +285,26 @@
         }
 
         var $select = window.jQuery(select);
+        var dropdownParent = null;
+
+        if (typeof select.closest === 'function') {
+            dropdownParent = select.closest('.smooth-booking-calendar-dialog') || select.closest('dialog');
+        }
+
+        var select2Options = {
+            width: 'resolve',
+            dropdownAutoWidth: true,
+        };
+
+        if (dropdownParent) {
+            select2Options.dropdownParent = window.jQuery(dropdownParent);
+        }
+
         if ($select.hasClass('select2-hidden-accessible')) {
             $select.select2('destroy');
         }
 
-        $select.select2({
-            width: 'resolve',
-            dropdownAutoWidth: true,
-        });
+        $select.select2(select2Options);
     }
 
     /**

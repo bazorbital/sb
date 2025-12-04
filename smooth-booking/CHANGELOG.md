@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.3] - 2026-03-15
+### Fixed
+- Scoped calendar booking dialog Select2 dropdowns to the modal container so they open reliably and expose the full service list inside the dialog.
+
 # [0.18.2] - 2026-03-10
 ### Added
 - Calendar header now includes an **Add appointment** button and booking dialog styled after the `calforsb.html` reference, posting directly to the appointments REST endpoint.
