@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.5] - 2026-04-01
+### Fixed
+- Eliminated missing font requests in the admin calendar by sourcing Inter and Material Icons from Google-hosted stylesheets instead of nonexistent local assets.
+- Cleared Select2-generated `aria-hidden` flags on focused calendar filters and booking form fields to satisfy accessibility expectations inside the booking dialog.
+
 # [0.18.4] - 2026-03-20
 ### Fixed
 - Guarded calendar REST requests and customer lookups with abortable fetch handling so rapid filter changes or dialog reuse no longer leave pending promises that surface asynchronous listener errors in the browser console.
