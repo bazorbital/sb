@@ -305,6 +305,10 @@
         }
 
         $select.select2(select2Options);
+
+        if ($select.attr('aria-hidden')) {
+            $select.attr('aria-hidden', 'false');
+        }
     }
 
     /**
