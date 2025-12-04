@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.4] - 2026-03-20
+### Fixed
+- Guarded calendar REST requests and customer lookups with abortable fetch handling so rapid filter changes or dialog reuse no longer leave pending promises that surface asynchronous listener errors in the browser console.
+
 # [0.18.3] - 2026-03-15
 ### Fixed
 - Scoped calendar booking dialog Select2 dropdowns to the modal container so they open reliably and expose the full service list inside the dialog.

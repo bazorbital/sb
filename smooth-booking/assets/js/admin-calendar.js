@@ -440,6 +440,8 @@
         };
 
         var bookingContext = Object.assign({}, bookingDefaults);
+        var scheduleAbortController = null;
+        var customersAbortController = null;
 
         if (!state.locationId && locationSelect && locationSelect.value) {
             state.locationId = parseInt(locationSelect.value, 10) || null;
@@ -636,19 +638,29 @@
                 return;
             }
 
+            if (customersAbortController && typeof customersAbortController.abort === 'function') {
+                customersAbortController.abort();
+            }
+
+            customersAbortController = typeof AbortController === 'function' ? new AbortController() : null;
+
             fetch(config.customersEndpoint + '?per_page=100', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
                     'X-WP-Nonce': config.nonce || '',
                 },
+                signal: customersAbortController && customersAbortController.signal ? customersAbortController.signal : undefined,
             })
                 .then(function (response) { return response.json(); })
                 .then(function (body) {
                     state.customers = ensureArray(body && (body.customers || body));
                     populateBookingCustomers(selectedId || null);
                 })
-                .catch(function () {
+                .catch(function (error) {
+                    if (error && error.name === 'AbortError') {
+                        return;
+                    }
                     populateBookingCustomers(selectedId || null);
                 });
         }
@@ -905,6 +917,12 @@
                 return;
             }
 
+            if (scheduleAbortController && typeof scheduleAbortController.abort === 'function') {
+                scheduleAbortController.abort();
+            }
+
+            scheduleAbortController = typeof AbortController === 'function' ? new AbortController() : null;
+
             var params = new URLSearchParams();
             var requestedDate = toDateString((fetchInfo && fetchInfo.startStr) || state.selectedDate || new Date());
             params.set('date', requestedDate);
@@ -926,6 +944,7 @@
                     'Accept': 'application/json',
                     'X-WP-Nonce': config.nonce || '',
                 },
+                signal: scheduleAbortController && scheduleAbortController.signal ? scheduleAbortController.signal : undefined,
             })
                 .then(function (response) {
                     if (!response.ok) {
@@ -969,6 +988,9 @@
                     success(filteredEvents);
                 })
                 .catch(function (error) {
+                    if (error && error.name === 'AbortError') {
+                        return;
+                    }
                     if (window.console && typeof window.console.error === 'function') {
                         window.console.error('Calendar schedule failed', error);
                     }
