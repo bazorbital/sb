@@ -502,6 +502,8 @@
             enhanceSelect(serviceFilter);
         }
 
+        refreshServiceFilter();
+
         /**
          * Retrieve a resource by id.
          *

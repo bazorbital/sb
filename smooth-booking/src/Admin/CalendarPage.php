@@ -223,9 +223,11 @@ class CalendarPage {
                         <select
                             name="resource_filter[]"
                             id="smooth-booking-resource-filter"
+                            class="smooth-booking-select2"
                             multiple="multiple"
                             data-placeholder="<?php echo esc_attr__( 'All employees', 'smooth-booking' ); ?>"
                             data-close-on-select="false"
+                            data-allow-clear="true"
                         >
                             <?php foreach ( $resources as $resource ) : ?>
                                 <?php if ( empty( $resource['id'] ) ) { continue; } ?>
@@ -238,9 +240,11 @@ class CalendarPage {
                         <select
                             name="service_filter[]"
                             id="smooth-booking-service-filter"
+                            class="smooth-booking-select2"
                             multiple="multiple"
                             data-placeholder="<?php echo esc_attr__( 'All services', 'smooth-booking' ); ?>"
                             data-close-on-select="false"
+                            data-allow-clear="true"
                         ></select>
                     </label>
                     <button type="submit" class="sba-btn sba-btn--primary sba-btn__medium smooth-booking-calendar-submit"><?php echo esc_html__( 'Show day', 'smooth-booking' ); ?></button>
