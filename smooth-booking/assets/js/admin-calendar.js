@@ -708,12 +708,15 @@
 
             var startValue = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
-
+			console.log("duration");
+			console.log(duration);
             if (!startValue || Number.isNaN(duration)) {
                 return;
             }
 
             var nextEnd = addMinutesToTime(startValue, duration);
+			console.log("nextEnd");
+			console.log(nextEnd);
             bookingEnd.value = nextEnd;
             bookingContext.endTime = nextEnd;
         }
@@ -728,7 +731,8 @@
 
             var endValue = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
-
+			console.log("duration");
+			console.log(duration);
             if (!endValue || Number.isNaN(duration)) {
                 return;
             }
@@ -741,6 +745,8 @@
             date.setMinutes(minutes - duration);
 
             var nextStart = formatTime(date);
+			console.log("nextStart");
+			console.log(nextStart);
             bookingStart.value = nextStart;
             bookingContext.startTime = nextStart;
         }
