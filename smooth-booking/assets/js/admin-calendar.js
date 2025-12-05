@@ -533,7 +533,14 @@
             }
 
             var key = typeof serviceId === 'string' ? serviceId : String(serviceId);
-            var template = state.services[key] || state.services[parseInt(serviceId, 10)];
+            var numericId = parseInt(serviceId, 10);
+            var template = state.services[key] || state.services[numericId];
+
+            if (!template && Array.isArray(state.services)) {
+                template = state.services.find(function (item) {
+                    return item && parseInt(item.id, 10) === numericId;
+                }) || null;
+            }
 
             if (template && typeof template.durationMinutes !== 'undefined') {
                 var minutes = parseInt(template.durationMinutes, 10);
@@ -700,7 +707,7 @@
             }
 
             var startValue = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
-            var duration = getServiceDurationMinutes(bookingService ? bookingService.value : null);
+            var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
 
             if (!startValue || Number.isNaN(duration)) {
                 return;
@@ -720,7 +727,7 @@
             }
 
             var endValue = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
-            var duration = getServiceDurationMinutes(bookingService ? bookingService.value : null);
+            var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
 
             if (!endValue || Number.isNaN(duration)) {
                 return;
