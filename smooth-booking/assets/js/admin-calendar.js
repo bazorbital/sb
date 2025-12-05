@@ -708,6 +708,7 @@
 
             var startValue = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
+
 			console.log("duration");
 			console.log(duration);
             if (!startValue || Number.isNaN(duration)) {
@@ -731,6 +732,7 @@
 
             var endValue = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
+
 			console.log("duration");
 			console.log(duration);
             if (!endValue || Number.isNaN(duration)) {
@@ -1312,9 +1314,11 @@
         }
 
         if (bookingStart) {
-            bookingStart.addEventListener('change', function () {
-                bookingContext.startTime = bookingStart.value;
-                syncBookingEndTime();
+            ['change', 'input'].forEach(function (eventName) {
+                bookingStart.addEventListener(eventName, function () {
+                    bookingContext.startTime = bookingStart.value;
+                    syncBookingEndTime();
+                });
             });
         }
 
@@ -1323,12 +1327,21 @@
                 bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
                 syncBookingEndTime();
             });
+
+            if (window.jQuery && typeof window.jQuery.fn.select2 === 'function') {
+                window.jQuery(bookingService).on('select2:select select2:clear', function () {
+                    bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
+                    syncBookingEndTime();
+                });
+            }
         }
 
         if (bookingEnd) {
-            bookingEnd.addEventListener('change', function () {
-                bookingContext.endTime = bookingEnd.value;
-                syncBookingStartTime();
+            ['change', 'input'].forEach(function (eventName) {
+                bookingEnd.addEventListener(eventName, function () {
+                    bookingContext.endTime = bookingEnd.value;
+                    syncBookingStartTime();
+                });
             });
         }
 
@@ -1432,6 +1445,9 @@
         if (bookingForm) {
             bookingForm.addEventListener('submit', onBookingSubmit);
         }
+
+        syncBookingEndTime();
+        syncBookingStartTime();
 
         renderEmptyState(calendarWrapper, ensureArray(state.bootstrapEvents).length > 0 || data.hasEvents);
     });
