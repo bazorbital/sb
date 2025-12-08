@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.13] - 2026-06-20
+### Fixed
+- Calendar admin timeline now derives its slot duration from the configured default, so 15-minute or other intervals display correctly even when the REST payload omits an explicit duration.
+
 # [0.18.12] - 2026-06-19
 ### Fixed
 - Calendar slot rendering now honours **Settings → General → Default time slot length**, adjusting the timeline grid to match 15-minute or other configured intervals.

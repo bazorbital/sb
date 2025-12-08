@@ -188,6 +188,7 @@ class CalendarPage {
                 'closeTime'       => $close_time instanceof DateTimeImmutable ? $close_time->format( 'H:i:s' ) : null,
                 'scrollTime'      => $view_window['scrollTime'] ?? $open_time->format( 'H:i:s' ),
                 'slotDuration'    => $this->calendar->format_slot_duration( $slot_length ),
+                'slotLengthMinutes' => $slot_length,
                 'slotMinTime'     => $view_window['slotMinTime'] ?? '06:00:00',
                 'slotMaxTime'     => $view_window['slotMaxTime'] ?? '22:00:00',
                 'locale'          => $this->get_locale_code(),
