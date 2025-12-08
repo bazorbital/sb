@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.11] - 2026-06-18
+### Fixed
+- Calendar modal submissions now target `admin-post.php` so non-JavaScript saves create appointments just like the Appointments screen.
+- Added debug log entries for calendar modal submissions (including payload context) governed by **Settings → General → Enable debug logging**.
+
 # [0.18.10] - 2026-06-15
 ### Fixed
 - Added a secure non-JS fallback for calendar modal submissions so Save Appointment posts create bookings via the appointments service, surfaces notices on return, and respects the debug logging toggle.

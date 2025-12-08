@@ -288,7 +288,12 @@ class CalendarPage {
                 </div>
 
                 <dialog id="smooth-booking-calendar-dialog" class="smooth-booking-calendar-dialog" hidden>
-                    <form id="smooth-booking-calendar-booking-form" class="smooth-booking-calendar-dialog__form" method="post">
+                    <form
+                        id="smooth-booking-calendar-booking-form"
+                        class="smooth-booking-calendar-dialog__form"
+                        method="post"
+                        action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+                    >
                         <input type="hidden" name="action" value="smooth_booking_save_calendar_booking" />
                         <?php wp_nonce_field( 'smooth-booking-calendar-booking', 'smooth_booking_calendar_nonce' ); ?>
                         <header class="smooth-booking-calendar-dialog__header">
@@ -424,6 +429,17 @@ class CalendarPage {
             'customer_email'     => isset( $_POST['booking-customer-email'] ) ? sanitize_email( wp_unslash( (string) $_POST['booking-customer-email'] ) ) : '',
             'customer_phone'     => isset( $_POST['booking-customer-phone'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['booking-customer-phone'] ) ) : '',
         ];
+
+        $this->logger->info(
+            sprintf(
+                'Calendar modal submission received (provider #%d, service #%d, date %s %s, customer #%d).',
+                $payload['provider_id'],
+                $payload['service_id'],
+                $payload['appointment_date'],
+                $payload['appointment_start'],
+                $payload['customer_id']
+            )
+        );
 
         $result = $this->appointments->create_appointment( $payload );
 
