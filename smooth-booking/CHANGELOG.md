@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.7] - 2026-05-20
+### Fixed
+- Saving an appointment from the calendar dialog now reuses the appointments endpoint reliably, shows a success notice, and refreshes the grid so the newly created booking appears immediately.
+
 # [0.18.6] - 2026-04-12
 ### Fixed
 - Restyled calendar employee and service filters to consistently render Select2-powered multi-select dropdowns with plugin-branded tokens and placeholders instead of legacy HTML list boxes, and aligned the submit control with standard Smooth Booking button sizing.

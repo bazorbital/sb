@@ -454,6 +454,7 @@ class CalendarPage {
                 'bookingValidation' => __( 'Please choose a staff member, service, start, and end time.', 'smooth-booking' ),
                 'bookingEndpointMissing' => __( 'Booking endpoint is unavailable. Please reload the page.', 'smooth-booking' ),
                 'bookingSaveError'  => __( 'Unable to save appointment. Please try again.', 'smooth-booking' ),
+                'bookingSaved'      => __( 'Appointment saved successfully.', 'smooth-booking' ),
             ],
         ];
 
