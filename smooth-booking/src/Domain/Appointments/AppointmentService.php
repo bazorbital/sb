@@ -296,15 +296,15 @@ class AppointmentService {
      * @return array<string, mixed>|WP_Error
      */
     private function validate_payload( array $data, ?Appointment $existing = null ) {
-        $provider_id  = isset( $data['provider_id'] ) ? absint( $data['provider_id'] ) : 0;
-        $service_id   = isset( $data['service_id'] ) ? absint( $data['service_id'] ) : 0;
-        $customer_id  = isset( $data['customer_id'] ) ? absint( $data['customer_id'] ) : 0;
+        $provider_id  = isset( $data['provider_id'] ) ? absint( $data['provider_id'] ) : ( $existing ? ( $existing->get_employee_id() ?? 0 ) : 0 );
+        $service_id   = isset( $data['service_id'] ) ? absint( $data['service_id'] ) : ( $existing ? ( $existing->get_service_id() ?? 0 ) : 0 );
+        $customer_id  = isset( $data['customer_id'] ) ? absint( $data['customer_id'] ) : ( $existing ? ( $existing->get_customer_id() ?? 0 ) : 0 );
         $status       = isset( $data['status'] ) ? sanitize_key( $data['status'] ) : ( $existing ? $existing->get_status() : 'pending' );
         $payment      = isset( $data['payment_status'] ) ? sanitize_key( $data['payment_status'] ) : ( $existing ? ( $existing->get_payment_status() ?? '' ) : '' );
         $notes        = isset( $data['notes'] ) ? sanitize_textarea_field( $data['notes'] ) : ( $existing ? ( $existing->get_notes() ?? '' ) : '' );
         $internal     = isset( $data['internal_note'] ) ? sanitize_textarea_field( $data['internal_note'] ) : ( $existing ? ( $existing->get_internal_note() ?? '' ) : '' );
-        $notify       = ! empty( $data['send_notifications'] );
-        $repeat       = ! empty( $data['is_recurring'] );
+        $notify       = isset( $data['send_notifications'] ) ? (bool) $data['send_notifications'] : ( $existing ? $existing->should_notify() : false );
+        $repeat       = isset( $data['is_recurring'] ) ? (bool) $data['is_recurring'] : ( $existing ? $existing->is_recurring() : false );
         $total_amount = isset( $data['total_amount'] ) ? (float) $data['total_amount'] : ( $existing && null !== $existing->get_total_amount() ? (float) $existing->get_total_amount() : null );
         $currency     = isset( $data['currency'] ) ? sanitize_text_field( $data['currency'] ) : ( $existing ? $existing->get_currency() : ( get_option( 'woocommerce_currency' ) ?: 'HUF' ) );
 
@@ -344,7 +344,9 @@ class AppointmentService {
             return new WP_Error( 'smooth_booking_invalid_period', __( 'The end time must be after the start time.', 'smooth-booking' ) );
         }
 
-        $customer_email = isset( $data['customer_email'] ) ? sanitize_email( $data['customer_email'] ) : '';
+        $customer_email = isset( $data['customer_email'] )
+            ? sanitize_email( $data['customer_email'] )
+            : ( $existing ? ( $existing->get_customer_email() ?? '' ) : '' );
 
         if ( $customer_email && ! is_email( $customer_email ) ) {
             return new WP_Error( 'smooth_booking_invalid_email', __( 'The provided customer email address is invalid.', 'smooth-booking' ) );
@@ -368,7 +370,9 @@ class AppointmentService {
             'service_id'      => $service_id,
             'customer_id'     => $customer_id ?: null,
             'customer_email'  => $customer_email ?: null,
-            'customer_phone'  => isset( $data['customer_phone'] ) ? sanitize_text_field( $data['customer_phone'] ) : null,
+            'customer_phone'  => isset( $data['customer_phone'] )
+                ? sanitize_text_field( $data['customer_phone'] )
+                : ( $existing ? ( $existing->get_customer_phone() ?? null ) : null ),
             'status'          => $normalized_status,
             'payment_status'  => $normalized_payment,
             'notes'           => $notes ?: null,

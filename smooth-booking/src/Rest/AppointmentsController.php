@@ -198,7 +198,7 @@ class AppointmentsController {
      */
     public function update_appointment( WP_REST_Request $request ): WP_REST_Response {
         $appointment_id = (int) $request['id'];
-        $data           = $this->extract_payload( $request );
+        $data           = $this->extract_payload( $request, true );
 
         $result = $this->service->update_appointment( $appointment_id, $data );
 
@@ -265,26 +265,45 @@ class AppointmentsController {
     /**
      * Extract payload from request.
      *
-     * @param WP_REST_Request $request REST request instance.
+     * @param WP_REST_Request $request       REST request instance.
+     * @param bool            $allow_partial Whether missing fields should be skipped for merge operations.
      *
      * @return array<string, mixed> Sanitised appointment data used by the service layer.
      */
-    private function extract_payload( WP_REST_Request $request ): array {
-        return [
-            'provider_id'        => (int) $request->get_param( 'provider_id' ),
-            'service_id'         => (int) $request->get_param( 'service_id' ),
-            'customer_id'        => (int) $request->get_param( 'customer_id' ),
-            'appointment_date'   => sanitize_text_field( (string) $request->get_param( 'appointment_date' ) ),
-            'appointment_start'  => sanitize_text_field( (string) $request->get_param( 'appointment_start' ) ),
-            'appointment_end'    => sanitize_text_field( (string) $request->get_param( 'appointment_end' ) ),
-            'notes'              => sanitize_textarea_field( (string) $request->get_param( 'notes' ) ),
-            'internal_note'      => sanitize_textarea_field( (string) $request->get_param( 'internal_note' ) ),
-            'status'             => sanitize_key( (string) $request->get_param( 'status' ) ),
-            'payment_status'     => sanitize_key( (string) $request->get_param( 'payment_status' ) ),
-            'send_notifications' => rest_sanitize_boolean( $request->get_param( 'send_notifications' ) ),
-            'is_recurring'       => rest_sanitize_boolean( $request->get_param( 'is_recurring' ) ),
-            'customer_email'     => sanitize_email( (string) $request->get_param( 'customer_email' ) ),
-            'customer_phone'     => sanitize_text_field( (string) $request->get_param( 'customer_phone' ) ),
+    private function extract_payload( WP_REST_Request $request, bool $allow_partial = false ): array {
+        $payload = [];
+
+        $fields = [
+            'provider_id'       => static fn( $value ) => (int) $value,
+            'service_id'        => static fn( $value ) => (int) $value,
+            'customer_id'       => static fn( $value ) => (int) $value,
+            'appointment_date'  => static fn( $value ) => sanitize_text_field( (string) $value ),
+            'appointment_start' => static fn( $value ) => sanitize_text_field( (string) $value ),
+            'appointment_end'   => static fn( $value ) => sanitize_text_field( (string) $value ),
+            'notes'             => static fn( $value ) => sanitize_textarea_field( (string) $value ),
+            'internal_note'     => static fn( $value ) => sanitize_textarea_field( (string) $value ),
+            'status'            => static fn( $value ) => sanitize_key( (string) $value ),
+            'payment_status'    => static fn( $value ) => sanitize_key( (string) $value ),
+            'customer_email'    => static fn( $value ) => sanitize_email( (string) $value ),
+            'customer_phone'    => static fn( $value ) => sanitize_text_field( (string) $value ),
         ];
+
+        foreach ( $fields as $field => $sanitizer ) {
+            if ( $allow_partial && ! $request->has_param( $field ) ) {
+                continue;
+            }
+
+            $payload[ $field ] = $sanitizer( $request->get_param( $field ) );
+        }
+
+        if ( ! $allow_partial || $request->has_param( 'send_notifications' ) ) {
+            $payload['send_notifications'] = rest_sanitize_boolean( $request->get_param( 'send_notifications' ) );
+        }
+
+        if ( ! $allow_partial || $request->has_param( 'is_recurring' ) ) {
+            $payload['is_recurring'] = rest_sanitize_boolean( $request->get_param( 'is_recurring' ) );
+        }
+
+        return $payload;
     }
 }

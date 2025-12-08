@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.17] - 2026-07-05
+### Fixed
+- Drag-and-drop reschedules now reuse existing customer details, notes, and contact information instead of overwriting them with empty values when only the time range and provider change.
+- Calendar event moves persist updated start and end times while keeping the full appointment payload intact across REST updates.
+
 # [0.18.15] - 2026-06-24
 ### Fixed
 - Calendar drag-and-drop now recalculates the appointment end time when the calendar payload omits it, ensuring rescheduled
