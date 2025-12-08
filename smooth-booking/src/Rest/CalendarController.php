@@ -15,6 +15,7 @@ use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
+use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Support\CalendarEventFormatterTrait;
 use WP_Error;
 use WP_REST_Request;
@@ -50,10 +51,13 @@ class CalendarController {
 
     private LocationService $locations;
 
-    public function __construct( CalendarService $calendar, ServiceService $services, LocationService $locations ) {
+    private GeneralSettings $settings;
+
+    public function __construct( CalendarService $calendar, ServiceService $services, LocationService $locations, GeneralSettings $settings ) {
         $this->calendar  = $calendar;
         $this->services  = $services;
         $this->locations = $locations;
+        $this->settings  = $settings;
     }
 
     /**
@@ -126,6 +130,10 @@ class CalendarController {
 
         $service_templates = $this->build_service_templates( $resources );
 
+        $slot_length = isset( $schedule['slot_length'] )
+            ? (int) $schedule['slot_length']
+            : $this->settings->get_time_slot_length();
+
         return rest_ensure_response(
             [
                 'date'           => $selected->setTimezone( $timezone )->format( 'Y-m-d' ),
@@ -138,7 +146,7 @@ class CalendarController {
                 'slotMinTime'    => $view_window['slotMinTime'] ?? '06:00:00',
                 'slotMaxTime'    => $view_window['slotMaxTime'] ?? '22:00:00',
                 'scrollTime'     => $view_window['scrollTime'] ?? '08:00:00',
-                'slotDuration'   => $this->calendar->format_slot_duration( (int) ( $schedule['slot_length'] ?? 30 ) ),
+                'slotDuration'   => $this->calendar->format_slot_duration( $slot_length ),
                 'services'       => $service_templates,
                 'resourceLookup' => $resource_ids,
             ]
