@@ -147,6 +147,7 @@ class CalendarController {
                 'slotMaxTime'    => $view_window['slotMaxTime'] ?? '22:00:00',
                 'scrollTime'     => $view_window['scrollTime'] ?? '08:00:00',
                 'slotDuration'   => $this->calendar->format_slot_duration( $slot_length ),
+                'slotLengthMinutes' => $slot_length,
                 'services'       => $service_templates,
                 'resourceLookup' => $resource_ids,
             ]

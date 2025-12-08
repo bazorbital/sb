@@ -174,6 +174,25 @@
     }
 
     /**
+     * Convert a minute value to a HH:MM:SS duration string.
+     *
+     * @param {number|string} minutes Duration in minutes.
+     * @returns {string}
+     */
+    function minutesToDuration(minutes) {
+        var totalMinutes = parseInt(minutes, 10);
+
+        if (!totalMinutes || totalMinutes < 1) {
+            return '00:30:00';
+        }
+
+        var hours = Math.floor(totalMinutes / 60);
+        var remainder = totalMinutes % 60;
+
+        return String(hours).padStart(2, '0') + ':' + String(remainder).padStart(2, '0') + ':00';
+    }
+
+    /**
      * Build custom EventCalendar event nodes displaying booking meta.
      *
      * @param {Object} arg EventCalendar argument.
@@ -435,7 +454,7 @@
         var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
         var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
 
-        var initialSlotDuration = data.slotDuration || '00:30:00';
+        var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes);
 
         var state = {
             selectedDate: data.selectedDate || toDateString(new Date()),
@@ -994,11 +1013,13 @@
                 viewOptions.resourceTimelineDay.slotMaxTime = payload.slotMaxTime;
             }
 
-            if (payload.slotDuration) {
-                state.slotDuration = payload.slotDuration;
-                state.defaultDurationMinutes = durationToMinutes(payload.slotDuration);
-                calendarInstance.setOption('slotDuration', payload.slotDuration);
-                viewOptions.resourceTimelineDay.slotDuration = payload.slotDuration;
+            var resolvedSlotDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes);
+
+            if (resolvedSlotDuration) {
+                state.slotDuration = resolvedSlotDuration;
+                state.defaultDurationMinutes = durationToMinutes(resolvedSlotDuration);
+                calendarInstance.setOption('slotDuration', resolvedSlotDuration);
+                viewOptions.resourceTimelineDay.slotDuration = resolvedSlotDuration;
             }
 
             if (payload.scrollTime) {
@@ -1068,7 +1089,9 @@
                     state.services = payload.services || {};
                     state.slotMinTime = payload.slotMinTime || state.slotMinTime;
                     state.slotMaxTime = payload.slotMaxTime || state.slotMaxTime;
-                    state.slotDuration = payload.slotDuration || state.slotDuration;
+                    var payloadDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes);
+
+                    state.slotDuration = payloadDuration || state.slotDuration;
                     state.defaultDurationMinutes = durationToMinutes(state.slotDuration);
 
                     populateSelect(resourceFilter, state.resources.map(function (resource) {
