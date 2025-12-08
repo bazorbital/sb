@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.15] - 2026-06-24
+### Fixed
+- Calendar drag-and-drop now recalculates the appointment end time when the calendar payload omits it, ensuring rescheduled
+  bookings persist both the updated start and derived end times in the appointments REST endpoint.
+
 # [0.18.14] - 2026-06-23
 ### Fixed
 - Drag-and-drop moves in the admin calendar now persist the new start/end times and provider to the appointments REST endpoint, ensuring rescheduled bookings keep their updated timings.

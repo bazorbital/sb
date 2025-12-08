@@ -26,6 +26,32 @@
     }
 
     /**
+     * Convert supported values to a Date instance.
+     *
+     * @param {*} value Raw date value.
+     * @returns {Date|null}
+     */
+    function toSafeDate(value) {
+        if (!value) {
+            return null;
+        }
+
+        if (value instanceof Date) {
+            return new Date(value.getTime());
+        }
+
+        if (typeof value === 'string') {
+            var parsed = new Date(value);
+
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Convert value to YYYY-MM-DD string.
      *
      * @param {*} value Date input.
@@ -1448,8 +1474,20 @@
 
             var resourceId = getEventResourceId(event);
             var serviceId = event.extendedProps && event.extendedProps.serviceId ? parseInt(event.extendedProps.serviceId, 10) : null;
-            var startDate = event.start ? new Date(event.start) : null;
-            var endDate = event.end ? new Date(event.end) : startDate;
+            var startDate = toSafeDate(event.start) || toSafeDate(event.startStr);
+            var endDate = toSafeDate(event.end) || toSafeDate(event.endStr);
+
+            if (!endDate && startDate && changeInfo && changeInfo.oldEvent) {
+                var oldStart = toSafeDate(changeInfo.oldEvent.start);
+                var oldEnd = toSafeDate(changeInfo.oldEvent.end);
+
+                if (oldStart && oldEnd) {
+                    var durationMs = oldEnd.getTime() - oldStart.getTime();
+                    if (durationMs > 0) {
+                        endDate = new Date(startDate.getTime() + durationMs);
+                    }
+                }
+            }
 
             var appointmentDate = toDateString(startDate);
             var startValue = normalizeTime(startDate, config.timezone);
