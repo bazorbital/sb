@@ -360,6 +360,49 @@
         }
     }
 
+    /**
+     * Render a notice within the calendar container.
+     *
+     * @param {HTMLElement|null} wrapper Calendar wrapper.
+     * @param {string} message Notice message.
+     * @param {'success'|'error'} [type='success'] Notice type.
+     * @returns {void}
+     */
+    function renderCalendarNotice(wrapper, message, type) {
+        if (!wrapper || !message) {
+            return;
+        }
+
+        var existing = wrapper.querySelector('.smooth-booking-calendar-notice');
+
+        if (existing && existing.parentNode) {
+            existing.parentNode.removeChild(existing);
+        }
+
+        var notice = document.createElement('div');
+        notice.className = 'notice smooth-booking-calendar-notice ' + (type === 'error' ? 'notice-error' : 'notice-success');
+
+        var messageNode = document.createElement('p');
+        messageNode.textContent = message;
+        notice.appendChild(messageNode);
+
+        if (wrapper.firstChild) {
+            wrapper.insertBefore(notice, wrapper.firstChild);
+        } else {
+            wrapper.appendChild(notice);
+        }
+
+        if (window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
+            window.wp.a11y.speak(message);
+        }
+
+        window.setTimeout(function () {
+            if (notice && notice.parentNode) {
+                notice.parentNode.removeChild(notice);
+            }
+        }, 8000);
+    }
+
     ready(function initCalendar() {
         var settings = window.SmoothBookingCalendar || {};
         var data = window.SmoothBookingCalendarData || settings.data || {};
@@ -1214,6 +1257,7 @@
                     'Accept': 'application/json',
                     'X-WP-Nonce': config.nonce || '',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(payload),
             })
                 .then(function (response) {
@@ -1231,9 +1275,19 @@
                     if (calendarInstance) {
                         calendarInstance.refetchEvents();
                     }
+                    renderCalendarNotice(
+                        calendarWrapper,
+                        i18n.bookingSaved || 'Appointment saved successfully.',
+                        'success'
+                    );
                 })
                 .catch(function (error) {
                     setBookingError(error && error.message ? error.message : (i18n.bookingSaveError || 'Unable to save appointment.'));
+                    renderCalendarNotice(
+                        calendarWrapper,
+                        error && error.message ? error.message : (i18n.bookingSaveError || 'Unable to save appointment.'),
+                        'error'
+                    );
                 });
         }
 
