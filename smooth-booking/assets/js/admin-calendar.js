@@ -1657,6 +1657,8 @@
         if (!calendarInstance || typeof calendarInstance.on !== 'function') {
             renderEmptyState(calendarWrapper, false);
             calendarInstance = null;
+
+            return;
         }
 
         calendarInstance.on('datesSet', onDatesSet);
