@@ -597,6 +597,8 @@ class CalendarPage {
                 'bookingEndpointMissing' => __( 'Booking endpoint is unavailable. Please reload the page.', 'smooth-booking' ),
                 'bookingSaveError'  => __( 'Unable to save appointment. Please try again.', 'smooth-booking' ),
                 'bookingSaved'      => __( 'Appointment saved successfully.', 'smooth-booking' ),
+                'bookingMoved'      => __( 'Appointment rescheduled.', 'smooth-booking' ),
+                'bookingMoveError'  => __( 'Unable to move appointment. Please try again.', 'smooth-booking' ),
             ],
         ];
 

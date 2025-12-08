@@ -1378,6 +1378,178 @@
             }
         }
 
+        /**
+         * Resolve the resource identifier for an EventCalendar event.
+         *
+         * @param {Object} event Calendar event.
+         * @returns {number|null}
+         */
+        function getEventResourceId(event) {
+            if (!event) {
+                return null;
+            }
+
+            if (event.getResources && typeof event.getResources === 'function') {
+                var resources = event.getResources();
+                if (Array.isArray(resources) && resources.length > 0 && resources[0].id) {
+                    return parseInt(resources[0].id, 10) || null;
+                }
+            }
+
+            if (event.resource && event.resource.id) {
+                return parseInt(event.resource.id, 10) || null;
+            }
+
+            if (event.resourceIds && event.resourceIds.length > 0) {
+                return parseInt(event.resourceIds[0], 10) || null;
+            }
+
+            if (event.extendedProps && event.extendedProps.resourceId) {
+                return parseInt(event.extendedProps.resourceId, 10) || null;
+            }
+
+            return null;
+        }
+
+        /**
+         * Format a human readable time range label.
+         *
+         * @param {string} startTime Start time (HH:MM).
+         * @param {string} endTime End time (HH:MM).
+         * @returns {string}
+         */
+        function formatTimeRangeLabel(startTime, endTime) {
+            var template = (i18n && i18n.timeRangeTemplate) ? i18n.timeRangeTemplate : '%1$s – %2$s';
+            return template.replace('%1$s', startTime).replace('%2$s', endTime);
+        }
+
+        /**
+         * Persist a moved or resized appointment to the REST API.
+         *
+         * @param {Object} changeInfo Event change payload from EventCalendar.
+         * @returns {void}
+         */
+        function onEventChange(changeInfo) {
+            if (!changeInfo || !changeInfo.event) {
+                return;
+            }
+
+            if (!config.appointmentsEndpoint) {
+                renderCalendarNotice(calendarWrapper, i18n.bookingEndpointMissing || 'Booking endpoint is unavailable. Please reload the page.', 'error');
+                return;
+            }
+
+            var event = changeInfo.event;
+            var appointmentId = event.id ? parseInt(event.id, 10) : null;
+
+            if (!appointmentId && event.extendedProps && event.extendedProps.appointmentId) {
+                appointmentId = parseInt(event.extendedProps.appointmentId, 10);
+            }
+
+            var resourceId = getEventResourceId(event);
+            var serviceId = event.extendedProps && event.extendedProps.serviceId ? parseInt(event.extendedProps.serviceId, 10) : null;
+            var startDate = event.start ? new Date(event.start) : null;
+            var endDate = event.end ? new Date(event.end) : startDate;
+
+            var appointmentDate = toDateString(startDate);
+            var startValue = normalizeTime(startDate, config.timezone);
+            var endValue = normalizeTime(endDate, config.timezone);
+
+            if (!appointmentId || !resourceId || !serviceId || !appointmentDate || !startValue || !endValue) {
+                if (changeInfo && typeof changeInfo.revert === 'function') {
+                    changeInfo.revert();
+                }
+                renderCalendarNotice(calendarWrapper, i18n.bookingMoveError || 'Unable to move appointment. Please try again.', 'error');
+                return;
+            }
+
+            var targetEndpoint = (config.appointmentsEndpoint || '').replace(/\/$/, '') + '/' + appointmentId;
+            var endpointPath = targetEndpoint;
+
+            try {
+                var parsedEndpoint = new URL(targetEndpoint, window.location.origin);
+                endpointPath = parsedEndpoint.pathname + parsedEndpoint.search;
+            } catch (error) {
+                endpointPath = targetEndpoint;
+            }
+
+            var payload = {
+                provider_id: resourceId,
+                service_id: serviceId,
+                appointment_date: appointmentDate,
+                appointment_start: startValue,
+                appointment_end: endValue,
+            };
+
+            var requestPromise;
+            if (window.wp && window.wp.apiFetch) {
+                var apiFetchArgs = {
+                    method: 'POST',
+                    data: payload,
+                };
+
+                if (/^https?:\/\//i.test(targetEndpoint)) {
+                    apiFetchArgs.url = targetEndpoint;
+                } else if (/^\/wp-json\//.test(endpointPath)) {
+                    apiFetchArgs.path = endpointPath.replace(/^\/wp-json/, '');
+                } else {
+                    apiFetchArgs.path = endpointPath;
+                }
+
+                requestPromise = window.wp.apiFetch(apiFetchArgs);
+            } else {
+                requestPromise = fetch(targetEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-WP-Nonce': config.nonce || '',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                }).then(function (response) {
+                    if (!response.ok) {
+                        return response.json().then(function (body) {
+                            var message = body && body.message ? body.message : response.statusText;
+                            throw new Error(message || 'Request failed');
+                        });
+                    }
+
+                    return response.json();
+                });
+            }
+
+            requestPromise
+                .then(function () {
+                    if (event.setExtendedProp) {
+                        event.setExtendedProp('timeRange', formatTimeRangeLabel(startValue, endValue));
+                    } else if (event.extendedProps) {
+                        event.extendedProps.timeRange = formatTimeRangeLabel(startValue, endValue);
+                    }
+
+                    renderCalendarNotice(
+                        calendarWrapper,
+                        i18n.bookingMoved || 'Appointment rescheduled.',
+                        'success'
+                    );
+
+                    if (calendarInstance && typeof calendarInstance.refetchEvents === 'function') {
+                        calendarInstance.refetchEvents();
+                    }
+                })
+                .catch(function (error) {
+                    if (changeInfo && typeof changeInfo.revert === 'function') {
+                        changeInfo.revert();
+                    }
+
+                    renderCalendarNotice(
+                        calendarWrapper,
+                        error && error.message ? error.message : (i18n.bookingMoveError || 'Unable to move appointment. Please try again.'),
+                        'error'
+                    );
+                });
+        }
+
         var calendarInstance = null;
 
         if (target && hasCalendarLibrary) {
@@ -1450,6 +1622,9 @@
         }
 
         calendarInstance.on('datesSet', onDatesSet);
+        calendarInstance.on('eventChange', onEventChange);
+        calendarInstance.on('eventDrop', onEventChange);
+        calendarInstance.on('eventResize', onEventChange);
 
         if (locationSelect) {
             locationSelect.addEventListener('change', onLocationChange);

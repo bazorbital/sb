@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.14] - 2026-06-23
+### Fixed
+- Drag-and-drop moves in the admin calendar now persist the new start/end times and provider to the appointments REST endpoint, ensuring rescheduled bookings keep their updated timings.
+
 # [0.18.13] - 2026-06-20
 ### Fixed
 - Calendar admin timeline now derives its slot duration from the configured default, so 15-minute or other intervals display correctly even when the REST payload omits an explicit duration.
