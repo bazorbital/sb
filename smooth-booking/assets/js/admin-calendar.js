@@ -1522,7 +1522,7 @@
             var requestPromise;
             if (window.wp && window.wp.apiFetch) {
                 var apiFetchArgs = {
-                    method: 'POST',
+                    method: 'PATCH',
                     data: payload,
                 };
 
@@ -1537,7 +1537,7 @@
                 requestPromise = window.wp.apiFetch(apiFetchArgs);
             } else {
                 requestPromise = fetch(targetEndpoint, {
-                    method: 'POST',
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
@@ -1595,6 +1595,10 @@
                 view: 'resourceTimeGridDay',
                 initialDate: state.selectedDate,
                 date: state.selectedDate,
+                editable: true,
+                eventStartEditable: true,
+                eventDurationEditable: true,
+                eventResizableFromStart: true,
                 customButtons: {
                     addAppointment: {
                         text: i18n.addAppointment || 'Add appointment',
@@ -1642,6 +1646,9 @@
                 selectable: true,
                 selectMirror: true,
                 select: onCalendarSelect,
+                eventChange: onEventChange,
+                eventDrop: onEventChange,
+                eventResize: onEventChange,
                 buttonText: {
                     resourceTimeGridDay: i18n.resourcesView || 'Resources',
                     resourceTimelineDay: i18n.timelineView || 'Timeline',

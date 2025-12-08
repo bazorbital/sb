@@ -201,6 +201,20 @@ class AppointmentService {
             return $validated;
         }
 
+        $this->logger->info(
+            sprintf(
+                'Rescheduling appointment #%1$d from %2$s–%3$s (provider #%4$s) to %5$s–%6$s for provider #%7$d, service #%8$d.',
+                $appointment_id,
+                $existing->get_scheduled_start()->format( 'Y-m-d H:i' ),
+                $existing->get_scheduled_end()->format( 'Y-m-d H:i' ),
+                null === $existing->get_employee_id() ? 'n/a' : (string) $existing->get_employee_id(),
+                $validated['scheduled_start']->format( 'Y-m-d H:i' ),
+                $validated['scheduled_end']->format( 'Y-m-d H:i' ),
+                $validated['provider_id'],
+                $validated['service_id']
+            )
+        );
+
         $result = $this->repository->update( $appointment_id, $validated );
 
         if ( is_wp_error( $result ) ) {

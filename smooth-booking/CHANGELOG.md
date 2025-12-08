@@ -234,6 +234,11 @@ All notable changes to Smooth Booking will be documented here.
 - Dedicated admin CSS/JS assets powering tab navigation, provider toggles, color picker initialisation, and media selection for services.
 - PHPUnit coverage for `ServiceService` with in-memory repositories.
 
+## [0.18.16] - 2024-08-30
+### Changed
+- Calendar drag and drop interactions now use editable callbacks and PATCH requests to persist rescheduled appointments immediately.
+- Added debug logging for appointment rescheduling attempts (source, destination, provider, and service) controlled by **Settings → General → Enable debug logging**.
+
 ## [0.3.0] - 2024-07-01
 ### Added
 - Employee profile images with media library selection, removal controls, and avatar previews in the admin list.
