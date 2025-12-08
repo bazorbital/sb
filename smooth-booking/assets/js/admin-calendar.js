@@ -1279,6 +1279,17 @@
                     credentials: 'include',
                     body: JSON.stringify(payload),
                 }).then(function (response) {
+            fetch(config.appointmentsEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-WP-Nonce': config.nonce || '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            })
+                .then(function (response) {
                     if (!response.ok) {
                         return response.json().then(function (body) {
                             var message = body && body.message ? body.message : response.statusText;
