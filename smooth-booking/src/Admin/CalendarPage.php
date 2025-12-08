@@ -275,7 +275,7 @@ class CalendarPage {
                 </div>
 
                 <dialog id="smooth-booking-calendar-dialog" class="smooth-booking-calendar-dialog" hidden>
-                    <form id="smooth-booking-calendar-booking-form" class="smooth-booking-calendar-dialog__form" method="dialog">
+                    <form id="smooth-booking-calendar-booking-form" class="smooth-booking-calendar-dialog__form" method="post">
                         <header class="smooth-booking-calendar-dialog__header">
                             <div>
                                 <p class="smooth-booking-calendar-dialog__eyebrow"><?php echo esc_html__( 'New appointment', 'smooth-booking' ); ?></p>

@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.8] - 2026-06-01
+### Fixed
+- Switched the calendar booking form away from the `dialog` submission method so the Save button now triggers the REST-backed submit handler instead of silently closing without creating an appointment.
+
 # [0.18.7] - 2026-05-20
 ### Fixed
 - Saving an appointment from the calendar dialog now reuses the appointments endpoint reliably, shows a success notice, and refreshes the grid so the newly created booking appears immediately.
