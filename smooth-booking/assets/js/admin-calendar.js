@@ -486,6 +486,7 @@
                 slotMinTime: state.slotMinTime,
                 slotMaxTime: state.slotMaxTime,
                 slotDuration: state.slotDuration,
+                slotLabelInterval: state.slotDuration,
                 resources: ensureArray(state.resources),
             },
         };
@@ -1021,6 +1022,7 @@
                 state.defaultDurationMinutes = durationToMinutes(resolvedSlotDuration);
                 calendarInstance.setOption('slotDuration', resolvedSlotDuration);
                 viewOptions.resourceTimelineDay.slotDuration = resolvedSlotDuration;
+                viewOptions.resourceTimelineDay.slotLabelInterval = resolvedSlotDuration;
             }
 
             if (payload.scrollTime) {
