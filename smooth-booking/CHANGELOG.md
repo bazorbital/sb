@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.12] - 2026-06-19
+### Fixed
+- Calendar slot rendering now honours **Settings → General → Default time slot length**, adjusting the timeline grid to match 15-minute or other configured intervals.
+
 # [0.18.11] - 2026-06-18
 ### Fixed
 - Calendar modal submissions now target `admin-post.php` so non-JavaScript saves create appointments just like the Appointments screen.

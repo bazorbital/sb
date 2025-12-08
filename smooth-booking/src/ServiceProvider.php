@@ -353,6 +353,7 @@ class ServiceProvider {
                 $container->get( CalendarService::class ),
                 $container->get( LocationService::class ),
                 $container->get( ServiceService::class ),
+                $container->get( GeneralSettings::class ),
                 $container->get( Logger::class )
             );
         } );
@@ -361,7 +362,8 @@ class ServiceProvider {
             return new CalendarController(
                 $container->get( CalendarService::class ),
                 $container->get( ServiceService::class ),
-                $container->get( LocationService::class )
+                $container->get( LocationService::class ),
+                $container->get( GeneralSettings::class )
             );
         } );
 

@@ -19,6 +19,7 @@ use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\Service;
 use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Infrastructure\Logging\Logger;
+use SmoothBooking\Infrastructure\Settings\GeneralSettings;
 use SmoothBooking\Support\CalendarEventFormatterTrait;
 use function __;
 use function absint;
@@ -78,13 +79,16 @@ class CalendarPage {
 
     private AppointmentService $appointments;
 
+    private GeneralSettings $settings;
+
     private Logger $logger;
 
-    public function __construct( AppointmentService $appointments, CalendarService $calendar, LocationService $locations, ServiceService $services, Logger $logger ) {
+    public function __construct( AppointmentService $appointments, CalendarService $calendar, LocationService $locations, ServiceService $services, GeneralSettings $settings, Logger $logger ) {
         $this->appointments = $appointments;
         $this->calendar     = $calendar;
         $this->locations    = $locations;
         $this->services     = $services;
+        $this->settings     = $settings;
         $this->logger       = $logger;
     }
 
@@ -125,7 +129,7 @@ class CalendarPage {
         $events            = [];
         $open_time         = $selected_date->setTime( 8, 0 );
         $close_time        = $open_time->add( new DateInterval( 'PT10H' ) );
-        $slot_length       = 30;
+        $slot_length       = $this->settings->get_time_slot_length();
         $is_closed         = false;
         $has_day_events    = false;
         $range_start       = $selected_date->sub( new DateInterval( 'P7D' ) );
