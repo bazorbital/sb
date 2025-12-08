@@ -453,6 +453,53 @@
         var scheduleAbortController = null;
         var customersAbortController = null;
 
+        /**
+         * Refresh booking field references and bind time synchronisation listeners.
+         */
+        function bindBookingFields() {
+            bookingStart = bookingStart || document.getElementById('smooth-booking-calendar-booking-start');
+            bookingEnd = bookingEnd || document.getElementById('smooth-booking-calendar-booking-end');
+            bookingService = bookingService || document.getElementById('smooth-booking-calendar-booking-service');
+
+            var bindTimeInput = function (element, callback) {
+                if (!element || element.dataset.smoothBookingBound === '1') {
+                    return;
+                }
+
+                ['change', 'input'].forEach(function (eventName) {
+                    element.addEventListener(eventName, callback);
+                });
+
+                element.dataset.smoothBookingBound = '1';
+            };
+
+            bindTimeInput(bookingStart, function () {
+                bookingContext.startTime = bookingStart.value;
+                syncBookingEndTime();
+            });
+
+            bindTimeInput(bookingEnd, function () {
+                bookingContext.endTime = bookingEnd.value;
+                syncBookingStartTime();
+            });
+
+            if (bookingService && bookingService.dataset.smoothBookingBound !== '1') {
+                bookingService.addEventListener('change', function () {
+                    bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
+                    syncBookingEndTime();
+                });
+
+                if (window.jQuery && typeof window.jQuery.fn.select2 === 'function') {
+                    window.jQuery(bookingService).on('select2:select select2:clear', function () {
+                        bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
+                        syncBookingEndTime();
+                    });
+                }
+
+                bookingService.dataset.smoothBookingBound = '1';
+            }
+        }
+
         if (!state.locationId && locationSelect && locationSelect.value) {
             state.locationId = parseInt(locationSelect.value, 10) || null;
         }
@@ -702,22 +749,19 @@
          * Update the end time when service or start changes.
          */
         function syncBookingEndTime() {
+            bindBookingFields();
+
             if (!bookingStart || !bookingEnd) {
                 return;
             }
 
             var startValue = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
-
-			console.log("duration");
-			console.log(duration);
             if (!startValue || Number.isNaN(duration)) {
                 return;
             }
 
             var nextEnd = addMinutesToTime(startValue, duration);
-			console.log("nextEnd");
-			console.log(nextEnd);
             bookingEnd.value = nextEnd;
             bookingContext.endTime = nextEnd;
         }
@@ -726,15 +770,14 @@
          * Update the start time when the end time changes to preserve duration.
          */
         function syncBookingStartTime() {
+            bindBookingFields();
+
             if (!bookingStart || !bookingEnd) {
                 return;
             }
 
             var endValue = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
             var duration = getServiceDurationMinutes((bookingService && bookingService.value) || bookingContext.serviceId);
-
-			console.log("duration");
-			console.log(duration);
             if (!endValue || Number.isNaN(duration)) {
                 return;
             }
@@ -747,8 +790,6 @@
             date.setMinutes(minutes - duration);
 
             var nextStart = formatTime(date);
-			console.log("nextStart");
-			console.log(nextStart);
             bookingStart.value = nextStart;
             bookingContext.startTime = nextStart;
         }
@@ -812,6 +853,8 @@
             if (bookingResourceLabel) {
                 bookingResourceLabel.textContent = selectedResource ? (selectedResource.title || '') : '';
             }
+
+            bindBookingFields();
 
             if (bookingStart) {
                 bookingStart.value = bookingContext.startTime || normalizeTime(state.slotMinTime);
@@ -1313,37 +1356,7 @@
             dateInput.addEventListener('change', onDateChange);
         }
 
-        if (bookingStart) {
-            ['change', 'input'].forEach(function (eventName) {
-                bookingStart.addEventListener(eventName, function () {
-                    bookingContext.startTime = bookingStart.value;
-                    syncBookingEndTime();
-                });
-            });
-        }
-
-        if (bookingService) {
-            bookingService.addEventListener('change', function () {
-                bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
-                syncBookingEndTime();
-            });
-
-            if (window.jQuery && typeof window.jQuery.fn.select2 === 'function') {
-                window.jQuery(bookingService).on('select2:select select2:clear', function () {
-                    bookingContext.serviceId = bookingService.value ? parseInt(bookingService.value, 10) : null;
-                    syncBookingEndTime();
-                });
-            }
-        }
-
-        if (bookingEnd) {
-            ['change', 'input'].forEach(function (eventName) {
-                bookingEnd.addEventListener(eventName, function () {
-                    bookingContext.endTime = bookingEnd.value;
-                    syncBookingStartTime();
-                });
-            });
-        }
+        bindBookingFields();
 
         if (bookingDateInput) {
             bookingDateInput.addEventListener('change', function () {
