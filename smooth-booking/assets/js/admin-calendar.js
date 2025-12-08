@@ -408,13 +408,8 @@
         var data = window.SmoothBookingCalendarData || settings.data || {};
         var i18n = settings.i18n || {};
         var target = document.getElementById('smooth-booking-calendar');
-
-        if (!target || typeof EventCalendar === 'undefined' || typeof EventCalendar.create !== 'function') {
-            renderEmptyState(target ? target.closest('.smooth-booking-calendar-board') : null, false);
-            return;
-        }
-
-        var calendarWrapper = target.closest('.smooth-booking-calendar-board');
+        var hasCalendarLibrary = typeof EventCalendar !== 'undefined' && typeof EventCalendar.create === 'function';
+        var calendarWrapper = target ? target.closest('.smooth-booking-calendar-board') : document.querySelector('.smooth-booking-calendar-board');
         var resourceFilter = document.getElementById('smooth-booking-resource-filter');
         var serviceFilter = document.getElementById('smooth-booking-service-filter');
         var locationSelect = document.getElementById('smooth-booking-calendar-location');
@@ -1357,69 +1352,75 @@
             }
         }
 
-        var calendarInstance = EventCalendar.create(target, {
-            view: 'resourceTimeGridDay',
-            initialDate: state.selectedDate,
-            date: state.selectedDate,
-                    customButtons: {
-                        addAppointment: {
-                            text: i18n.addAppointment || 'Add appointment',
-                            click: function () {
-                                var baseStart = normalizeTime(state.slotMinTime) || '09:00';
-                                var defaultResource = getVisibleResources().length ? getVisibleResources()[0].id : null;
-                                openBookingDialog({
-                                    mode: 'manual',
-                                    date: state.selectedDate,
-                                    resourceId: defaultResource,
-                                    startTime: baseStart,
-                                    endTime: addMinutesToTime(baseStart, state.defaultDurationMinutes),
-                                    status: 'pending',
-                                    paymentStatus: '',
-                                    customerId: null,
-                                    customerEmail: '',
-                                    customerPhone: '',
-                                    notes: '',
-                                    internalNote: '',
-                                    sendNotifications: false,
-                                });
-                            },
+        var calendarInstance = null;
+
+        if (target && hasCalendarLibrary) {
+            calendarInstance = EventCalendar.create(target, {
+                view: 'resourceTimeGridDay',
+                initialDate: state.selectedDate,
+                date: state.selectedDate,
+                customButtons: {
+                    addAppointment: {
+                        text: i18n.addAppointment || 'Add appointment',
+                        click: function () {
+                            var baseStart = normalizeTime(state.slotMinTime) || '09:00';
+                            var defaultResource = getVisibleResources().length ? getVisibleResources()[0].id : null;
+                            openBookingDialog({
+                                mode: 'manual',
+                                date: state.selectedDate,
+                                resourceId: defaultResource,
+                                startTime: baseStart,
+                                endTime: addMinutesToTime(baseStart, state.defaultDurationMinutes),
+                                status: 'pending',
+                                paymentStatus: '',
+                                customerId: null,
+                                customerEmail: '',
+                                customerPhone: '',
+                                notes: '',
+                                internalNote: '',
+                                sendNotifications: false,
+                            });
                         },
-            },
-            headerToolbar: {
-                start: 'prev,next today',
-                center: 'title',
-                end: 'resourceTimeGridDay,resourceTimelineDay addAppointment',
-            },
-            timeZone: config.timezone,
-            resources: getVisibleResources(),
-            views: viewOptions,
-            eventSources: [
-                {
-                    events: fetchSchedule,
+                    },
                 },
-            ],
-            nowIndicator: true,
-            locale: config.locale,
-            slotMinTime: state.slotMinTime,
-            slotMaxTime: state.slotMaxTime,
-            slotDuration: state.slotDuration,
-            resourceAreaHeaderContent: i18n.resourceColumn || 'Employees',
-            dayMaxEvents: true,
-            selectable: true,
-            selectMirror: true,
-            select: onCalendarSelect,
-            buttonText: {
-                resourceTimeGridDay: i18n.resourcesView || 'Resources',
-                resourceTimelineDay: i18n.timelineView || 'Timeline',
-            },
-            eventContent: function (arg) {
-                return buildEventContent(arg, i18n);
-            },
-        });
+                headerToolbar: {
+                    start: 'prev,next today',
+                    center: 'title',
+                    end: 'resourceTimeGridDay,resourceTimelineDay addAppointment',
+                },
+                timeZone: config.timezone,
+                resources: getVisibleResources(),
+                views: viewOptions,
+                eventSources: [
+                    {
+                        events: fetchSchedule,
+                    },
+                ],
+                nowIndicator: true,
+                locale: config.locale,
+                slotMinTime: state.slotMinTime,
+                slotMaxTime: state.slotMaxTime,
+                slotDuration: state.slotDuration,
+                resourceAreaHeaderContent: i18n.resourceColumn || 'Employees',
+                dayMaxEvents: true,
+                selectable: true,
+                selectMirror: true,
+                select: onCalendarSelect,
+                buttonText: {
+                    resourceTimeGridDay: i18n.resourcesView || 'Resources',
+                    resourceTimelineDay: i18n.timelineView || 'Timeline',
+                },
+                eventContent: function (arg) {
+                    return buildEventContent(arg, i18n);
+                },
+            });
+        } else if (calendarWrapper) {
+            renderEmptyState(calendarWrapper, false);
+        }
 
         if (!calendarInstance || typeof calendarInstance.on !== 'function') {
             renderEmptyState(calendarWrapper, false);
-            return;
+            calendarInstance = null;
         }
 
         calendarInstance.on('datesSet', onDatesSet);

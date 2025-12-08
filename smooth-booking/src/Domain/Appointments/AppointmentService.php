@@ -150,6 +150,7 @@ class AppointmentService {
         $validated = $this->validate_payload( $data );
 
         if ( is_wp_error( $validated ) ) {
+            $this->logger->error( sprintf( 'Appointment validation failed: %s', $validated->get_error_message() ) );
             return $validated;
         }
 
@@ -158,6 +159,19 @@ class AppointmentService {
         if ( is_wp_error( $result ) ) {
             $this->logger->error( sprintf( 'Failed creating appointment: %s', $result->get_error_message() ) );
             return $result;
+        }
+
+        if ( $result instanceof Appointment ) {
+            $this->logger->info(
+                sprintf(
+                    'Appointment #%d created for provider #%d, service #%d on %s to %s.',
+                    $result->get_id(),
+                    $validated['provider_id'],
+                    $validated['service_id'],
+                    $validated['scheduled_start']->format( 'Y-m-d H:i' ),
+                    $validated['scheduled_end']->format( 'Y-m-d H:i' )
+                )
+            );
         }
 
         return $result;

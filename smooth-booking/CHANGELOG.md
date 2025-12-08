@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.10] - 2026-06-15
+### Fixed
+- Added a secure non-JS fallback for calendar modal submissions so Save Appointment posts create bookings via the appointments service, surfaces notices on return, and respects the debug logging toggle.
+- Calendar modal submissions and appointment validation now emit debug log entries (success and failure) when General → Enable debug logging is turned on.
+
 # [0.18.9] - 2026-06-10
 ### Fixed
 - Normalised calendar booking submissions to always call the appointments REST endpoint (full URL when apiFetch is available), preventing modal saves from targeting the calendar route and ensuring new appointments are created successfully.

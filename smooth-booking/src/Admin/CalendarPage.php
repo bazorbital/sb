@@ -11,6 +11,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use SmoothBooking\Domain\Appointments\AppointmentService;
 use SmoothBooking\Domain\Calendar\CalendarService;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Locations\Location;
@@ -28,13 +29,16 @@ use function esc_html;
 use function esc_html__;
 use function get_user_locale;
 use function is_wp_error;
+use function add_query_arg;
 use function plugins_url;
 use function sanitize_text_field;
+use function sanitize_key;
 use function selected;
 use function sprintf;
 use function strtolower;
 use function rest_url;
 use function wp_add_inline_script;
+use function check_admin_referer;
 use function wp_date;
 use function wp_die;
 use function wp_enqueue_script;
@@ -43,6 +47,11 @@ use function wp_create_nonce;
 use function wp_json_encode;
 use function wp_timezone;
 use function wp_unslash;
+use function sanitize_textarea_field;
+use function wp_safe_redirect;
+use function wp_get_referer;
+use function sanitize_email;
+use function strpos;
 use function array_merge;
 use function is_array;
 use function array_unique;
@@ -67,13 +76,16 @@ class CalendarPage {
 
     private ServiceService $services;
 
+    private AppointmentService $appointments;
+
     private Logger $logger;
 
-    public function __construct( CalendarService $calendar, LocationService $locations, ServiceService $services, Logger $logger ) {
-        $this->calendar  = $calendar;
-        $this->locations = $locations;
-        $this->services  = $services;
-        $this->logger    = $logger;
+    public function __construct( AppointmentService $appointments, CalendarService $calendar, LocationService $locations, ServiceService $services, Logger $logger ) {
+        $this->appointments = $appointments;
+        $this->calendar     = $calendar;
+        $this->locations    = $locations;
+        $this->services     = $services;
+        $this->logger       = $logger;
     }
 
     /**
@@ -196,6 +208,7 @@ class CalendarPage {
         ?>
         <div class="wrap smooth-booking-admin smooth-booking-calendar-wrap">
             <div class="smooth-booking-admin__content">
+                <?php $this->render_notices(); ?>
                 <div class="smooth-booking-admin-header">
                     <div class="smooth-booking-admin-header__content">
                         <h1><?php echo esc_html__( 'Calendar', 'smooth-booking' ); ?></h1>
@@ -276,6 +289,8 @@ class CalendarPage {
 
                 <dialog id="smooth-booking-calendar-dialog" class="smooth-booking-calendar-dialog" hidden>
                     <form id="smooth-booking-calendar-booking-form" class="smooth-booking-calendar-dialog__form" method="post">
+                        <input type="hidden" name="action" value="smooth_booking_save_calendar_booking" />
+                        <?php wp_nonce_field( 'smooth-booking-calendar-booking', 'smooth_booking_calendar_nonce' ); ?>
                         <header class="smooth-booking-calendar-dialog__header">
                             <div>
                                 <p class="smooth-booking-calendar-dialog__eyebrow"><?php echo esc_html__( 'New appointment', 'smooth-booking' ); ?></p>
@@ -381,6 +396,112 @@ class CalendarPage {
                 </dialog>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Handle booking submissions when JavaScript is unavailable.
+     */
+    public function handle_booking_submit(): void {
+        if ( ! current_user_can( self::CAPABILITY ) ) {
+            wp_die( esc_html__( 'You do not have permission to create appointments.', 'smooth-booking' ) );
+        }
+
+        check_admin_referer( 'smooth-booking-calendar-booking', 'smooth_booking_calendar_nonce' );
+
+        $payload = [
+            'provider_id'        => isset( $_POST['booking-resource'] ) ? absint( sanitize_text_field( wp_unslash( (string) $_POST['booking-resource'] ) ) ) : 0,
+            'service_id'         => isset( $_POST['booking-service'] ) ? absint( sanitize_text_field( wp_unslash( (string) $_POST['booking-service'] ) ) ) : 0,
+            'customer_id'        => isset( $_POST['booking-customer'] ) ? absint( sanitize_text_field( wp_unslash( (string) $_POST['booking-customer'] ) ) ) : 0,
+            'appointment_date'   => isset( $_POST['booking-date'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['booking-date'] ) ) : '',
+            'appointment_start'  => isset( $_POST['booking-start'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['booking-start'] ) ) : '',
+            'appointment_end'    => isset( $_POST['booking-end'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['booking-end'] ) ) : '',
+            'status'             => isset( $_POST['booking-status'] ) ? sanitize_key( wp_unslash( (string) $_POST['booking-status'] ) ) : 'pending',
+            'payment_status'     => isset( $_POST['booking-payment'] ) ? sanitize_key( wp_unslash( (string) $_POST['booking-payment'] ) ) : '',
+            'notes'              => isset( $_POST['booking-note'] ) ? sanitize_textarea_field( wp_unslash( (string) $_POST['booking-note'] ) ) : '',
+            'internal_note'      => isset( $_POST['booking-internal-note'] ) ? sanitize_textarea_field( wp_unslash( (string) $_POST['booking-internal-note'] ) ) : '',
+            'send_notifications' => ! empty( $_POST['booking-notify'] ),
+            'customer_email'     => isset( $_POST['booking-customer-email'] ) ? sanitize_email( wp_unslash( (string) $_POST['booking-customer-email'] ) ) : '',
+            'customer_phone'     => isset( $_POST['booking-customer-phone'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['booking-customer-phone'] ) ) : '',
+        ];
+
+        $result = $this->appointments->create_appointment( $payload );
+
+        if ( is_wp_error( $result ) ) {
+            $this->logger->error(
+                sprintf(
+                    'Calendar booking creation failed: %s (provider #%d, service #%d, date %s %s)',
+                    $result->get_error_message(),
+                    $payload['provider_id'],
+                    $payload['service_id'],
+                    $payload['appointment_date'],
+                    $payload['appointment_start']
+                )
+            );
+
+            $this->redirect_with_notice( 'error', $result->get_error_message() );
+        }
+
+        $this->logger->info(
+            sprintf(
+                'Calendar booking created via admin modal for provider #%d, service #%d on %s %s (appointment #%d).',
+                $payload['provider_id'],
+                $payload['service_id'],
+                $payload['appointment_date'],
+                $payload['appointment_start'],
+                $result->get_id()
+            )
+        );
+
+        $this->redirect_with_notice( 'created', __( 'Appointment created successfully.', 'smooth-booking' ) );
+    }
+
+    /**
+     * Redirect back to the calendar with a contextual notice.
+     */
+    private function redirect_with_notice( string $type, string $message = '' ): void {
+        $redirect = wp_get_referer();
+
+        if ( ! $redirect || false === strpos( $redirect, 'page=' . self::MENU_SLUG ) ) {
+            $redirect = add_query_arg( 'page', self::MENU_SLUG, admin_url( 'admin.php' ) );
+        }
+
+        $args = [
+            'smooth_booking_calendar_notice'  => $type,
+            'smooth_booking_calendar_message' => $message,
+        ];
+
+        wp_safe_redirect( add_query_arg( $args, $redirect ) );
+        exit;
+    }
+
+    /**
+     * Render a notice based on query parameters.
+     */
+    private function render_notices(): void {
+        $notice  = isset( $_GET['smooth_booking_calendar_notice'] ) ? sanitize_key( wp_unslash( (string) $_GET['smooth_booking_calendar_notice'] ) ) : '';
+        $message = isset( $_GET['smooth_booking_calendar_message'] ) ? sanitize_text_field( wp_unslash( (string) $_GET['smooth_booking_calendar_message'] ) ) : '';
+
+        if ( 'created' === $notice && '' === $message ) {
+            $message = __( 'Appointment created successfully.', 'smooth-booking' );
+        }
+
+        if ( 'error' === $notice && '' === $message ) {
+            $message = __( 'Unable to save appointment. Please try again.', 'smooth-booking' );
+        }
+
+        if ( ! $notice || '' === $message ) {
+            return;
+        }
+
+        $class = 'notice-success';
+
+        if ( 'error' === $notice ) {
+            $class = 'notice-error';
+        }
+
+        ?>
+        <div class="notice <?php echo esc_attr( $class ); ?>"><p><?php echo esc_html( $message ); ?></p></div>
         <?php
     }
 

@@ -3,7 +3,7 @@
  * Plugin Name: Smooth Booking
  * Plugin URI:  https://example.com/plugins/smooth-booking
  * Description: Bootstraps the Smooth Booking environment and ensures database schema integrity for booking operations.
- * Version:     0.18.6
+ * Version:     0.18.10
  * Author:      Smooth Booking Contributors
  * Author URI:  https://example.com
  * Text Domain: smooth-booking
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'SMOOTH_BOOKING_VERSION', '0.18.6' );
+define( 'SMOOTH_BOOKING_VERSION', '0.18.10' );
 define( 'SMOOTH_BOOKING_PLUGIN_FILE', __FILE__ );
 define( 'SMOOTH_BOOKING_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SMOOTH_BOOKING_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
