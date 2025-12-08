@@ -973,6 +973,8 @@
             if (bookingForm && typeof bookingForm.reset === 'function') {
                 bookingForm.reset();
             }
+
+            setBookingError('');
         }
 
         /**
@@ -1250,6 +1252,33 @@
                 customer_phone: bookingContext.customerPhone || '',
             };
 
+            var endpointPath = config.appointmentsEndpoint;
+
+            try {
+                var parsed = new URL(config.appointmentsEndpoint, window.location.origin);
+                endpointPath = parsed.pathname + parsed.search;
+            } catch (error) {
+                endpointPath = config.appointmentsEndpoint;
+            }
+
+            var requestPromise;
+            if (window.wp && window.wp.apiFetch) {
+                requestPromise = window.wp.apiFetch({
+                    path: endpointPath,
+                    method: 'POST',
+                    data: payload,
+                });
+            } else {
+                requestPromise = fetch(config.appointmentsEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-WP-Nonce': config.nonce || '',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                }).then(function (response) {
             fetch(config.appointmentsEndpoint, {
                 method: 'POST',
                 headers: {
@@ -1269,7 +1298,10 @@
                     }
 
                     return response.json();
-                })
+                });
+            }
+
+            requestPromise
                 .then(function () {
                     closeBookingDialog();
                     if (calendarInstance) {
@@ -1476,23 +1508,32 @@
             });
         }
 
-        if (bookingCancel) {
-            bookingCancel.addEventListener('click', function (event) {
-                if (event && typeof event.preventDefault === 'function') {
-                    event.preventDefault();
-                }
-                closeBookingDialog();
-            });
-        }
+        var bindDialogDismiss = function (element) {
+            if (!element) {
+                return;
+            }
 
-        if (bookingCancelAlt) {
-            bookingCancelAlt.addEventListener('click', function (event) {
+            element.addEventListener('click', function (event) {
                 if (event && typeof event.preventDefault === 'function') {
                     event.preventDefault();
                 }
                 closeBookingDialog();
             });
-        }
+        };
+
+        bindDialogDismiss(bookingCancel);
+        bindDialogDismiss(bookingCancelAlt);
+
+        document.addEventListener('click', function (event) {
+            var targetElement = event.target;
+            if (!targetElement || !(targetElement instanceof HTMLElement)) {
+                return;
+            }
+
+            if (targetElement.matches('[data-smooth-booking-dismiss]')) {
+                closeBookingDialog();
+            }
+        });
 
         if (bookingDialog) {
             bookingDialog.addEventListener('cancel', function (event) {

@@ -5,6 +5,7 @@ All notable changes to Smooth Booking will be documented here.
 # [0.18.7] - 2026-05-20
 ### Fixed
 - Saving an appointment from the calendar dialog now reuses the appointments endpoint reliably, shows a success notice, and refreshes the grid so the newly created booking appears immediately.
+- Calendar dialog cancel controls now close the modal consistently and booking submissions use WordPress apiFetch where available to mirror the working flow from the Appointments admin screen.
 
 # [0.18.6] - 2026-04-12
 ### Fixed
