@@ -179,11 +179,12 @@
      * @param {number|string} minutes Duration in minutes.
      * @returns {string}
      */
-    function minutesToDuration(minutes) {
+    function minutesToDuration(minutes, fallbackMinutes) {
         var totalMinutes = parseInt(minutes, 10);
+        var configuredMinutes = parseInt(fallbackMinutes, 10);
 
         if (!totalMinutes || totalMinutes < 1) {
-            return '00:30:00';
+            totalMinutes = configuredMinutes && configuredMinutes > 0 ? configuredMinutes : 30;
         }
 
         var hours = Math.floor(totalMinutes / 60);
@@ -454,7 +455,7 @@
         var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
         var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
 
-        var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes);
+        var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes, data.slotLengthMinutes);
 
         var state = {
             selectedDate: data.selectedDate || toDateString(new Date()),
@@ -1013,7 +1014,7 @@
                 viewOptions.resourceTimelineDay.slotMaxTime = payload.slotMaxTime;
             }
 
-            var resolvedSlotDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes);
+            var resolvedSlotDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes, state.defaultDurationMinutes);
 
             if (resolvedSlotDuration) {
                 state.slotDuration = resolvedSlotDuration;
@@ -1089,7 +1090,7 @@
                     state.services = payload.services || {};
                     state.slotMinTime = payload.slotMinTime || state.slotMinTime;
                     state.slotMaxTime = payload.slotMaxTime || state.slotMaxTime;
-                    var payloadDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes);
+                    var payloadDuration = payload.slotDuration || minutesToDuration(payload.slotLengthMinutes, state.defaultDurationMinutes);
 
                     state.slotDuration = payloadDuration || state.slotDuration;
                     state.defaultDurationMinutes = durationToMinutes(state.slotDuration);
