@@ -168,6 +168,7 @@ class Plugin {
         add_action( 'admin_post_smooth_booking_restore_appointment', [ $appointments_page, 'handle_restore' ] );
         add_action( 'admin_enqueue_scripts', [ $appointments_page, 'enqueue_assets' ] );
 
+        add_action( 'admin_post_smooth_booking_save_calendar_booking', [ $calendar_page, 'handle_booking_submit' ] );
         add_action( 'admin_enqueue_scripts', [ $calendar_page, 'enqueue_assets' ] );
 
         add_action( 'admin_post_smooth_booking_save_customer', [ $customers_page, 'handle_save' ] );

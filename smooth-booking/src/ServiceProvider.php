@@ -349,6 +349,7 @@ class ServiceProvider {
 
         $container->singleton( CalendarPage::class, static function ( ServiceContainer $container ): CalendarPage {
             return new CalendarPage(
+                $container->get( AppointmentService::class ),
                 $container->get( CalendarService::class ),
                 $container->get( LocationService::class ),
                 $container->get( ServiceService::class ),
