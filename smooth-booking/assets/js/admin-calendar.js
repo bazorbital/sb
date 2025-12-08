@@ -1263,11 +1263,20 @@
 
             var requestPromise;
             if (window.wp && window.wp.apiFetch) {
-                requestPromise = window.wp.apiFetch({
-                    path: endpointPath,
+                var apiFetchArgs = {
                     method: 'POST',
                     data: payload,
-                });
+                };
+
+                if (/^https?:\/\//i.test(config.appointmentsEndpoint)) {
+                    apiFetchArgs.url = config.appointmentsEndpoint;
+                } else if (/^\/wp-json\//.test(endpointPath)) {
+                    apiFetchArgs.path = endpointPath.replace(/^\/wp-json/, '');
+                } else {
+                    apiFetchArgs.path = endpointPath;
+                }
+
+                requestPromise = window.wp.apiFetch(apiFetchArgs);
             } else {
                 requestPromise = fetch(config.appointmentsEndpoint, {
                     method: 'POST',

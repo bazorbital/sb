@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.9] - 2026-06-10
+### Fixed
+- Normalised calendar booking submissions to always call the appointments REST endpoint (full URL when apiFetch is available), preventing modal saves from targeting the calendar route and ensuring new appointments are created successfully.
+
 # [0.18.8] - 2026-06-01
 ### Fixed
 - Switched the calendar booking form away from the `dialog` submission method so the Save button now triggers the REST-backed submit handler instead of silently closing without creating an appointment.
