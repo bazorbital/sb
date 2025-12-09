@@ -2,6 +2,13 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.23] - 2026-09-05
+### Fixed
+- Customer selection in the calendar booking dialog now reliably auto-fills the phone and email fields by reading the selected option even when Select2 does not update the native selected index.
+
+### Added
+- Customer REST lookups now emit debug log entries (respecting Settings → General → Enable debug logging) with pagination context and contact presence to aid troubleshooting calendar auto-fill issues.
+
 # [0.18.22] - 2026-08-20
 ### Fixed
 - Calendar booking dialog now fetches missing customer contact details on selection, ensuring phone and email fields auto-fill even when the initial customer list is cached without those attributes.

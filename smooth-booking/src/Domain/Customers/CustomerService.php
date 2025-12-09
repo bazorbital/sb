@@ -87,6 +87,18 @@ class CustomerService {
         $result    = $this->repository->paginate( $args );
         $customers = $this->attach_tags( $result['customers'] );
 
+        $search_term = isset( $args['search'] ) ? sanitize_text_field( (string) $args['search'] ) : '';
+
+        $this->logger->info(
+            sprintf(
+                'Customers paginated (page: %d, per_page: %d, search: "%s") returned %d records.',
+                (int) $args['paged'],
+                (int) $args['per_page'],
+                $search_term,
+                count( $customers )
+            )
+        );
+
         /**
          * Filter the customers list result.
          *
@@ -117,13 +129,25 @@ class CustomerService {
         $customer = $this->repository->find_with_deleted( $customer_id );
 
         if ( null === $customer ) {
+            $this->logger->info( sprintf( 'Customer lookup failed for id %d', $customer_id ) );
             return new WP_Error(
                 'smooth_booking_customer_not_found',
                 __( 'The requested customer could not be found.', 'smooth-booking' )
             );
         }
 
-        return $this->enrich_customer( $customer );
+        $customer = $this->enrich_customer( $customer );
+
+        $this->logger->info(
+            sprintf(
+                'Customer %d loaded (email: %s, phone: %s)',
+                $customer_id,
+                $customer->get_email() ? 'present' : 'missing',
+                $customer->get_phone() ? 'present' : 'missing'
+            )
+        );
+
+        return $customer;
     }
 
     /**

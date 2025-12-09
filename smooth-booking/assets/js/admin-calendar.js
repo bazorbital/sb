@@ -831,8 +831,27 @@
             var email = customer && customer.email ? customer.email : '';
             var phone = customer && customer.phone ? customer.phone : '';
 
-            if ((!email || !phone) && bookingCustomer && bookingCustomer.options) {
-                var option = bookingCustomer.options[bookingCustomer.selectedIndex];
+            if ((!email || !phone) && bookingCustomer) {
+                var option = null;
+                var targetValue = typeof customerId === 'undefined' || customerId === null ? '' : String(customerId);
+
+                if (typeof bookingCustomer.querySelector === 'function' && targetValue) {
+                    try {
+                        var escapedValue = targetValue;
+                        if (window.CSS && typeof window.CSS.escape === 'function') {
+                            escapedValue = window.CSS.escape(targetValue);
+                        }
+
+                        option = bookingCustomer.querySelector('option[value="' + escapedValue + '"]');
+                    } catch (error) {
+                        option = null;
+                    }
+                }
+
+                if (!option && bookingCustomer.options && bookingCustomer.selectedIndex >= 0) {
+                    option = bookingCustomer.options[bookingCustomer.selectedIndex];
+                }
+
                 if (option && option.dataset) {
                     email = email || option.dataset.email || '';
                     phone = phone || option.dataset.phone || '';
