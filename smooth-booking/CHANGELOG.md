@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.19] - 2026-07-21
+### Fixed
+- Calendar drag-and-drop now updates the visible time range instantly when an appointment is moved and restores the previous label if the move fails.
+
 # [0.18.18] - 2026-07-10
 ### Fixed
 - Calendar drag-and-drop now refreshes the visible start and end times immediately after a successful reschedule without requiring a page reload.

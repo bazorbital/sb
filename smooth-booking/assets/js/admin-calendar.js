@@ -1450,6 +1450,66 @@
         }
 
         /**
+         * Update an EventCalendar event instance with new timings and labels.
+         *
+         * @param {Object} event EventCalendar event.
+         * @param {Date|null} startDate New start date.
+         * @param {Date|null} endDate New end date.
+         * @param {string} startValue Normalised start time string.
+         * @param {string} endValue Normalised end time string.
+         * @param {string} timeRangeLabel Human readable time range label.
+         *
+         * @returns {void}
+         */
+        function applyEventTimeUpdates(event, startDate, endDate, startValue, endValue, timeRangeLabel) {
+            if (!event) {
+                return;
+            }
+
+            if (startDate && typeof event.setStart === 'function') {
+                event.setStart(startDate, { maintainDuration: false });
+            } else if (startDate) {
+                event.start = startDate;
+            }
+
+            if (endDate && typeof event.setEnd === 'function') {
+                event.setEnd(endDate);
+            } else if (endDate) {
+                event.end = endDate;
+            }
+
+            if (event.setExtendedProp) {
+                if (timeRangeLabel) {
+                    event.setExtendedProp('timeRange', timeRangeLabel);
+                }
+                if (startValue) {
+                    event.setExtendedProp('appointment_start', startValue);
+                }
+                if (endValue) {
+                    event.setExtendedProp('appointment_end', endValue);
+                }
+            } else if (event.extendedProps) {
+                if (timeRangeLabel) {
+                    event.extendedProps.timeRange = timeRangeLabel;
+                }
+                if (startValue) {
+                    event.extendedProps.appointment_start = startValue;
+                }
+                if (endValue) {
+                    event.extendedProps.appointment_end = endValue;
+                }
+            }
+
+            if (event.el) {
+                var timeNode = event.el.querySelector('.smooth-booking-calendar-event__time');
+
+                if (timeNode && timeRangeLabel) {
+                    timeNode.textContent = timeRangeLabel;
+                }
+            }
+        }
+
+        /**
          * Persist a moved or resized appointment to the REST API.
          *
          * @param {Object} changeInfo Event change payload from EventCalendar.
@@ -1519,6 +1579,14 @@
                 appointment_end: endValue,
             };
 
+            var timeRangeLabel = formatTimeRangeLabel(startValue, endValue);
+
+            applyEventTimeUpdates(event, startDate, endDate, startValue, endValue, timeRangeLabel);
+
+            if (calendarInstance && typeof calendarInstance.rerenderEvents === 'function') {
+                calendarInstance.rerenderEvents();
+            }
+
             var requestPromise;
             if (window.wp && window.wp.apiFetch) {
                 var apiFetchArgs = {
@@ -1559,41 +1627,6 @@
 
             requestPromise
                 .then(function () {
-                    if (startDate && typeof event.setStart === 'function') {
-                        event.setStart(startDate, { maintainDuration: false });
-                    } else if (startDate) {
-                        event.start = startDate;
-                    }
-
-                    if (endDate && typeof event.setEnd === 'function') {
-                        event.setEnd(endDate);
-                    } else if (endDate) {
-                        event.end = endDate;
-                    }
-
-                    var timeRangeLabel = formatTimeRangeLabel(startValue, endValue);
-
-                    if (event.setExtendedProp) {
-                        event.setExtendedProp('timeRange', timeRangeLabel);
-                        event.setExtendedProp('appointment_start', startValue);
-                        event.setExtendedProp('appointment_end', endValue);
-                    } else if (event.extendedProps) {
-                        event.extendedProps.timeRange = timeRangeLabel;
-                        event.extendedProps.appointment_start = startValue;
-                        event.extendedProps.appointment_end = endValue;
-                    }
-
-                    if (event.el) {
-                        var timeNode = event.el.querySelector('.smooth-booking-calendar-event__time');
-                        if (timeNode) {
-                            timeNode.textContent = timeRangeLabel;
-                        }
-                    }
-
-                    if (calendarInstance && typeof calendarInstance.rerenderEvents === 'function') {
-                        calendarInstance.rerenderEvents();
-                    }
-
                     renderCalendarNotice(
                         calendarWrapper,
                         i18n.bookingMoved || 'Appointment rescheduled.',
@@ -1608,6 +1641,14 @@
                     if (changeInfo && typeof changeInfo.revert === 'function') {
                         changeInfo.revert();
                     }
+
+                    var previousStart = changeInfo && changeInfo.oldEvent ? toSafeDate(changeInfo.oldEvent.start) : startDate;
+                    var previousEnd = changeInfo && changeInfo.oldEvent ? toSafeDate(changeInfo.oldEvent.end) : endDate;
+                    var previousStartValue = normalizeTime(previousStart, config.timezone);
+                    var previousEndValue = normalizeTime(previousEnd, config.timezone);
+                    var previousLabel = formatTimeRangeLabel(previousStartValue, previousEndValue);
+
+                    applyEventTimeUpdates(event, previousStart, previousEnd, previousStartValue, previousEndValue, previousLabel);
 
                     renderCalendarNotice(
                         calendarWrapper,
