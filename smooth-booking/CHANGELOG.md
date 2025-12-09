@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.22] - 2026-08-20
+### Fixed
+- Calendar booking dialog now fetches missing customer contact details on selection, ensuring phone and email fields auto-fill even when the initial customer list is cached without those attributes.
+
 # [0.18.21] - 2026-08-05
 ### Fixed
 - Selecting a customer in the calendar booking modal now auto-fills their email and phone fields, reducing manual entry mistakes.

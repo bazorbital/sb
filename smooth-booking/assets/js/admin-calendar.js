@@ -537,6 +537,7 @@
         var bookingContext = Object.assign({}, bookingDefaults);
         var scheduleAbortController = null;
         var customersAbortController = null;
+        var customerDetailRequests = {};
 
         /**
          * Refresh booking field references and bind time synchronisation listeners.
@@ -831,6 +832,62 @@
 
             bookingContext.customerEmail = email;
             bookingContext.customerPhone = phone;
+
+            if (!customer && customerId && config.customersEndpoint) {
+                fetchCustomerDetails(customerId);
+            }
+        }
+
+        /**
+         * Fetch a customer's details when not present in local state.
+         *
+         * @param {number|string|null} customerId Customer identifier.
+         * @returns {void}
+         */
+        function fetchCustomerDetails(customerId) {
+            var id = parseInt(customerId, 10);
+
+            if (Number.isNaN(id) || customerDetailRequests[id]) {
+                return;
+            }
+
+            if (!config.customersEndpoint) {
+                return;
+            }
+
+            customerDetailRequests[id] = fetch(config.customersEndpoint + '/' + id, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-WP-Nonce': config.nonce || '',
+                },
+            })
+                .then(function (response) { return response.ok ? response.json() : null; })
+                .then(function (body) {
+                    if (!body || typeof body !== 'object' || Number.isNaN(parseInt(body.id, 10))) {
+                        return;
+                    }
+
+                    var customers = ensureArray(state.customers);
+                    var existingIndex = customers.findIndex(function (customer) {
+                        return customer && parseInt(customer.id, 10) === id;
+                    });
+
+                    if (existingIndex >= 0) {
+                        customers[existingIndex] = body;
+                    } else {
+                        customers.push(body);
+                    }
+
+                    state.customers = customers;
+                    syncCustomerContactFields(id);
+                })
+                .catch(function () {
+                    // Intentionally swallow errors; manual input remains available.
+                })
+                .finally(function () {
+                    delete customerDetailRequests[id];
+                });
         }
 
         /**
