@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.21] - 2026-08-05
+### Fixed
+- Selecting a customer in the calendar booking modal now auto-fills their email and phone fields, reducing manual entry mistakes.
+
 # [0.18.20] - 2026-07-25
 ### Fixed
 - Calendar drag-and-drop now respects the selected location time zone when rescheduling appointments, preventing offsets between browser display and stored booking times.
