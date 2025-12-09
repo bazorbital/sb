@@ -779,6 +779,61 @@
         }
 
         /**
+         * Find a customer object by id.
+         *
+         * @param {number|string|null} customerId Customer identifier.
+         * @returns {Object|null}
+         */
+        function findCustomerById(customerId) {
+            var id = parseInt(customerId, 10);
+
+            if (Number.isNaN(id)) {
+                return null;
+            }
+
+            var customers = ensureArray(state.customers);
+
+            for (var index = 0; index < customers.length; index++) {
+                var customer = customers[index];
+
+                if (!customer) {
+                    continue;
+                }
+
+                var currentId = typeof customer.id !== 'undefined' ? parseInt(customer.id, 10) : null;
+
+                if (!Number.isNaN(currentId) && currentId === id) {
+                    return customer;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Sync customer contact inputs with selected customer details.
+         *
+         * @param {number|string|null} customerId Customer identifier.
+         * @returns {void}
+         */
+        function syncCustomerContactFields(customerId) {
+            var customer = findCustomerById(customerId);
+            var email = customer && customer.email ? customer.email : '';
+            var phone = customer && customer.phone ? customer.phone : '';
+
+            if (bookingCustomerEmail) {
+                bookingCustomerEmail.value = email;
+            }
+
+            if (bookingCustomerPhone) {
+                bookingCustomerPhone.value = phone;
+            }
+
+            bookingContext.customerEmail = email;
+            bookingContext.customerPhone = phone;
+        }
+
+        /**
          * Fetch customers from the REST API.
          *
          * @param {number|null} selectedId Selected customer id.
@@ -807,12 +862,14 @@
                 .then(function (body) {
                     state.customers = ensureArray(body && (body.customers || body));
                     populateBookingCustomers(selectedId || null);
+                    syncCustomerContactFields(selectedId || bookingContext.customerId);
                 })
                 .catch(function (error) {
                     if (error && error.name === 'AbortError') {
                         return;
                     }
                     populateBookingCustomers(selectedId || null);
+                    syncCustomerContactFields(selectedId || bookingContext.customerId);
                 });
         }
 
@@ -924,6 +981,7 @@
             if (bookingCustomer) {
                 populateBookingCustomers(bookingContext.customerId);
                 bookingCustomer.value = bookingContext.customerId ? String(bookingContext.customerId) : '';
+                syncCustomerContactFields(bookingContext.customerId);
             }
 
             if (bookingDateLabel) {
@@ -1771,6 +1829,7 @@
         if (bookingCustomer) {
             bookingCustomer.addEventListener('change', function () {
                 bookingContext.customerId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+                syncCustomerContactFields(bookingContext.customerId);
             });
         }
 
