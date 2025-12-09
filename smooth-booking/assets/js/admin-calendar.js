@@ -290,6 +290,11 @@
             var option = document.createElement('option');
             option.value = item.value;
             option.textContent = item.text;
+            if (item.dataset && typeof item.dataset === 'object') {
+                Object.keys(item.dataset).forEach(function (key) {
+                    option.dataset[key] = item.dataset[key];
+                });
+            }
             if (item.selected) {
                 option.selected = true;
             }
@@ -765,6 +770,10 @@
                 return {
                     value: String(customer.id || ''),
                     text: labelParts.join(' '),
+                    dataset: {
+                        email: customer.email || '',
+                        phone: customer.phone || '',
+                    },
                     selected: selectedId ? parseInt(customer.id, 10) === parseInt(selectedId, 10) : false,
                 };
             }).filter(function (item) { return !!item; });
@@ -821,6 +830,14 @@
             var customer = findCustomerById(customerId);
             var email = customer && customer.email ? customer.email : '';
             var phone = customer && customer.phone ? customer.phone : '';
+
+            if ((!email || !phone) && bookingCustomer && bookingCustomer.options) {
+                var option = bookingCustomer.options[bookingCustomer.selectedIndex];
+                if (option && option.dataset) {
+                    email = email || option.dataset.email || '';
+                    phone = phone || option.dataset.phone || '';
+                }
+            }
 
             if (bookingCustomerEmail) {
                 bookingCustomerEmail.value = email;
