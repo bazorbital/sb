@@ -11,6 +11,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use SmoothBooking\Domain\Customers\CustomerService;
 use SmoothBooking\Domain\Employees\EmployeeService;
+use SmoothBooking\Domain\Locations\LocationService;
 use SmoothBooking\Domain\Services\ServiceService;
 use SmoothBooking\Infrastructure\Logging\Logger;
 use WP_Error;
@@ -18,6 +19,7 @@ use WP_Error;
 use function __;
 use function absint;
 use function apply_filters;
+use function array_unique;
 use function in_array;
 use function get_option;
 use function is_email;
@@ -45,6 +47,11 @@ class AppointmentService {
     private EmployeeService $employee_service;
 
     /**
+     * Location service dependency.
+     */
+    private LocationService $location_service;
+
+    /**
      * Service service dependency.
      */
     private ServiceService $service_service;
@@ -62,9 +69,10 @@ class AppointmentService {
     /**
      * Constructor.
      */
-    public function __construct( AppointmentRepositoryInterface $repository, EmployeeService $employee_service, ServiceService $service_service, CustomerService $customer_service, Logger $logger ) {
+    public function __construct( AppointmentRepositoryInterface $repository, EmployeeService $employee_service, ServiceService $service_service, CustomerService $customer_service, LocationService $location_service, Logger $logger ) {
         $this->repository        = $repository;
         $this->employee_service  = $employee_service;
+        $this->location_service  = $location_service;
         $this->service_service   = $service_service;
         $this->customer_service  = $customer_service;
         $this->logger            = $logger;
@@ -331,8 +339,11 @@ class AppointmentService {
         $appointment_date  = isset( $data['appointment_date'] ) ? sanitize_text_field( $data['appointment_date'] ) : '';
         $appointment_start = isset( $data['appointment_start'] ) ? sanitize_text_field( $data['appointment_start'] ) : '';
         $appointment_end   = isset( $data['appointment_end'] ) ? sanitize_text_field( $data['appointment_end'] ) : '';
+        $location_id       = isset( $data['location_id'] ) ? absint( $data['location_id'] ) : 0;
 
-        $times = $this->combine_datetimes( $appointment_date, $appointment_start, $appointment_end );
+        $timezone = $this->resolve_timezone_for_provider( $provider_id, $location_id );
+
+        $times = $this->combine_datetimes( $appointment_date, $appointment_start, $appointment_end, $timezone );
 
         if ( is_wp_error( $times ) ) {
             return $times;
@@ -379,6 +390,7 @@ class AppointmentService {
             'internal_note'   => $internal ?: null,
             'should_notify'   => $notify,
             'is_recurring'    => $repeat,
+            'location_id'     => $location_id > 0 ? $location_id : null,
             'scheduled_start' => $start,
             'scheduled_end'   => $end,
             'total_amount'    => $total_amount,
@@ -401,16 +413,13 @@ class AppointmentService {
     /**
      * Combine date and times into timezone aware datetimes.
      *
+     * @param DateTimeZone $timezone Location-aware timezone.
+     *
      * @return array{0:DateTimeImmutable,1:DateTimeImmutable}|WP_Error
      */
-    private function combine_datetimes( string $date, string $start_time, string $end_time ) {
+    private function combine_datetimes( string $date, string $start_time, string $end_time, DateTimeZone $timezone ) {
         if ( ! $date || ! $start_time || ! $end_time ) {
             return new WP_Error( 'smooth_booking_invalid_schedule', __( 'Appointment date and times are required.', 'smooth-booking' ) );
-        }
-
-        $timezone = wp_timezone();
-        if ( ! $timezone instanceof DateTimeZone ) {
-            $timezone = new DateTimeZone( 'UTC' );
         }
 
         $start_string = sprintf( '%s %s', $date, $start_time );
@@ -424,5 +433,60 @@ class AppointmentService {
         }
 
         return [ $start, $end ];
+    }
+
+    /**
+     * Determine the timezone to use for an appointment based on location and provider.
+     */
+    private function resolve_timezone_for_provider( int $provider_id, int $location_id = 0 ): DateTimeZone {
+        $fallback = wp_timezone();
+
+        if ( ! $fallback instanceof DateTimeZone ) {
+            $fallback = new DateTimeZone( 'UTC' );
+        }
+
+        $location_ids = [];
+
+        if ( $location_id > 0 ) {
+            $location_ids[] = $location_id;
+        }
+
+        $employee = $this->employee_service->get_employee( $provider_id );
+
+        if ( ! is_wp_error( $employee ) ) {
+            foreach ( $employee->get_location_ids() as $employee_location_id ) {
+                $employee_location_id = absint( $employee_location_id );
+
+                if ( $employee_location_id > 0 ) {
+                    $location_ids[] = $employee_location_id;
+                }
+            }
+        }
+
+        foreach ( array_unique( $location_ids ) as $candidate_location_id ) {
+            $location = $this->location_service->get_location( $candidate_location_id );
+
+            if ( is_wp_error( $location ) || null === $location ) {
+                continue;
+            }
+
+            $location_timezone = $location->get_timezone();
+
+            if ( $location_timezone ) {
+                try {
+                    return new DateTimeZone( $location_timezone );
+                } catch ( \Exception $exception ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+                    $this->logger->warning(
+                        sprintf(
+                            'Invalid timezone "%s" for location #%d, falling back to site timezone.',
+                            $location_timezone,
+                            $candidate_location_id
+                        )
+                    );
+                }
+            }
+        }
+
+        return $fallback;
     }
 }
