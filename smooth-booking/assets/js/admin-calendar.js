@@ -1559,10 +1559,39 @@
 
             requestPromise
                 .then(function () {
+                    if (startDate && typeof event.setStart === 'function') {
+                        event.setStart(startDate, { maintainDuration: false });
+                    } else if (startDate) {
+                        event.start = startDate;
+                    }
+
+                    if (endDate && typeof event.setEnd === 'function') {
+                        event.setEnd(endDate);
+                    } else if (endDate) {
+                        event.end = endDate;
+                    }
+
+                    var timeRangeLabel = formatTimeRangeLabel(startValue, endValue);
+
                     if (event.setExtendedProp) {
-                        event.setExtendedProp('timeRange', formatTimeRangeLabel(startValue, endValue));
+                        event.setExtendedProp('timeRange', timeRangeLabel);
+                        event.setExtendedProp('appointment_start', startValue);
+                        event.setExtendedProp('appointment_end', endValue);
                     } else if (event.extendedProps) {
-                        event.extendedProps.timeRange = formatTimeRangeLabel(startValue, endValue);
+                        event.extendedProps.timeRange = timeRangeLabel;
+                        event.extendedProps.appointment_start = startValue;
+                        event.extendedProps.appointment_end = endValue;
+                    }
+
+                    if (event.el) {
+                        var timeNode = event.el.querySelector('.smooth-booking-calendar-event__time');
+                        if (timeNode) {
+                            timeNode.textContent = timeRangeLabel;
+                        }
+                    }
+
+                    if (calendarInstance && typeof calendarInstance.rerenderEvents === 'function') {
+                        calendarInstance.rerenderEvents();
                     }
 
                     renderCalendarNotice(
