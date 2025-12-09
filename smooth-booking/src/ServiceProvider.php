@@ -243,6 +243,7 @@ class ServiceProvider {
                 $container->get( EmployeeService::class ),
                 $container->get( ServiceService::class ),
                 $container->get( CustomerService::class ),
+                $container->get( LocationService::class ),
                 $container->get( Logger::class )
             );
         } );

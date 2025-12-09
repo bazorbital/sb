@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.20] - 2026-07-25
+### Fixed
+- Calendar drag-and-drop now respects the selected location time zone when rescheduling appointments, preventing offsets between browser display and stored booking times.
+
 # [0.18.19] - 2026-07-21
 ### Fixed
 - Calendar drag-and-drop now updates the visible time range instantly when an appointment is moved and restores the previous label if the move fails.

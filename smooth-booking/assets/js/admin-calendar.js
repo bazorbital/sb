@@ -1574,6 +1574,7 @@
             var payload = {
                 provider_id: resourceId,
                 service_id: serviceId,
+                location_id: state.locationId ? parseInt(state.locationId, 10) : null,
                 appointment_date: appointmentDate,
                 appointment_start: startValue,
                 appointment_end: endValue,

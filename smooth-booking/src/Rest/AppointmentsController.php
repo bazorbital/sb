@@ -14,6 +14,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+use function absint;
 use function array_map;
 use function current_user_can;
 use function is_wp_error;
@@ -277,6 +278,7 @@ class AppointmentsController {
             'provider_id'       => static fn( $value ) => (int) $value,
             'service_id'        => static fn( $value ) => (int) $value,
             'customer_id'       => static fn( $value ) => (int) $value,
+            'location_id'       => static fn( $value ) => absint( $value ),
             'appointment_date'  => static fn( $value ) => sanitize_text_field( (string) $value ),
             'appointment_start' => static fn( $value ) => sanitize_text_field( (string) $value ),
             'appointment_end'   => static fn( $value ) => sanitize_text_field( (string) $value ),
