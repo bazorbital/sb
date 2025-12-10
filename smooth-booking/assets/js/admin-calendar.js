@@ -786,6 +786,7 @@
 
             populateSelect(bookingCustomer, customers);
             enhanceSelect(bookingCustomer);
+            bindCustomerChangeHandlers();
         }
 
         /**
@@ -818,6 +819,56 @@
             }
 
             return null;
+        }
+
+        /**
+         * Handle customer selection changes across native and Select2 events.
+         *
+         * @param {Event} event Selection event.
+         * @returns {void}
+         */
+        function handleCustomerChange(event) {
+            if (!bookingCustomer) {
+                return;
+            }
+
+            var selectedId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+            var contact = null;
+
+            if (event && event.params && event.params.data && typeof event.params.data.id !== 'undefined') {
+                selectedId = event.params.data.id === '' ? null : parseInt(event.params.data.id, 10);
+
+                var dataset = event.params.data.element && event.params.data.element.dataset ? event.params.data.element.dataset : null;
+                contact = {
+                    email: event.params.data.email || (dataset && dataset.email ? dataset.email : ''),
+                    phone: event.params.data.phone || (dataset && dataset.phone ? dataset.phone : ''),
+                };
+            }
+
+            bookingContext.customerId = Number.isNaN(selectedId) ? null : selectedId;
+            syncCustomerContactFields(bookingContext.customerId, contact);
+        }
+
+        /**
+         * Ensure customer selection events remain bound after Select2 reinitialisation.
+         *
+         * @returns {void}
+         */
+        function bindCustomerChangeHandlers() {
+            if (!bookingCustomer) {
+                return;
+            }
+
+            if (bookingCustomer.dataset.smoothBookingCustomerBound !== '1') {
+                bookingCustomer.addEventListener('change', handleCustomerChange);
+                bookingCustomer.dataset.smoothBookingCustomerBound = '1';
+            }
+
+            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.select2 === 'function') {
+                window.jQuery(document)
+                    .off('select2:select.smoothBookingCustomer select2:clear.smoothBookingCustomer')
+                    .on('select2:select.smoothBookingCustomer select2:clear.smoothBookingCustomer', '#smooth-booking-calendar-booking-customer', handleCustomerChange);
+            }
         }
 
         /**
@@ -1929,31 +1980,7 @@
             });
         }
 
-        if (bookingCustomer) {
-            var handleCustomerChange = function (event) {
-                var selectedId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
-                var contact = null;
-
-                if (event && event.params && event.params.data && typeof event.params.data.id !== 'undefined') {
-                    selectedId = event.params.data.id === '' ? null : parseInt(event.params.data.id, 10);
-
-                    var dataset = event.params.data.element && event.params.data.element.dataset ? event.params.data.element.dataset : null;
-                    contact = {
-                        email: event.params.data.email || (dataset && dataset.email ? dataset.email : ''),
-                        phone: event.params.data.phone || (dataset && dataset.phone ? dataset.phone : ''),
-                    };
-                }
-
-                bookingContext.customerId = Number.isNaN(selectedId) ? null : selectedId;
-                syncCustomerContactFields(bookingContext.customerId, contact);
-            };
-
-            bookingCustomer.addEventListener('change', handleCustomerChange);
-
-            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.select2 === 'function') {
-                window.jQuery(bookingCustomer).on('select2:select select2:clear', handleCustomerChange);
-            }
-        }
+        bindCustomerChangeHandlers();
 
         if (bookingStatus) {
             bookingStatus.addEventListener('change', function () {
