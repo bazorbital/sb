@@ -1,9 +1,7 @@
 {
   "name": "bazorbital/sb",
   "description": "Smooth Booking Wordpress plugin project.",
-  "license": [
-        "GPL-3.0-only",
-        "GPL-3.0-or-later",
+  "license": "GPL-3.0-or-later",
   "require": {},
   "autoload": {
     "psr-4": {
