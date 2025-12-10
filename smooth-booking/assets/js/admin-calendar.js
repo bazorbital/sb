@@ -824,13 +824,15 @@
          * Sync customer contact inputs with selected customer details.
          *
          * @param {number|string|null} customerId Customer identifier.
+         * @param {{email?: string, phone?: string}|null} [contactDetails] Optional contact details from selection event.
          * @returns {void}
          */
-        function syncCustomerContactFields(customerId) {
+        function syncCustomerContactFields(customerId, contactDetails) {
             var customer = findCustomerById(customerId);
             var option = null;
-            var email = customer && customer.email ? customer.email : '';
-            var phone = customer && customer.phone ? customer.phone : '';
+            var fallbackContact = contactDetails && typeof contactDetails === 'object' ? contactDetails : {};
+            var email = fallbackContact.email || (customer && customer.email ? customer.email : '');
+            var phone = fallbackContact.phone || (customer && customer.phone ? customer.phone : '');
 
             if ((!email || !phone) && bookingCustomer) {
                 var targetValue = typeof customerId === 'undefined' || customerId === null ? '' : String(customerId);
@@ -1930,13 +1932,20 @@
         if (bookingCustomer) {
             var handleCustomerChange = function (event) {
                 var selectedId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+                var contact = null;
 
                 if (event && event.params && event.params.data && typeof event.params.data.id !== 'undefined') {
                     selectedId = event.params.data.id === '' ? null : parseInt(event.params.data.id, 10);
+
+                    var dataset = event.params.data.element && event.params.data.element.dataset ? event.params.data.element.dataset : null;
+                    contact = {
+                        email: event.params.data.email || (dataset && dataset.email ? dataset.email : ''),
+                        phone: event.params.data.phone || (dataset && dataset.phone ? dataset.phone : ''),
+                    };
                 }
 
                 bookingContext.customerId = Number.isNaN(selectedId) ? null : selectedId;
-                syncCustomerContactFields(bookingContext.customerId);
+                syncCustomerContactFields(bookingContext.customerId, contact);
             };
 
             bookingCustomer.addEventListener('change', handleCustomerChange);
