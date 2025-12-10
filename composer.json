@@ -1,9 +1,11 @@
 {
   "name": "bazorbital/sb",
+  "description": "Smooth Booking Wordpress plugin project.",
   "require": {},
   "autoload": {
     "psr-4": {
       "Bazorbital\\Sb\\": "src/"
+
     }
   }
 }
