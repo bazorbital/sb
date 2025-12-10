@@ -828,11 +828,11 @@
          */
         function syncCustomerContactFields(customerId) {
             var customer = findCustomerById(customerId);
+            var option = null;
             var email = customer && customer.email ? customer.email : '';
             var phone = customer && customer.phone ? customer.phone : '';
 
             if ((!email || !phone) && bookingCustomer) {
-                var option = null;
                 var targetValue = typeof customerId === 'undefined' || customerId === null ? '' : String(customerId);
 
                 if (typeof bookingCustomer.querySelector === 'function' && targetValue) {
@@ -868,6 +868,14 @@
 
             bookingContext.customerEmail = email;
             bookingContext.customerPhone = phone;
+
+            if (typeof console !== 'undefined' && typeof console.log === 'function') {
+                console.log('[Smooth Booking] Selected customer contact', {
+                    id: typeof customerId === 'undefined' ? null : customerId,
+                    email: email,
+                    phone: phone,
+                });
+            }
 
             if (customerId && config.customersEndpoint && (!customer || !email || !phone)) {
                 fetchCustomerDetails(customerId);
@@ -1920,8 +1928,14 @@
         }
 
         if (bookingCustomer) {
-            var handleCustomerChange = function () {
-                bookingContext.customerId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+            var handleCustomerChange = function (event) {
+                var selectedId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
+
+                if (event && event.params && event.params.data && typeof event.params.data.id !== 'undefined') {
+                    selectedId = event.params.data.id === '' ? null : parseInt(event.params.data.id, 10);
+                }
+
+                bookingContext.customerId = Number.isNaN(selectedId) ? null : selectedId;
                 syncCustomerContactFields(bookingContext.customerId);
             };
 
