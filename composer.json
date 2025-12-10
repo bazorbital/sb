@@ -1,0 +1,9 @@
+{
+  "name": "bazorbital/sb",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "Bazorbital\\Sb\\": "src/"
+    }
+  }
+}
