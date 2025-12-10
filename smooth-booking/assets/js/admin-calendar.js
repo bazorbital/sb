@@ -1920,10 +1920,16 @@
         }
 
         if (bookingCustomer) {
-            bookingCustomer.addEventListener('change', function () {
+            var handleCustomerChange = function () {
                 bookingContext.customerId = bookingCustomer.value ? parseInt(bookingCustomer.value, 10) : null;
                 syncCustomerContactFields(bookingContext.customerId);
-            });
+            };
+
+            bookingCustomer.addEventListener('change', handleCustomerChange);
+
+            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.select2 === 'function') {
+                window.jQuery(bookingCustomer).on('select2:select select2:clear', handleCustomerChange);
+            }
         }
 
         if (bookingStatus) {
