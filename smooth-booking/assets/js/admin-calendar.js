@@ -869,7 +869,7 @@
             bookingContext.customerEmail = email;
             bookingContext.customerPhone = phone;
 
-            if (!customer && customerId && config.customersEndpoint) {
+            if (customerId && config.customersEndpoint && (!customer || !email || !phone)) {
                 fetchCustomerDetails(customerId);
             }
         }
