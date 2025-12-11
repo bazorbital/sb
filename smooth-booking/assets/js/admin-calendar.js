@@ -1220,6 +1220,7 @@
                 bookingDialog.close();
             }
 
+            bookingDialog.open = false;
             bookingDialog.removeAttribute('open');
             bookingDialog.setAttribute('hidden', 'hidden');
             bookingDialog.hidden = true;
@@ -2040,6 +2041,9 @@
             }
 
             element.addEventListener('click', function (event) {
+                /* eslint-disable no-console */
+                console.log('[SmoothBooking] Booking dialog dismiss clicked:', element.id || 'unknown');
+                /* eslint-enable no-console */
                 if (event && typeof event.preventDefault === 'function') {
                     event.preventDefault();
                 }

@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.24] - 2026-09-12
+### Fixed
+- Calendar booking modal cancel and close buttons now trigger dismissal reliably and emit console diagnostics when clicked to aid debugging.
+
 # [0.18.23] - 2026-09-05
 ### Fixed
 - Customer selection in the calendar booking dialog now reliably auto-fills the phone and email fields by reading the selected option even when Select2 does not update the native selected index.
