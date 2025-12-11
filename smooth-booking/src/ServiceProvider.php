@@ -355,7 +355,8 @@ class ServiceProvider {
                 $container->get( LocationService::class ),
                 $container->get( ServiceService::class ),
                 $container->get( GeneralSettings::class ),
-                $container->get( Logger::class )
+                $container->get( Logger::class ),
+                $container->get( CustomerService::class )
             );
         } );
 

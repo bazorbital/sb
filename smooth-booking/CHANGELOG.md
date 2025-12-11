@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.26] - 2026-10-20
+### Added
+- Calendar booking dialog now supports creating a new customer inline via a dedicated modal and reopens the booking form with the freshly created profile preselected.
+
 # [0.18.25] - 2026-10-02
 ### Fixed
 - Calendar booking modal dismiss buttons now carry explicit dismiss hooks and are bound earlier in the script lifecycle, ensuring both Cancel controls close the dialog even if later calendar logic encounters errors.
