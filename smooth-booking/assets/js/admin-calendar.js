@@ -2497,6 +2497,10 @@
                 if (event && typeof event.preventDefault === 'function') {
                     event.preventDefault();
                 }
+
+                if (window.console && typeof window.console.log === 'function') {
+                    window.console.log('Smooth Booking: opening new customer dialog from booking modal click');
+                }
                 openCustomerDialog();
             });
         }
