@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.28] - 2026-11-04
+### Fixed
+- New customer button in the calendar booking modal now opens the inline customer form reliably thanks to delegated click
+  binding that survives dynamic modal renders.
+
 # [0.18.27] - 2026-10-28
 ### Fixed
 - Calendar booking dialog now reliably opens the inline **Add new customer** modal even when the browser blocks `showModal()`,
