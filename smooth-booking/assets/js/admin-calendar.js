@@ -1844,10 +1844,19 @@
             customerDialog.removeAttribute('hidden');
             customerDialog.hidden = false;
 
-            if (typeof customerDialog.showModal === 'function') {
-                customerDialog.showModal();
-            } else {
+            try {
+                if (typeof customerDialog.showModal === 'function') {
+                    customerDialog.showModal();
+                } else {
+                    customerDialog.setAttribute('open', 'open');
+                }
+            } catch (error) {
                 customerDialog.setAttribute('open', 'open');
+                customerDialog.open = true;
+
+                if (window.console && typeof window.console.error === 'function') {
+                    window.console.error('Smooth Booking: unable to open customer dialog', error);
+                }
             }
 
             if (customerName && typeof customerName.focus === 'function') {

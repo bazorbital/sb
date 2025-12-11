@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.27] - 2026-10-28
+### Fixed
+- Calendar booking dialog now reliably opens the inline **Add new customer** modal even when the browser blocks `showModal()`,
+  falling back to the standard `open` attribute and logging the issue for debugging.
+
 # [0.18.26] - 2026-10-20
 ### Added
 - Calendar booking dialog now supports creating a new customer inline via a dedicated modal and reopens the booking form with the freshly created profile preselected.
