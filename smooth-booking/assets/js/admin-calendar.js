@@ -2056,9 +2056,19 @@
                 return;
             }
 
-            if (targetElement.matches('[data-smooth-booking-dismiss]')) {
-                closeBookingDialog();
+            var dismissTarget = targetElement.closest(
+                '[data-smooth-booking-dismiss], #smooth-booking-calendar-booking-cancel, #smooth-booking-calendar-booking-cancel-alt'
+            );
+
+            if (!dismissTarget) {
+                return;
             }
+
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            closeBookingDialog();
         });
 
         if (bookingDialog) {
