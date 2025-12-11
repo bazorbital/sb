@@ -15,6 +15,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - Top-level Smooth Booking admin menu with the **Locations**, **Appointments**, **Employees**, **Customers**, and **Services** screens
 - Calendar workspace powered by the EventCalendar library, defaulting to today's bookings in a resource-based day view with employee columns, service-coloured appointments, native location and date filters, Select2-enhanced employee/service filters, and automatic locale-aware slot rendering plus quick **Resources**/**Timeline** view buttons
 - Calendar workspace now includes an **Add appointment** control and selection-aware modal that posts to the appointments REST endpoint, pre-filling staff, date, and service-duration-aware end times from the highlighted slot
+- Booking modal now offers inline customer creation so new profiles can be added, saved, and preselected without leaving the calendar view
 - REST-backed calendar schedule endpoint that feeds EventCalendar via AJAX, honouring per-location business hours with two-hour padding, service colour palettes, and customer contact details
 - Email notifications workspace with list view, drawer-based creation/editing, recipient scoping, placeholder reference table, and soft delete/disable flows plus SMTP-aware delivery settings
 - Daily cron health check

@@ -485,6 +485,30 @@
         var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
         var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
         var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
+        var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
+        var customerDialog = document.getElementById('smooth-booking-calendar-customer-dialog');
+        var customerForm = document.getElementById('smooth-booking-calendar-customer-form');
+        var customerError = document.getElementById('smooth-booking-calendar-customer-error');
+        var customerUserAction = document.getElementById('smooth-booking-customer-user-action');
+        var customerExistingUser = document.getElementById('smooth-booking-customer-existing-user');
+        var customerTags = document.getElementById('smooth-booking-customer-tags');
+        var customerNewTags = document.getElementById('smooth-booking-customer-new-tags');
+        var customerName = document.getElementById('smooth-booking-customer-name');
+        var customerFirstName = document.getElementById('smooth-booking-customer-first-name');
+        var customerLastName = document.getElementById('smooth-booking-customer-last-name');
+        var customerPhone = document.getElementById('smooth-booking-customer-phone');
+        var customerEmail = document.getElementById('smooth-booking-customer-email');
+        var customerDateOfBirth = document.getElementById('smooth-booking-customer-date-of-birth');
+        var customerCountry = document.getElementById('smooth-booking-customer-country');
+        var customerStateRegion = document.getElementById('smooth-booking-customer-state-region');
+        var customerPostalCode = document.getElementById('smooth-booking-customer-postal-code');
+        var customerCity = document.getElementById('smooth-booking-customer-city');
+        var customerStreetAddress = document.getElementById('smooth-booking-customer-street-address');
+        var customerAdditionalAddress = document.getElementById('smooth-booking-customer-additional-address');
+        var customerStreetNumber = document.getElementById('smooth-booking-customer-street-number');
+        var customerNotes = document.getElementById('smooth-booking-customer-notes');
+        var customerProfileImage = document.querySelector('#smooth-booking-calendar-customer-dialog input[name="customer_profile_image_id"]');
+        var customerSubmit = document.getElementById('smooth-booking-calendar-customer-submit');
 
         var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes, data.slotLengthMinutes);
 
@@ -1091,6 +1115,51 @@
         }
 
         /**
+         * Capture the current booking form values into the booking context.
+         *
+         * @returns {void}
+         */
+        function captureBookingFormState() {
+            bookingContext.date = bookingDateInput && bookingDateInput.value
+                ? toDateString(bookingDateInput.value)
+                : bookingContext.date;
+            bookingContext.resourceId = bookingResource && bookingResource.value
+                ? parseInt(bookingResource.value, 10)
+                : bookingContext.resourceId;
+            bookingContext.serviceId = bookingService && bookingService.value
+                ? parseInt(bookingService.value, 10)
+                : bookingContext.serviceId;
+            bookingContext.startTime = bookingStart && bookingStart.value
+                ? normalizeTime(bookingStart.value, config.timezone)
+                : bookingContext.startTime;
+            bookingContext.endTime = bookingEnd && bookingEnd.value
+                ? normalizeTime(bookingEnd.value, config.timezone)
+                : bookingContext.endTime;
+            bookingContext.customerId = bookingCustomer && bookingCustomer.value
+                ? parseInt(bookingCustomer.value, 10)
+                : bookingContext.customerId;
+            bookingContext.status = bookingStatus && bookingStatus.value
+                ? bookingStatus.value
+                : bookingContext.status;
+            bookingContext.paymentStatus = bookingPayment && bookingPayment.value
+                ? bookingPayment.value
+                : bookingContext.paymentStatus;
+            bookingContext.customerEmail = bookingCustomerEmail && bookingCustomerEmail.value
+                ? bookingCustomerEmail.value
+                : bookingContext.customerEmail;
+            bookingContext.customerPhone = bookingCustomerPhone && bookingCustomerPhone.value
+                ? bookingCustomerPhone.value
+                : bookingContext.customerPhone;
+            bookingContext.internalNote = bookingInternalNote && bookingInternalNote.value
+                ? bookingInternalNote.value
+                : bookingContext.internalNote;
+            bookingContext.notes = bookingNote && bookingNote.value
+                ? bookingNote.value
+                : bookingContext.notes;
+            bookingContext.sendNotifications = bookingNotify ? !!bookingNotify.checked : bookingContext.sendNotifications;
+        }
+
+        /**
          * Open the booking dialog with the provided context.
          *
          * @param {Object} context Booking context.
@@ -1230,6 +1299,26 @@
             }
 
             setBookingError('');
+        }
+
+        /**
+         * Hide the booking dialog without resetting the form values.
+         *
+         * @returns {void}
+         */
+        function pauseBookingDialog() {
+            if (!bookingDialog) {
+                return;
+            }
+
+            if (typeof bookingDialog.close === 'function') {
+                bookingDialog.close();
+            }
+
+            bookingDialog.open = false;
+            bookingDialog.removeAttribute('open');
+            bookingDialog.setAttribute('hidden', 'hidden');
+            bookingDialog.hidden = true;
         }
 
         /**
@@ -1507,33 +1596,15 @@
                 return;
             }
 
-            if (bookingStart) {
-                bookingContext.startTime = normalizeTime(bookingStart.value || bookingContext.startTime, config.timezone);
-                bookingStart.value = bookingContext.startTime;
-            }
-
-            if (bookingEnd) {
-                bookingContext.endTime = normalizeTime(bookingEnd.value || bookingContext.endTime, config.timezone);
-            }
-
             syncBookingEndTime();
+            captureBookingFormState();
 
-            var providerId = bookingResource ? parseInt(bookingResource.value, 10) : 0;
-            var serviceId = bookingService ? parseInt(bookingService.value, 10) : 0;
-            var customerId = bookingCustomer ? parseInt(bookingCustomer.value, 10) : 0;
-            var startValue = bookingStart ? bookingStart.value : '';
-            var endValue = bookingEnd ? bookingEnd.value : '';
-            var dateValue = bookingDateInput ? toDateString(bookingDateInput.value) : (bookingContext.date || state.selectedDate);
-
-            bookingContext.date = dateValue || bookingContext.date;
-            bookingContext.customerId = customerId || null;
-            bookingContext.status = bookingStatus ? bookingStatus.value : bookingContext.status;
-            bookingContext.paymentStatus = bookingPayment ? bookingPayment.value : bookingContext.paymentStatus;
-            bookingContext.customerEmail = bookingCustomerEmail ? bookingCustomerEmail.value : bookingContext.customerEmail;
-            bookingContext.customerPhone = bookingCustomerPhone ? bookingCustomerPhone.value : bookingContext.customerPhone;
-            bookingContext.internalNote = bookingInternalNote ? bookingInternalNote.value : bookingContext.internalNote;
-            bookingContext.notes = bookingNote ? bookingNote.value : bookingContext.notes;
-            bookingContext.sendNotifications = bookingNotify ? !!bookingNotify.checked : bookingContext.sendNotifications;
+            var providerId = bookingContext.resourceId || (bookingResource ? parseInt(bookingResource.value, 10) : 0);
+            var serviceId = bookingContext.serviceId || (bookingService ? parseInt(bookingService.value, 10) : 0);
+            var customerId = bookingContext.customerId || (bookingCustomer ? parseInt(bookingCustomer.value, 10) : 0);
+            var startValue = bookingContext.startTime || (bookingStart ? bookingStart.value : '');
+            var endValue = bookingContext.endTime || (bookingEnd ? bookingEnd.value : '');
+            var dateValue = bookingContext.date || state.selectedDate;
 
             if (!providerId || !serviceId || !dateValue || !startValue || !endValue) {
                 setBookingError(i18n.bookingValidation || 'Please complete all required fields.');
@@ -1624,6 +1695,337 @@
                         error && error.message ? error.message : (i18n.bookingSaveError || 'Unable to save appointment.'),
                         'error'
                     );
+                });
+        }
+
+        /**
+         * Toggle the existing user selector visibility.
+         *
+         * @param {string} action Selected action key.
+         * @returns {void}
+         */
+        function toggleCustomerExistingUserField(action) {
+            var field = customerDialog ? customerDialog.querySelector('.smooth-booking-existing-user-field') : null;
+
+            if (!field) {
+                return;
+            }
+
+            if (action === 'assign') {
+                field.style.display = '';
+            } else {
+                field.style.display = 'none';
+                if (customerExistingUser) {
+                    customerExistingUser.value = '0';
+                }
+            }
+        }
+
+        /**
+         * Display or clear customer dialog errors.
+         *
+         * @param {string} message Error message.
+         * @returns {void}
+         */
+        function setCustomerDialogError(message) {
+            if (!customerError) {
+                return;
+            }
+
+            customerError.textContent = message || '';
+            customerError.hidden = !message;
+        }
+
+        /**
+         * Retrieve the avatar field wrapper.
+         *
+         * @returns {HTMLElement|null} Avatar field element.
+         */
+        function getCustomerAvatarField() {
+            if (!customerDialog) {
+                return null;
+            }
+
+            return customerDialog.querySelector('.smooth-booking-avatar-field');
+        }
+
+        /**
+         * Reset the avatar preview to placeholder.
+         *
+         * @returns {void}
+         */
+        function resetCustomerAvatar() {
+            var field = getCustomerAvatarField();
+            if (!field) {
+                return;
+            }
+
+            var preview = field.querySelector('.smooth-booking-avatar-preview');
+            var removeButton = field.querySelector('.smooth-booking-avatar-remove');
+            var placeholder = field.getAttribute('data-placeholder') || '';
+
+            if (preview) {
+                preview.innerHTML = placeholder;
+            }
+
+            if (removeButton) {
+                removeButton.style.display = 'none';
+            }
+
+            if (customerProfileImage) {
+                customerProfileImage.value = '0';
+            }
+        }
+
+        /**
+         * Update avatar preview from media frame selection.
+         *
+         * @param {Object|null} attachment Media attachment object.
+         * @returns {void}
+         */
+        function updateCustomerAvatar(attachment) {
+            var field = getCustomerAvatarField();
+            if (!field) {
+                return;
+            }
+
+            var preview = field.querySelector('.smooth-booking-avatar-preview');
+            var removeButton = field.querySelector('.smooth-booking-avatar-remove');
+
+            if (attachment && attachment.id) {
+                var imageUrl = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
+                var altText = attachment.alt || attachment.title || '';
+                var wrapper = document.createElement('span');
+                wrapper.className = 'smooth-booking-avatar-wrapper';
+                var img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = altText;
+                img.className = 'smooth-booking-avatar-image';
+                wrapper.appendChild(img);
+
+                if (preview) {
+                    preview.innerHTML = '';
+                    preview.appendChild(wrapper);
+                }
+
+                if (customerProfileImage) {
+                    customerProfileImage.value = attachment.id;
+                }
+
+                if (removeButton) {
+                    removeButton.style.display = '';
+                }
+            } else {
+                resetCustomerAvatar();
+            }
+        }
+
+        /**
+         * Open the customer creation dialog.
+         *
+         * @returns {void}
+         */
+        function openCustomerDialog() {
+            if (!customerDialog) {
+                return;
+            }
+
+            captureBookingFormState();
+            pauseBookingDialog();
+            setCustomerDialogError('');
+
+            if (customerForm && typeof customerForm.reset === 'function') {
+                customerForm.reset();
+            }
+
+            resetCustomerAvatar();
+            toggleCustomerExistingUserField(customerUserAction ? customerUserAction.value : 'none');
+
+            customerDialog.removeAttribute('hidden');
+            customerDialog.hidden = false;
+
+            if (typeof customerDialog.showModal === 'function') {
+                customerDialog.showModal();
+            } else {
+                customerDialog.setAttribute('open', 'open');
+            }
+
+            if (customerName && typeof customerName.focus === 'function') {
+                window.setTimeout(function () { customerName.focus(); }, 50);
+            }
+        }
+
+        /**
+         * Close the customer dialog and optionally reopen booking dialog.
+         *
+         * @param {boolean} [reopenBooking] Whether to return to the booking dialog.
+         * @returns {void}
+         */
+        function closeCustomerDialog(reopenBooking) {
+            if (!customerDialog) {
+                return;
+            }
+
+            if (typeof customerDialog.close === 'function') {
+                customerDialog.close();
+            }
+
+            customerDialog.open = false;
+            customerDialog.removeAttribute('open');
+            customerDialog.setAttribute('hidden', 'hidden');
+            customerDialog.hidden = true;
+
+            if (customerForm && typeof customerForm.reset === 'function') {
+                customerForm.reset();
+            }
+
+            resetCustomerAvatar();
+            setCustomerDialogError('');
+            toggleCustomerExistingUserField('none');
+
+            if (reopenBooking) {
+                openBookingDialog(bookingContext);
+            }
+        }
+
+        /**
+         * Enable or disable the customer form submit button.
+         *
+         * @param {boolean} disabled Whether the form is submitting.
+         * @returns {void}
+         */
+        function disableCustomerForm(disabled) {
+            if (customerSubmit) {
+                customerSubmit.disabled = !!disabled;
+            }
+
+            if (customerForm) {
+                customerForm.classList.toggle('is-submitting', !!disabled);
+            }
+        }
+
+        /**
+         * Build the payload for creating a customer.
+         *
+         * @returns {Object} Payload object.
+         */
+        function gatherCustomerPayload() {
+            var tagIds = [];
+
+            if (customerTags && customerTags.selectedOptions) {
+                tagIds = Array.prototype.slice.call(customerTags.selectedOptions)
+                    .map(function (option) { return parseInt(option.value, 10); })
+                    .filter(function (value) { return !Number.isNaN(value); });
+            }
+
+            return {
+                name: customerName ? customerName.value : '',
+                first_name: customerFirstName ? customerFirstName.value : '',
+                last_name: customerLastName ? customerLastName.value : '',
+                phone: customerPhone ? customerPhone.value : '',
+                email: customerEmail ? customerEmail.value : '',
+                date_of_birth: customerDateOfBirth ? customerDateOfBirth.value : '',
+                country: customerCountry ? customerCountry.value : '',
+                state_region: customerStateRegion ? customerStateRegion.value : '',
+                postal_code: customerPostalCode ? customerPostalCode.value : '',
+                city: customerCity ? customerCity.value : '',
+                street_address: customerStreetAddress ? customerStreetAddress.value : '',
+                additional_address: customerAdditionalAddress ? customerAdditionalAddress.value : '',
+                street_number: customerStreetNumber ? customerStreetNumber.value : '',
+                notes: customerNotes ? customerNotes.value : '',
+                profile_image_id: customerProfileImage && customerProfileImage.value ? customerProfileImage.value : 0,
+                user_action: customerUserAction ? customerUserAction.value : 'none',
+                existing_user_id: customerExistingUser ? customerExistingUser.value : 0,
+                tag_ids: tagIds,
+                new_tags: customerNewTags ? customerNewTags.value : '',
+            };
+        }
+
+        /**
+         * Submit the customer form via REST and return to booking dialog.
+         *
+         * @param {Event} event Submit event.
+         * @returns {void}
+         */
+        function handleCustomerSubmit(event) {
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            if (!config.customersEndpoint || !customerForm || typeof fetch !== 'function') {
+                if (customerForm && typeof customerForm.submit === 'function') {
+                    customerForm.submit();
+                }
+                return;
+            }
+
+            setCustomerDialogError('');
+            disableCustomerForm(true);
+
+            var payload = gatherCustomerPayload();
+
+            fetch(config.customersEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-WP-Nonce': config.nonce || '',
+                },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+            })
+                .then(function (response) {
+                    return response.json().then(function (body) {
+                        return { ok: response.ok, body: body };
+                    });
+                })
+                .then(function (result) {
+                    if (!result.ok) {
+                        var message = result.body && result.body.message ? result.body.message : '';
+                        throw new Error(message || (i18n.customerCreateError || 'Unable to create customer.'));
+                    }
+
+                    return result.body;
+                })
+                .then(function (customer) {
+                    if (!customer || Number.isNaN(parseInt(customer.id, 10))) {
+                        throw new Error(i18n.customerCreateError || 'Unable to create customer.');
+                    }
+
+                    var id = parseInt(customer.id, 10);
+                    var customers = ensureArray(state.customers);
+                    var existingIndex = customers.findIndex(function (item) {
+                        return item && parseInt(item.id, 10) === id;
+                    });
+
+                    if (existingIndex >= 0) {
+                        customers[existingIndex] = customer;
+                    } else {
+                        customers.unshift(customer);
+                    }
+
+                    state.customers = customers;
+                    bookingContext.customerId = id;
+                    bookingContext.customerEmail = customer.email || bookingContext.customerEmail;
+                    bookingContext.customerPhone = customer.phone || bookingContext.customerPhone;
+
+                    populateBookingCustomers(id);
+                    if (bookingCustomer) {
+                        bookingCustomer.value = String(id);
+                    }
+
+                    syncCustomerContactFields(id, {
+                        email: bookingContext.customerEmail,
+                        phone: bookingContext.customerPhone,
+                    });
+
+                    closeCustomerDialog(true);
+                })
+                .catch(function (error) {
+                    setCustomerDialogError(error && error.message ? error.message : (i18n.customerCreateError || 'Unable to create customer.'));
+                })
+                .finally(function () {
+                    disableCustomerForm(false);
                 });
         }
 
@@ -2079,6 +2481,91 @@
                     bookingResourceLabel.textContent = resource ? (resource.title || '') : '';
                 }
             });
+        }
+
+        if (addCustomerButton) {
+            addCustomerButton.addEventListener('click', function (event) {
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                openCustomerDialog();
+            });
+        }
+
+        if (customerUserAction) {
+            customerUserAction.addEventListener('change', function () {
+                toggleCustomerExistingUserField(customerUserAction.value || 'none');
+            });
+
+            toggleCustomerExistingUserField(customerUserAction.value || 'none');
+        }
+
+        if (customerDialog) {
+            customerDialog.addEventListener('cancel', function (event) {
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                closeCustomerDialog(true);
+            });
+
+            customerDialog.addEventListener('close', function () {
+                customerDialog.removeAttribute('open');
+                customerDialog.setAttribute('hidden', 'hidden');
+                customerDialog.hidden = true;
+            });
+
+            customerDialog.addEventListener('click', function (event) {
+                var target = event.target;
+                if (!target || !(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (target.closest('[data-smooth-booking-customer-dismiss]')) {
+                    if (event && typeof event.preventDefault === 'function') {
+                        event.preventDefault();
+                    }
+                    closeCustomerDialog(true);
+                    return;
+                }
+
+                if (target.classList.contains('smooth-booking-avatar-select')) {
+                    if (event && typeof event.preventDefault === 'function') {
+                        event.preventDefault();
+                    }
+
+                    if (!window.wp || !window.wp.media) {
+                        return;
+                    }
+
+                    var frame = window.wp.media({
+                        title: (i18n && i18n.chooseImage) || 'Choose image',
+                        button: {
+                            text: (i18n && i18n.useImage) || 'Use image',
+                        },
+                        library: { type: 'image' },
+                        multiple: false,
+                    });
+
+                    frame.on('select', function () {
+                        var attachment = frame.state().get('selection').first().toJSON();
+                        updateCustomerAvatar(attachment);
+                    });
+
+                    frame.open();
+                    return;
+                }
+
+                if (target.classList.contains('smooth-booking-avatar-remove')) {
+                    if (event && typeof event.preventDefault === 'function') {
+                        event.preventDefault();
+                    }
+                    resetCustomerAvatar();
+                }
+            });
+        }
+
+        if (customerForm) {
+            customerForm.addEventListener('submit', handleCustomerSubmit);
         }
 
         if (bookingDialog) {

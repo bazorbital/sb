@@ -13,6 +13,8 @@ use DateTimeInterface;
 use DateTimeZone;
 use SmoothBooking\Domain\Appointments\AppointmentService;
 use SmoothBooking\Domain\Calendar\CalendarService;
+use SmoothBooking\Domain\Customers\CustomerService;
+use SmoothBooking\Domain\Customers\CustomerTag;
 use SmoothBooking\Domain\Employees\Employee;
 use SmoothBooking\Domain\Locations\Location;
 use SmoothBooking\Domain\Locations\LocationService;
@@ -44,6 +46,7 @@ use function wp_date;
 use function wp_die;
 use function wp_enqueue_script;
 use function wp_enqueue_style;
+use function wp_enqueue_media;
 use function wp_create_nonce;
 use function wp_json_encode;
 use function wp_timezone;
@@ -57,6 +60,7 @@ use function array_merge;
 use function is_array;
 use function array_unique;
 use function in_array;
+use function get_users;
 
 /**
  * Renders the Smooth Booking calendar page using a resource-based day view.
@@ -83,13 +87,16 @@ class CalendarPage {
 
     private Logger $logger;
 
-    public function __construct( AppointmentService $appointments, CalendarService $calendar, LocationService $locations, ServiceService $services, GeneralSettings $settings, Logger $logger ) {
+    private CustomerService $customers;
+
+    public function __construct( AppointmentService $appointments, CalendarService $calendar, LocationService $locations, ServiceService $services, GeneralSettings $settings, Logger $logger, CustomerService $customers ) {
         $this->appointments = $appointments;
         $this->calendar     = $calendar;
         $this->locations    = $locations;
         $this->services     = $services;
         $this->settings     = $settings;
         $this->logger       = $logger;
+        $this->customers    = $customers;
     }
 
     /**
@@ -112,6 +119,17 @@ class CalendarPage {
         $timezone        = $this->resolve_timezone( $location );
         $selected_date   = $this->determine_date( $timezone );
         $schedule_result = $this->calendar->get_daily_schedule( $location_id, $selected_date );
+
+        $customer_tags = $this->customers->list_tags();
+        $customer_users = get_users(
+            [
+                'orderby' => 'display_name',
+                'order'   => 'ASC',
+                'fields'  => [ 'ID', 'display_name', 'user_email' ],
+            ]
+        );
+
+        wp_enqueue_media();
 
         if ( is_wp_error( $schedule_result ) ) {
             $this->logger->error(
@@ -350,6 +368,11 @@ class CalendarPage {
                             <label class="smooth-booking-calendar-dialog__field">
                                 <span><?php echo esc_html__( 'Customer', 'smooth-booking' ); ?></span>
                                 <select id="smooth-booking-calendar-booking-customer" name="booking-customer"></select>
+                                <button
+                                    type="button"
+                                    class="button button-link smooth-booking-calendar-add-customer"
+                                    id="smooth-booking-calendar-add-customer"
+                                ><?php echo esc_html__( 'Add new customer', 'smooth-booking' ); ?></button>
                             </label>
 
                             <div class="smooth-booking-calendar-dialog__grid">
@@ -412,6 +435,157 @@ class CalendarPage {
                                 data-smooth-booking-dismiss="dialog"
                             ><?php echo esc_html__( 'Cancel', 'smooth-booking' ); ?></button>
                             <button type="submit" class="button button-primary"><?php echo esc_html__( 'Save appointment', 'smooth-booking' ); ?></button>
+                        </div>
+                    </form>
+                </dialog>
+
+                <dialog id="smooth-booking-calendar-customer-dialog" class="smooth-booking-calendar-dialog smooth-booking-calendar-customer-dialog" hidden>
+                    <form
+                        id="smooth-booking-calendar-customer-form"
+                        class="smooth-booking-calendar-dialog__form"
+                        method="post"
+                        action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+                    >
+                        <?php wp_nonce_field( 'smooth_booking_save_customer', '_smooth_booking_save_nonce' ); ?>
+                        <input type="hidden" name="action" value="smooth_booking_save_customer" />
+                        <header class="smooth-booking-calendar-dialog__header">
+                            <div>
+                                <p class="smooth-booking-calendar-dialog__eyebrow"><?php echo esc_html__( 'New customer', 'smooth-booking' ); ?></p>
+                                <h2 class="smooth-booking-calendar-dialog__title"><?php echo esc_html__( 'Add new customer', 'smooth-booking' ); ?></h2>
+                            </div>
+                            <button
+                                type="button"
+                                class="smooth-booking-calendar-dialog__close smooth-booking-calendar-customer-dismiss"
+                                aria-label="<?php echo esc_attr__( 'Close', 'smooth-booking' ); ?>"
+                                data-smooth-booking-customer-dismiss="dialog"
+                            >×</button>
+                        </header>
+                        <div class="smooth-booking-calendar-dialog__body smooth-booking-calendar-customer-dialog__body">
+                            <p class="smooth-booking-calendar-dialog__description"><?php echo esc_html__( 'Create a customer without leaving the calendar. The new profile will be added to the list and preselected for this booking.', 'smooth-booking' ); ?></p>
+                            <div class="smooth-booking-calendar-customer-scroll">
+                                <table class="form-table" role="presentation">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-name"><?php esc_html_e( 'Customer name', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-name" name="customer_name" value="" required /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><?php esc_html_e( 'Profile image', 'smooth-booking' ); ?></th>
+                                            <td>
+                                                <div class="smooth-booking-avatar-field" data-placeholder="<?php echo esc_attr( '<span class=\"smooth-booking-avatar-wrapper smooth-booking-avatar-wrapper--placeholder dashicons dashicons-admin-users\" aria-hidden=\"true\"></span>' ); ?>">
+                                                    <div class="smooth-booking-avatar-preview">
+                                                        <span class="smooth-booking-avatar-wrapper smooth-booking-avatar-wrapper--placeholder dashicons dashicons-admin-users" aria-hidden="true"></span>
+                                                    </div>
+                                                    <div class="smooth-booking-avatar-actions">
+                                                        <button type="button" class="sba-btn sba-btn__small sba-btn__filled smooth-booking-avatar-select"><?php esc_html_e( 'Choose image', 'smooth-booking' ); ?></button>
+                                                        <button type="button" class="sba-btn sba-btn__small sba-btn__filled-light smooth-booking-avatar-remove" style="display:none"><?php esc_html_e( 'Remove', 'smooth-booking' ); ?></button>
+                                                        <input type="hidden" name="customer_profile_image_id" value="0" />
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-user-action"><?php esc_html_e( 'WordPress user', 'smooth-booking' ); ?></label></th>
+                                            <td>
+                                                <select id="smooth-booking-customer-user-action" name="customer_user_action">
+                                                    <option value="none"><?php esc_html_e( "Don't create a WordPress user", 'smooth-booking' ); ?></option>
+                                                    <option value="create"><?php esc_html_e( 'Create WordPress user', 'smooth-booking' ); ?></option>
+                                                    <option value="assign"><?php esc_html_e( 'Assign existing WordPress user', 'smooth-booking' ); ?></option>
+                                                </select>
+                                                <p class="description"><?php esc_html_e( 'Create or assign a WordPress user account for this customer.', 'smooth-booking' ); ?></p>
+                                                <div class="smooth-booking-existing-user-field" style="display:none">
+                                                    <label for="smooth-booking-customer-existing-user" class="screen-reader-text"><?php esc_html_e( 'Existing WordPress user', 'smooth-booking' ); ?></label>
+                                                    <select id="smooth-booking-customer-existing-user" name="customer_existing_user">
+                                                        <option value="0"><?php esc_html_e( 'Select user', 'smooth-booking' ); ?></option>
+                                                        <?php foreach ( $customer_users as $user ) : ?>
+                                                            <?php if ( ! $user instanceof \WP_User ) { continue; } ?>
+                                                            <option value="<?php echo esc_attr( (string) $user->ID ); ?>"><?php echo esc_html( $user->display_name . ' (' . $user->user_email . ')' ); ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-first-name"><?php esc_html_e( 'First name', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-first-name" name="customer_first_name" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-last-name"><?php esc_html_e( 'Last name', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-last-name" name="customer_last_name" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-phone"><?php esc_html_e( 'Phone', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-phone" name="customer_phone" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-email"><?php esc_html_e( 'Email', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="email" class="regular-text" id="smooth-booking-customer-email" name="customer_email" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-tags"><?php esc_html_e( 'Tags', 'smooth-booking' ); ?></label></th>
+                                            <td>
+                                                <select id="smooth-booking-customer-tags" name="customer_tags[]" multiple size="5" class="smooth-booking-tags-select">
+                                                    <?php foreach ( $customer_tags as $tag ) : ?>
+                                                        <?php if ( ! $tag instanceof CustomerTag ) { continue; } ?>
+                                                        <option value="<?php echo esc_attr( (string) $tag->get_id() ); ?>"><?php echo esc_html( $tag->get_name() ); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <p class="description"><?php esc_html_e( 'Hold CTRL or CMD to select multiple tags.', 'smooth-booking' ); ?></p>
+                                                <label for="smooth-booking-customer-new-tags" class="screen-reader-text"><?php esc_html_e( 'Create new tags', 'smooth-booking' ); ?></label>
+                                                <input type="text" id="smooth-booking-customer-new-tags" name="customer_new_tags" value="" placeholder="<?php echo esc_attr__( 'Add new tags separated by comma', 'smooth-booking' ); ?>" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-date-of-birth"><?php esc_html_e( 'Date of birth', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="date" id="smooth-booking-customer-date-of-birth" name="customer_date_of_birth" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-country"><?php esc_html_e( 'Country', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-country" name="customer_country" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-state-region"><?php esc_html_e( 'State/Region', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-state-region" name="customer_state_region" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-postal-code"><?php esc_html_e( 'Postal code', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-postal-code" name="customer_postal_code" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-city"><?php esc_html_e( 'City', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-city" name="customer_city" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-street-address"><?php esc_html_e( 'Street address', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-street-address" name="customer_street_address" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-additional-address"><?php esc_html_e( 'Additional address', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-additional-address" name="customer_additional_address" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-street-number"><?php esc_html_e( 'Street number', 'smooth-booking' ); ?></label></th>
+                                            <td><input type="text" class="regular-text" id="smooth-booking-customer-street-number" name="customer_street_number" value="" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row"><label for="smooth-booking-customer-notes"><?php esc_html_e( 'Notes', 'smooth-booking' ); ?></label></th>
+                                            <td>
+                                                <textarea id="smooth-booking-customer-notes" name="customer_notes" rows="4" class="large-text"></textarea>
+                                                <p class="description"><?php esc_html_e( 'This text can be inserted into notifications with {client_note} code.', 'smooth-booking' ); ?></p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="smooth-booking-calendar-dialog__error" id="smooth-booking-calendar-customer-error" hidden></p>
+                            </div>
+                        </div>
+                        <div class="smooth-booking-calendar-dialog__actions">
+                            <button
+                                type="button"
+                                class="button button-secondary smooth-booking-calendar-customer-dismiss"
+                                data-smooth-booking-customer-dismiss="dialog"
+                            ><?php echo esc_html__( 'Cancel', 'smooth-booking' ); ?></button>
+                            <button type="submit" class="button button-primary" id="smooth-booking-calendar-customer-submit"><?php echo esc_html__( 'Create customer', 'smooth-booking' ); ?></button>
                         </div>
                     </form>
                 </dialog>
