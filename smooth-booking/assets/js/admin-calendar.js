@@ -2492,7 +2492,7 @@
             });
         }
 
-        document.addEventListener('click', function (event) {
+        function handleCustomerDialogOpen(event) {
             var trigger = event && event.target instanceof HTMLElement
                 ? event.target.closest('#smooth-booking-calendar-add-customer')
                 : null;
@@ -2510,7 +2510,13 @@
             }
 
             openCustomerDialog();
-        });
+        }
+
+        if (addCustomerButton) {
+            addCustomerButton.addEventListener('click', handleCustomerDialogOpen);
+        }
+
+        document.addEventListener('click', handleCustomerDialogOpen);
 
         if (customerUserAction) {
             customerUserAction.addEventListener('change', function () {
