@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.25] - 2026-10-02
+### Fixed
+- Calendar booking modal dismiss buttons now carry explicit dismiss hooks and are bound earlier in the script lifecycle, ensuring both Cancel controls close the dialog even if later calendar logic encounters errors.
+
 # [0.18.24] - 2026-09-12
 ### Fixed
 - Calendar booking modal cancel and close buttons now trigger dismissal reliably and emit console diagnostics when clicked to aid debugging.
