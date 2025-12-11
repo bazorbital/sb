@@ -311,7 +311,13 @@ class CalendarPage {
                                     <span id="smooth-booking-calendar-booking-date"></span>
                                 </p>
                             </div>
-                            <button type="button" class="smooth-booking-calendar-dialog__close" id="smooth-booking-calendar-booking-cancel" aria-label="<?php echo esc_attr__( 'Close', 'smooth-booking' ); ?>">×</button>
+                            <button
+                                type="button"
+                                class="smooth-booking-calendar-dialog__close"
+                                id="smooth-booking-calendar-booking-cancel"
+                                aria-label="<?php echo esc_attr__( 'Close', 'smooth-booking' ); ?>"
+                                data-smooth-booking-dismiss="dialog"
+                            >×</button>
                         </header>
 
                         <div class="smooth-booking-calendar-dialog__body">
@@ -399,7 +405,12 @@ class CalendarPage {
                         </div>
 
                         <div class="smooth-booking-calendar-dialog__actions">
-                            <button type="button" class="button button-secondary" id="smooth-booking-calendar-booking-cancel-alt"><?php echo esc_html__( 'Cancel', 'smooth-booking' ); ?></button>
+                            <button
+                                type="button"
+                                class="button button-secondary"
+                                id="smooth-booking-calendar-booking-cancel-alt"
+                                data-smooth-booking-dismiss="dialog"
+                            ><?php echo esc_html__( 'Cancel', 'smooth-booking' ); ?></button>
                             <button type="submit" class="button button-primary"><?php echo esc_html__( 'Save appointment', 'smooth-booking' ); ?></button>
                         </div>
                     </form>

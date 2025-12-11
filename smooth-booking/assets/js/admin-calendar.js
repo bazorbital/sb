@@ -1233,6 +1233,52 @@
         }
 
         /**
+         * Bind dialog dismiss handlers.
+         *
+         * @param {HTMLElement|null} element Target element.
+         * @returns {void}
+         */
+        function bindDialogDismiss(element) {
+            if (!element) {
+                return;
+            }
+
+            element.addEventListener('click', function (event) {
+                /* eslint-disable no-console */
+                console.log('[SmoothBooking] Booking dialog dismiss clicked:', element.id || 'unknown');
+                /* eslint-enable no-console */
+                if (event && typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+                closeBookingDialog();
+            });
+        }
+
+        bindDialogDismiss(bookingCancel);
+        bindDialogDismiss(bookingCancelAlt);
+
+        document.addEventListener('click', function (event) {
+            var targetElement = event.target;
+            if (!targetElement || !(targetElement instanceof HTMLElement)) {
+                return;
+            }
+
+            var dismissTarget = targetElement.closest(
+                '[data-smooth-booking-dismiss], #smooth-booking-calendar-booking-cancel, #smooth-booking-calendar-booking-cancel-alt'
+            );
+
+            if (!dismissTarget) {
+                return;
+            }
+
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            closeBookingDialog();
+        });
+
+        /**
          * Sync slot options from the schedule payload.
          *
          * @param {Object} payload API payload.
@@ -2034,46 +2080,6 @@
                 }
             });
         }
-
-        var bindDialogDismiss = function (element) {
-            if (!element) {
-                return;
-            }
-
-            element.addEventListener('click', function (event) {
-                /* eslint-disable no-console */
-                console.log('[SmoothBooking] Booking dialog dismiss clicked:', element.id || 'unknown');
-                /* eslint-enable no-console */
-                if (event && typeof event.preventDefault === 'function') {
-                    event.preventDefault();
-                }
-                closeBookingDialog();
-            });
-        };
-
-        bindDialogDismiss(bookingCancel);
-        bindDialogDismiss(bookingCancelAlt);
-
-        document.addEventListener('click', function (event) {
-            var targetElement = event.target;
-            if (!targetElement || !(targetElement instanceof HTMLElement)) {
-                return;
-            }
-
-            var dismissTarget = targetElement.closest(
-                '[data-smooth-booking-dismiss], #smooth-booking-calendar-booking-cancel, #smooth-booking-calendar-booking-cancel-alt'
-            );
-
-            if (!dismissTarget) {
-                return;
-            }
-
-            if (event && typeof event.preventDefault === 'function') {
-                event.preventDefault();
-            }
-
-            closeBookingDialog();
-        });
 
         if (bookingDialog) {
             bookingDialog.addEventListener('cancel', function (event) {
