@@ -2492,18 +2492,25 @@
             });
         }
 
-        if (addCustomerButton) {
-            addCustomerButton.addEventListener('click', function (event) {
-                if (event && typeof event.preventDefault === 'function') {
-                    event.preventDefault();
-                }
+        document.addEventListener('click', function (event) {
+            var trigger = event && event.target instanceof HTMLElement
+                ? event.target.closest('#smooth-booking-calendar-add-customer')
+                : null;
 
-                if (window.console && typeof window.console.log === 'function') {
-                    window.console.log('Smooth Booking: opening new customer dialog from booking modal click');
-                }
-                openCustomerDialog();
-            });
-        }
+            if (!trigger || !customerDialog) {
+                return;
+            }
+
+            if (typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            if (window.console && typeof window.console.log === 'function') {
+                window.console.log('Smooth Booking: opening new customer dialog from booking modal click');
+            }
+
+            openCustomerDialog();
+        });
 
         if (customerUserAction) {
             customerUserAction.addEventListener('change', function () {
