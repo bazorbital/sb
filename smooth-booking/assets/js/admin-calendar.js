@@ -2493,7 +2493,13 @@
         }
 
         function handleCustomerDialogOpen(event) {
-            var target = event ? event.target : null;
+            // Support both delegated and direct bindings even when another handler stops bubbling.
+            var target = event && event.target instanceof HTMLElement ? event.target : null;
+
+            if (!target && event && event.currentTarget === addCustomerButton) {
+                target = addCustomerButton;
+            }
+
             var trigger = target && typeof target.closest === 'function'
                 ? target.closest('#smooth-booking-calendar-add-customer')
                 : null;
@@ -2505,8 +2511,12 @@
                 return;
             }
 
-            if (typeof event.preventDefault === 'function') {
+            if (event && typeof event.preventDefault === 'function') {
                 event.preventDefault();
+            }
+
+            if (event && typeof event.stopPropagation === 'function') {
+                event.stopPropagation();
             }
 
             if (window.console && typeof window.console.log === 'function') {
@@ -2517,10 +2527,10 @@
         }
 
         if (addCustomerButton) {
-            addCustomerButton.addEventListener('click', handleCustomerDialogOpen);
+            addCustomerButton.addEventListener('click', handleCustomerDialogOpen, true);
         }
 
-        document.addEventListener('click', handleCustomerDialogOpen);
+        document.addEventListener('click', handleCustomerDialogOpen, true);
 
         if (customerUserAction) {
             customerUserAction.addEventListener('change', function () {

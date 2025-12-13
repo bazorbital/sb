@@ -2,6 +2,11 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.29] - 2026-11-11
+### Fixed
+- Strengthened the **Add new customer** trigger binding in the calendar booking modal by capturing clicks before other handlers
+  can stop propagation, ensuring the customer dialog opens even when another modal is active.
+
 # [0.18.28] - 2026-11-04
 ### Fixed
 - Added a direct **Add new customer** button listener (alongside delegation) so the inline customer form opens even when the
