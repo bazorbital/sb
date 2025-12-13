@@ -109,6 +109,7 @@ Smooth Booking ensures that the booking-specific database schema is provisioned 
 - REST controllers reside in `src/Rest/` and register routes on `rest_api_init`.
 - Admin calendar data is exposed via the `window.SmoothBookingCalendarData` global before `admin-calendar.js` runs to prevent WordPress localisation helpers from overwriting the schedule payload that feeds the EventCalendar grid.
 - Select2 assets for calendar filters are pulled from the CDN and hydrated on load, while falling back to native multi-selects when the dependency is unavailable.
+- Use `window.SmoothBookingCalendarDebug.logCustomerTriggerState()` from the browser console to confirm the calendar “Add new customer” trigger is bound and whether the booking or customer dialog is currently open when debugging modal behaviour.
 - Calendar aggregation, SelectWoo asset registration, booking repository operations, and calendar modal submissions (including validation failures) log to the WordPress debug log when the General → Debug logging option is enabled. Toggle the setting off for production.
 
 ## Hooks

@@ -2,6 +2,27 @@
     'use strict';
 
     /**
+     * Safely log to the console.
+     *
+     * @param {string} level Console method name.
+     * @param {string} message Message to log.
+     * @param {*} [context] Optional context payload.
+     * @returns {void}
+     */
+    function logConsole(level, message, context) {
+        if (!window.console || typeof window.console[level] !== 'function') {
+            return;
+        }
+
+        if (typeof context !== 'undefined') {
+            window.console[level](message, context);
+            return;
+        }
+
+        window.console[level](message);
+    }
+
+    /**
      * Invoke callback when DOM is ready.
      *
      * @param {Function} callback Callback to run when ready.
@@ -455,86 +476,87 @@
     }
 
     ready(function initCalendar() {
-        var settings = window.SmoothBookingCalendar || {};
-        var data = window.SmoothBookingCalendarData || settings.data || {};
-        var i18n = settings.i18n || {};
-        var target = document.getElementById('smooth-booking-calendar');
-        var hasCalendarLibrary = typeof EventCalendar !== 'undefined' && typeof EventCalendar.create === 'function';
-        var calendarWrapper = target ? target.closest('.smooth-booking-calendar-board') : document.querySelector('.smooth-booking-calendar-board');
-        var resourceFilter = document.getElementById('smooth-booking-resource-filter');
-        var serviceFilter = document.getElementById('smooth-booking-service-filter');
-        var locationSelect = document.getElementById('smooth-booking-calendar-location');
-        var dateInput = document.getElementById('smooth-booking-calendar-date');
-        var bookingDialog = document.getElementById('smooth-booking-calendar-dialog');
-        var bookingForm = document.getElementById('smooth-booking-calendar-booking-form');
-        var bookingResource = document.getElementById('smooth-booking-calendar-booking-resource');
-        var bookingService = document.getElementById('smooth-booking-calendar-booking-service');
-        var bookingDateInput = document.getElementById('smooth-booking-calendar-booking-date-input');
-        var bookingStart = document.getElementById('smooth-booking-calendar-booking-start');
-        var bookingEnd = document.getElementById('smooth-booking-calendar-booking-end');
-        var bookingCustomer = document.getElementById('smooth-booking-calendar-booking-customer');
-        var bookingStatus = document.getElementById('smooth-booking-calendar-booking-status');
-        var bookingPayment = document.getElementById('smooth-booking-calendar-booking-payment');
-        var bookingCustomerEmail = document.getElementById('smooth-booking-calendar-booking-customer-email');
-        var bookingCustomerPhone = document.getElementById('smooth-booking-calendar-booking-customer-phone');
-        var bookingInternalNote = document.getElementById('smooth-booking-calendar-booking-internal-note');
-        var bookingNote = document.getElementById('smooth-booking-calendar-booking-note');
-        var bookingNotify = document.getElementById('smooth-booking-calendar-booking-notify');
-        var bookingDateLabel = document.getElementById('smooth-booking-calendar-booking-date');
-        var bookingResourceLabel = document.getElementById('smooth-booking-calendar-booking-resource-label');
-        var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
-        var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
-        var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
-        var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
-        var customerDialog = document.getElementById('smooth-booking-calendar-customer-dialog');
-        var customerForm = document.getElementById('smooth-booking-calendar-customer-form');
-        var customerError = document.getElementById('smooth-booking-calendar-customer-error');
-        var customerUserAction = document.getElementById('smooth-booking-customer-user-action');
-        var customerExistingUser = document.getElementById('smooth-booking-customer-existing-user');
-        var customerTags = document.getElementById('smooth-booking-customer-tags');
-        var customerNewTags = document.getElementById('smooth-booking-customer-new-tags');
-        var customerName = document.getElementById('smooth-booking-customer-name');
-        var customerFirstName = document.getElementById('smooth-booking-customer-first-name');
-        var customerLastName = document.getElementById('smooth-booking-customer-last-name');
-        var customerPhone = document.getElementById('smooth-booking-customer-phone');
-        var customerEmail = document.getElementById('smooth-booking-customer-email');
-        var customerDateOfBirth = document.getElementById('smooth-booking-customer-date-of-birth');
-        var customerCountry = document.getElementById('smooth-booking-customer-country');
-        var customerStateRegion = document.getElementById('smooth-booking-customer-state-region');
-        var customerPostalCode = document.getElementById('smooth-booking-customer-postal-code');
-        var customerCity = document.getElementById('smooth-booking-customer-city');
-        var customerStreetAddress = document.getElementById('smooth-booking-customer-street-address');
-        var customerAdditionalAddress = document.getElementById('smooth-booking-customer-additional-address');
-        var customerStreetNumber = document.getElementById('smooth-booking-customer-street-number');
-        var customerNotes = document.getElementById('smooth-booking-customer-notes');
-        var customerProfileImage = document.querySelector('#smooth-booking-calendar-customer-dialog input[name="customer_profile_image_id"]');
-        var customerSubmit = document.getElementById('smooth-booking-calendar-customer-submit');
+        try {
+            var settings = window.SmoothBookingCalendar || {};
+            var data = window.SmoothBookingCalendarData || settings.data || {};
+            var i18n = settings.i18n || {};
+            var target = document.getElementById('smooth-booking-calendar');
+            var hasCalendarLibrary = typeof EventCalendar !== 'undefined' && typeof EventCalendar.create === 'function';
+            var calendarWrapper = target ? target.closest('.smooth-booking-calendar-board') : document.querySelector('.smooth-booking-calendar-board');
+            var resourceFilter = document.getElementById('smooth-booking-resource-filter');
+            var serviceFilter = document.getElementById('smooth-booking-service-filter');
+            var locationSelect = document.getElementById('smooth-booking-calendar-location');
+            var dateInput = document.getElementById('smooth-booking-calendar-date');
+            var bookingDialog = document.getElementById('smooth-booking-calendar-dialog');
+            var bookingForm = document.getElementById('smooth-booking-calendar-booking-form');
+            var bookingResource = document.getElementById('smooth-booking-calendar-booking-resource');
+            var bookingService = document.getElementById('smooth-booking-calendar-booking-service');
+            var bookingDateInput = document.getElementById('smooth-booking-calendar-booking-date-input');
+            var bookingStart = document.getElementById('smooth-booking-calendar-booking-start');
+            var bookingEnd = document.getElementById('smooth-booking-calendar-booking-end');
+            var bookingCustomer = document.getElementById('smooth-booking-calendar-booking-customer');
+            var bookingStatus = document.getElementById('smooth-booking-calendar-booking-status');
+            var bookingPayment = document.getElementById('smooth-booking-calendar-booking-payment');
+            var bookingCustomerEmail = document.getElementById('smooth-booking-calendar-booking-customer-email');
+            var bookingCustomerPhone = document.getElementById('smooth-booking-calendar-booking-customer-phone');
+            var bookingInternalNote = document.getElementById('smooth-booking-calendar-booking-internal-note');
+            var bookingNote = document.getElementById('smooth-booking-calendar-booking-note');
+            var bookingNotify = document.getElementById('smooth-booking-calendar-booking-notify');
+            var bookingDateLabel = document.getElementById('smooth-booking-calendar-booking-date');
+            var bookingResourceLabel = document.getElementById('smooth-booking-calendar-booking-resource-label');
+            var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
+            var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
+            var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
+            var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
+            var customerDialog = document.getElementById('smooth-booking-calendar-customer-dialog');
+            var customerForm = document.getElementById('smooth-booking-calendar-customer-form');
+            var customerError = document.getElementById('smooth-booking-calendar-customer-error');
+            var customerUserAction = document.getElementById('smooth-booking-customer-user-action');
+            var customerExistingUser = document.getElementById('smooth-booking-customer-existing-user');
+            var customerTags = document.getElementById('smooth-booking-customer-tags');
+            var customerNewTags = document.getElementById('smooth-booking-customer-new-tags');
+            var customerName = document.getElementById('smooth-booking-customer-name');
+            var customerFirstName = document.getElementById('smooth-booking-customer-first-name');
+            var customerLastName = document.getElementById('smooth-booking-customer-last-name');
+            var customerPhone = document.getElementById('smooth-booking-customer-phone');
+            var customerEmail = document.getElementById('smooth-booking-customer-email');
+            var customerDateOfBirth = document.getElementById('smooth-booking-customer-date-of-birth');
+            var customerCountry = document.getElementById('smooth-booking-customer-country');
+            var customerStateRegion = document.getElementById('smooth-booking-customer-state-region');
+            var customerPostalCode = document.getElementById('smooth-booking-customer-postal-code');
+            var customerCity = document.getElementById('smooth-booking-customer-city');
+            var customerStreetAddress = document.getElementById('smooth-booking-customer-street-address');
+            var customerAdditionalAddress = document.getElementById('smooth-booking-customer-additional-address');
+            var customerStreetNumber = document.getElementById('smooth-booking-customer-street-number');
+            var customerNotes = document.getElementById('smooth-booking-customer-notes');
+            var customerProfileImage = document.querySelector('#smooth-booking-calendar-customer-dialog input[name="customer_profile_image_id"]');
+            var customerSubmit = document.getElementById('smooth-booking-calendar-customer-submit');
 
-        var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes, data.slotLengthMinutes);
+            var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes, data.slotLengthMinutes);
 
-        var state = {
-            selectedDate: data.selectedDate || toDateString(new Date()),
-            locationId: data.locationId || null,
-            resources: ensureArray(data.resources),
-            services: data.services || {},
-            slotMinTime: data.slotMinTime || '06:00:00',
-            slotMaxTime: data.slotMaxTime || '22:00:00',
-            slotDuration: initialSlotDuration,
-            defaultDurationMinutes: durationToMinutes(initialSlotDuration),
-            resourceFilterIds: new Set(),
-            serviceFilterIds: new Set(),
-            bootstrapEvents: ensureArray(data.events),
-            customers: ensureArray(data.customers),
-        };
+            var state = {
+                selectedDate: data.selectedDate || toDateString(new Date()),
+                locationId: data.locationId || null,
+                resources: ensureArray(data.resources),
+                services: data.services || {},
+                slotMinTime: data.slotMinTime || '06:00:00',
+                slotMaxTime: data.slotMaxTime || '22:00:00',
+                slotDuration: initialSlotDuration,
+                defaultDurationMinutes: durationToMinutes(initialSlotDuration),
+                resourceFilterIds: new Set(),
+                serviceFilterIds: new Set(),
+                bootstrapEvents: ensureArray(data.events),
+                customers: ensureArray(data.customers),
+            };
 
-        var config = {
-            endpoint: data.endpoint || '',
-            nonce: data.nonce || '',
-            locale: data.locale || 'en',
-            timezone: data.timezone || 'local',
-            appointmentsEndpoint: data.appointmentsEndpoint || '',
-            customersEndpoint: data.customersEndpoint || '',
-        };
+            var config = {
+                endpoint: data.endpoint || '',
+                nonce: data.nonce || '',
+                locale: data.locale || 'en',
+                timezone: data.timezone || 'local',
+                appointmentsEndpoint: data.appointmentsEndpoint || '',
+                customersEndpoint: data.customersEndpoint || '',
+            };
 
         var viewOptions = {
             resourceTimelineDay: {
@@ -2508,6 +2530,10 @@
             customerDialog = customerDialog || document.getElementById('smooth-booking-calendar-customer-dialog');
 
             if (!trigger || !customerDialog) {
+                logConsole('warn', 'Smooth Booking: customer dialog trigger ignored because required elements are missing', {
+                    hasTrigger: !!trigger,
+                    hasDialog: !!customerDialog,
+                });
                 return;
             }
 
@@ -2528,9 +2554,16 @@
 
         if (addCustomerButton) {
             addCustomerButton.addEventListener('click', handleCustomerDialogOpen, true);
+            logConsole('log', 'Smooth Booking: add customer trigger bound directly to button');
+        } else {
+            logConsole('warn', 'Smooth Booking: add customer button not found; relying on delegated listener only');
         }
 
-        document.addEventListener('click', handleCustomerDialogOpen, true);
+        if (!customerDialog) {
+            logConsole('warn', 'Smooth Booking: customer dialog markup was not found in the DOM');
+        }
+
+        document.addEventListener('click', handleCustomerDialogOpen, { capture: true, passive: false });
 
         if (customerUserAction) {
             customerUserAction.addEventListener('change', function () {
@@ -2608,6 +2641,24 @@
             customerForm.addEventListener('submit', handleCustomerSubmit);
         }
 
+        window.SmoothBookingCalendarDebug = Object.assign({}, window.SmoothBookingCalendarDebug || {}, {
+            logCustomerTriggerState: function () {
+                var snapshot = {
+                    hasAddCustomerButton: !!addCustomerButton,
+                    hasCustomerDialog: !!customerDialog,
+                    bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
+                    bookingContext: Object.assign({}, bookingContext),
+                };
+
+                logConsole('log', 'Smooth Booking debug: customer trigger snapshot', snapshot);
+
+                return snapshot;
+            },
+            openCustomerDialog: function () {
+                return openCustomerDialog();
+            },
+        });
+
         if (bookingDialog) {
             bookingDialog.addEventListener('cancel', function (event) {
                 if (event && typeof event.preventDefault === 'function') {
@@ -2631,5 +2682,8 @@
         syncBookingStartTime();
 
         renderEmptyState(calendarWrapper, ensureArray(state.bootstrapEvents).length > 0 || data.hasEvents);
+        } catch (error) {
+            logConsole('error', 'Smooth Booking: admin calendar failed to initialize', error);
+        }
     });
 })(window, document);

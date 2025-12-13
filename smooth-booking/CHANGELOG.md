@@ -293,6 +293,11 @@ All notable changes to Smooth Booking will be documented here.
 - Dedicated admin CSS/JS assets powering tab navigation, provider toggles, color picker initialisation, and media selection for services.
 - PHPUnit coverage for `ServiceService` with in-memory repositories.
 
+## [0.18.29] - 2024-09-05
+### Fixed
+- Added defensive error logging around the admin calendar bootstrap to surface JavaScript failures that previously prevented the booking modal controls from binding.
+- Improved the **Add new customer** trigger with delegated listener diagnostics, explicit warnings when markup is missing, and a console-accessible debug helper for opening the customer dialog while the booking modal is active.
+
 ## [0.18.16] - 2024-08-30
 ### Changed
 - Calendar drag and drop interactions now use editable callbacks and PATCH requests to persist rescheduled appointments immediately.
