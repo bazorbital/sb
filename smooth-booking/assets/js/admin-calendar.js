@@ -2493,9 +2493,13 @@
         }
 
         function handleCustomerDialogOpen(event) {
-            var trigger = event && event.target instanceof HTMLElement
-                ? event.target.closest('#smooth-booking-calendar-add-customer')
+            var target = event ? event.target : null;
+            var trigger = target && typeof target.closest === 'function'
+                ? target.closest('#smooth-booking-calendar-add-customer')
                 : null;
+
+            // Lazily refresh the dialog reference in case the markup is injected later.
+            customerDialog = customerDialog || document.getElementById('smooth-booking-calendar-customer-dialog');
 
             if (!trigger || !customerDialog) {
                 return;
