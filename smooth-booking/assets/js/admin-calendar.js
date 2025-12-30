@@ -508,8 +508,7 @@
             var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
             var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
             var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
-            var customerDialog = document.getElementById('smooth-booking-calendar-customer-dialog');
-            var customerForm = document.getElementById('smooth-booking-calendar-customer-form');
+            var customerAccordion = document.getElementById('smooth-booking-calendar-customer-accordion');
             var customerError = document.getElementById('smooth-booking-calendar-customer-error');
             var customerUserAction = document.getElementById('smooth-booking-customer-user-action');
             var customerExistingUser = document.getElementById('smooth-booking-customer-existing-user');
@@ -529,7 +528,7 @@
             var customerAdditionalAddress = document.getElementById('smooth-booking-customer-additional-address');
             var customerStreetNumber = document.getElementById('smooth-booking-customer-street-number');
             var customerNotes = document.getElementById('smooth-booking-customer-notes');
-            var customerProfileImage = document.querySelector('#smooth-booking-calendar-customer-dialog input[name="customer_profile_image_id"]');
+            var customerProfileImage = document.querySelector('#smooth-booking-calendar-customer-accordion input[name="customer_profile_image_id"]');
             var customerSubmit = document.getElementById('smooth-booking-calendar-customer-submit');
 
             var initialSlotDuration = data.slotDuration || minutesToDuration(data.slotLengthMinutes, data.slotLengthMinutes);
@@ -1729,7 +1728,7 @@
          * @returns {void}
          */
         function toggleCustomerExistingUserField(action) {
-            var field = customerDialog ? customerDialog.querySelector('.smooth-booking-existing-user-field') : null;
+            var field = customerAccordion ? customerAccordion.querySelector('.smooth-booking-existing-user-field') : null;
 
             if (!field) {
                 return;
@@ -1766,11 +1765,11 @@
          * @returns {HTMLElement|null} Avatar field element.
          */
         function getCustomerAvatarField() {
-            if (!customerDialog) {
+            if (!customerAccordion) {
                 return null;
             }
 
-            return customerDialog.querySelector('.smooth-booking-avatar-field');
+            return customerAccordion.querySelector('.smooth-booking-avatar-field');
         }
 
         /**
@@ -1845,46 +1844,77 @@
         }
 
         /**
-         * Open the customer creation dialog.
+         * Reset customer form fields for the accordion.
          *
          * @returns {void}
          */
-        function openCustomerDialog() {
-            if (!customerDialog) {
+        function resetCustomerFormFields() {
+            if (!customerAccordion) {
                 return;
             }
 
-            captureBookingFormState();
-            pauseBookingDialog();
-            setCustomerDialogError('');
+            var fields = customerAccordion.querySelectorAll('input, select, textarea');
+            Array.prototype.slice.call(fields).forEach(function (field) {
+                if (!(field instanceof HTMLElement)) {
+                    return;
+                }
 
-            if (customerForm && typeof customerForm.reset === 'function') {
-                customerForm.reset();
+                if (field.matches('input[type="hidden"][name="customer_profile_image_id"]')) {
+                    field.value = '0';
+                    return;
+                }
+
+                if (field.matches('input[type="checkbox"], input[type="radio"]')) {
+                    field.checked = false;
+                    return;
+                }
+
+                if (field.tagName === 'SELECT') {
+                    if (field.multiple) {
+                        Array.prototype.slice.call(field.options).forEach(function (option) {
+                            option.selected = false;
+                        });
+                    } else if (field.options.length) {
+                        field.selectedIndex = 0;
+                    } else {
+                        field.value = '';
+                    }
+                    return;
+                }
+
+                field.value = '';
+            });
+
+            if (customerUserAction) {
+                customerUserAction.value = 'none';
             }
 
+            if (customerExistingUser) {
+                customerExistingUser.value = '0';
+            }
+        }
+
+        /**
+         * Open the customer creation accordion.
+         *
+         * @returns {void}
+         */
+        function openCustomerAccordion() {
+            if (!customerAccordion) {
+                return;
+            }
+
+            setCustomerDialogError('');
+            resetCustomerFormFields();
             resetCustomerAvatar();
             toggleCustomerExistingUserField(customerUserAction ? customerUserAction.value : 'none');
 
-            customerDialog.removeAttribute('hidden');
-            customerDialog.hidden = false;
+            customerAccordion.removeAttribute('hidden');
+            customerAccordion.hidden = false;
+            customerAccordion.classList.add('is-open');
 
-            try {
-                if (typeof customerDialog.showModal === 'function') {
-                    customerDialog.showModal();
-                } else {
-                    customerDialog.setAttribute('open', 'open');
-                }
-            } catch (error) {
-                logConsole('warn', 'Smooth Booking: falling back to non-modal customer dialog', {
-                    bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
-                    errorMessage: error && error.message ? error.message : String(error),
-                });
-                customerDialog.setAttribute('open', 'open');
-                customerDialog.open = true;
-
-                if (window.console && typeof window.console.error === 'function') {
-                    window.console.error('Smooth Booking: unable to open customer dialog', error);
-                }
+            if (addCustomerButton) {
+                addCustomerButton.setAttribute('aria-expanded', 'true');
             }
 
             if (customerName && typeof customerName.focus === 'function') {
@@ -1893,35 +1923,26 @@
         }
 
         /**
-         * Close the customer dialog and optionally reopen booking dialog.
+         * Close the customer accordion.
          *
-         * @param {boolean} [reopenBooking] Whether to return to the booking dialog.
          * @returns {void}
          */
-        function closeCustomerDialog(reopenBooking) {
-            if (!customerDialog) {
+        function closeCustomerAccordion() {
+            if (!customerAccordion) {
                 return;
             }
 
-            if (typeof customerDialog.close === 'function') {
-                customerDialog.close();
-            }
-
-            customerDialog.open = false;
-            customerDialog.removeAttribute('open');
-            customerDialog.setAttribute('hidden', 'hidden');
-            customerDialog.hidden = true;
-
-            if (customerForm && typeof customerForm.reset === 'function') {
-                customerForm.reset();
-            }
+            customerAccordion.classList.remove('is-open');
+            customerAccordion.setAttribute('hidden', 'hidden');
+            customerAccordion.hidden = true;
 
             resetCustomerAvatar();
             setCustomerDialogError('');
             toggleCustomerExistingUserField('none');
+            resetCustomerFormFields();
 
-            if (reopenBooking) {
-                openBookingDialog(bookingContext);
+            if (addCustomerButton) {
+                addCustomerButton.setAttribute('aria-expanded', 'false');
             }
         }
 
@@ -1936,8 +1957,8 @@
                 customerSubmit.disabled = !!disabled;
             }
 
-            if (customerForm) {
-                customerForm.classList.toggle('is-submitting', !!disabled);
+            if (customerAccordion) {
+                customerAccordion.classList.toggle('is-submitting', !!disabled);
             }
         }
 
@@ -1989,10 +2010,8 @@
                 event.preventDefault();
             }
 
-            if (!config.customersEndpoint || !customerForm || typeof fetch !== 'function') {
-                if (customerForm && typeof customerForm.submit === 'function') {
-                    customerForm.submit();
-                }
+            if (!config.customersEndpoint || typeof fetch !== 'function') {
+                setCustomerDialogError(i18n.customerCreateError || 'Unable to create customer.');
                 return;
             }
 
@@ -2056,7 +2075,7 @@
                         phone: bookingContext.customerPhone,
                     });
 
-                    closeCustomerDialog(true);
+                    closeCustomerAccordion();
                 })
                 .catch(function (error) {
                     setCustomerDialogError(error && error.message ? error.message : (i18n.customerCreateError || 'Unable to create customer.'));
@@ -2541,7 +2560,7 @@
                 eventType: event && event.type ? event.type : '',
                 defaultPrevented: !!(event && event.defaultPrevented),
                 bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
-                customerDialogOpen: !!(customerDialog && customerDialog.open),
+                customerDialogOpen: !!(customerAccordion && !customerAccordion.hidden),
             };
 
             if (customerTriggerTraceEnabled) {
@@ -2562,12 +2581,12 @@
             customerTriggerLastTimestamp = now;
 
             // Lazily refresh the dialog reference in case the markup is injected later.
-            customerDialog = customerDialog || document.getElementById('smooth-booking-calendar-customer-dialog');
+            customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
 
-            if (!customerDialog) {
-                logConsole('warn', 'Smooth Booking: customer dialog trigger ignored because required elements are missing', {
+            if (!customerAccordion) {
+                logConsole('warn', 'Smooth Booking: customer accordion trigger ignored because required elements are missing', {
                     hasTrigger: !!trigger,
-                    hasDialog: !!customerDialog,
+                    hasDialog: !!customerAccordion,
                 });
                 return;
             }
@@ -2584,11 +2603,11 @@
                 event.stopPropagation();
             }
 
-            if (window.console && typeof window.console.log === 'function') {
-                window.console.log('Smooth Booking: opening new customer dialog from booking modal click');
+            if (customerAccordion.hidden) {
+                openCustomerAccordion();
+            } else {
+                closeCustomerAccordion();
             }
-
-            openCustomerDialog();
         }
 
         var customerTriggerEvents = ['click', 'pointerdown'];
@@ -2602,8 +2621,8 @@
             logConsole('warn', 'Smooth Booking: add customer button not found; relying on delegated listener only');
         }
 
-        if (!customerDialog) {
-            logConsole('warn', 'Smooth Booking: customer dialog markup was not found in the DOM');
+        if (!customerAccordion) {
+            logConsole('warn', 'Smooth Booking: customer accordion markup was not found in the DOM');
         }
 
         customerTriggerEvents.forEach(function (eventName) {
@@ -2618,21 +2637,8 @@
             toggleCustomerExistingUserField(customerUserAction.value || 'none');
         }
 
-        if (customerDialog) {
-            customerDialog.addEventListener('cancel', function (event) {
-                if (event && typeof event.preventDefault === 'function') {
-                    event.preventDefault();
-                }
-                closeCustomerDialog(true);
-            });
-
-            customerDialog.addEventListener('close', function () {
-                customerDialog.removeAttribute('open');
-                customerDialog.setAttribute('hidden', 'hidden');
-                customerDialog.hidden = true;
-            });
-
-            customerDialog.addEventListener('click', function (event) {
+        if (customerAccordion) {
+            customerAccordion.addEventListener('click', function (event) {
                 var target = event.target;
                 if (!target || !(target instanceof HTMLElement)) {
                     return;
@@ -2642,7 +2648,7 @@
                     if (event && typeof event.preventDefault === 'function') {
                         event.preventDefault();
                     }
-                    closeCustomerDialog(true);
+                    closeCustomerAccordion();
                     return;
                 }
 
@@ -2682,15 +2688,15 @@
             });
         }
 
-        if (customerForm) {
-            customerForm.addEventListener('submit', handleCustomerSubmit);
+        if (customerSubmit) {
+            customerSubmit.addEventListener('click', handleCustomerSubmit);
         }
 
         window.SmoothBookingCalendarDebug = Object.assign({}, window.SmoothBookingCalendarDebug || {}, {
             logCustomerTriggerState: function () {
                 var snapshot = {
                     hasAddCustomerButton: !!addCustomerButton,
-                    hasCustomerDialog: !!customerDialog,
+                    hasCustomerDialog: !!customerAccordion,
                     bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
                     bookingContext: Object.assign({}, bookingContext),
                 };
@@ -2700,7 +2706,7 @@
                 return snapshot;
             },
             openCustomerDialog: function () {
-                return openCustomerDialog();
+                return openCustomerAccordion();
             },
             toggleCustomerTriggerTracing: function (enabled) {
                 if (typeof enabled === 'undefined') {
