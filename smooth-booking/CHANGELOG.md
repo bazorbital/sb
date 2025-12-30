@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.33] - 2026-12-09
+### Fixed
+- Ensured the calendar booking modal **Add new customer** trigger resolves even when the click target is a text node or nested element, so the accordion body reliably opens and logs.
+
 # [0.18.32] - 2026-12-02
 ### Fixed
 - Ensured the calendar booking modal **Add new customer** trigger always logs and opens the customer accordion, even when the click is captured directly on the button.
