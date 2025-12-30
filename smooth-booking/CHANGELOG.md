@@ -2,6 +2,10 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.31] - 2026-11-25
+### Fixed
+- Moved the **Add new customer** trigger into the calendar customer accordion header and ensured the header remains visible so the inline customer form can be opened as intended.
+
 # [0.18.30] - 2026-11-18
 ### Fixed
 - Captured the calendar booking modal **Add new customer** trigger on both pointer and click events and guard against duplicate firings so the inline customer dialog opens even when other handlers stop bubbling.

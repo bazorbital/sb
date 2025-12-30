@@ -509,6 +509,9 @@
             var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
             var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
             var customerAccordion = document.getElementById('smooth-booking-calendar-customer-accordion');
+            var customerAccordionBody = customerAccordion
+                ? customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body')
+                : null;
             var customerError = document.getElementById('smooth-booking-calendar-customer-error');
             var customerUserAction = document.getElementById('smooth-booking-customer-user-action');
             var customerExistingUser = document.getElementById('smooth-booking-customer-existing-user');
@@ -1909,8 +1912,11 @@
             resetCustomerAvatar();
             toggleCustomerExistingUserField(customerUserAction ? customerUserAction.value : 'none');
 
-            customerAccordion.removeAttribute('hidden');
-            customerAccordion.hidden = false;
+            customerAccordionBody = customerAccordionBody || customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body');
+            if (customerAccordionBody) {
+                customerAccordionBody.removeAttribute('hidden');
+                customerAccordionBody.hidden = false;
+            }
             customerAccordion.classList.add('is-open');
 
             if (addCustomerButton) {
@@ -1933,8 +1939,11 @@
             }
 
             customerAccordion.classList.remove('is-open');
-            customerAccordion.setAttribute('hidden', 'hidden');
-            customerAccordion.hidden = true;
+            customerAccordionBody = customerAccordionBody || customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body');
+            if (customerAccordionBody) {
+                customerAccordionBody.setAttribute('hidden', 'hidden');
+                customerAccordionBody.hidden = true;
+            }
 
             resetCustomerAvatar();
             setCustomerDialogError('');
@@ -2560,7 +2569,7 @@
                 eventType: event && event.type ? event.type : '',
                 defaultPrevented: !!(event && event.defaultPrevented),
                 bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
-                customerDialogOpen: !!(customerAccordion && !customerAccordion.hidden),
+                customerDialogOpen: !!(customerAccordionBody && !customerAccordionBody.hidden),
             };
 
             if (customerTriggerTraceEnabled) {
@@ -2582,11 +2591,14 @@
 
             // Lazily refresh the dialog reference in case the markup is injected later.
             customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
+            customerAccordionBody = customerAccordionBody
+                || (customerAccordion ? customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body') : null);
 
-            if (!customerAccordion) {
+            if (!customerAccordion || !customerAccordionBody) {
                 logConsole('warn', 'Smooth Booking: customer accordion trigger ignored because required elements are missing', {
                     hasTrigger: !!trigger,
                     hasDialog: !!customerAccordion,
+                    hasBody: !!customerAccordionBody,
                 });
                 return;
             }
@@ -2603,7 +2615,7 @@
                 event.stopPropagation();
             }
 
-            if (customerAccordion.hidden) {
+            if (customerAccordionBody.hidden) {
                 openCustomerAccordion();
             }
         }
@@ -2621,6 +2633,8 @@
 
         if (!customerAccordion) {
             logConsole('warn', 'Smooth Booking: customer accordion markup was not found in the DOM');
+        } else if (!customerAccordionBody) {
+            logConsole('warn', 'Smooth Booking: customer accordion body was not found in the DOM');
         }
 
         customerTriggerEvents.forEach(function (eventName) {
