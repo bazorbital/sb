@@ -2579,15 +2579,36 @@
 
         function handleCustomerDialogOpen(event) {
             // Support both delegated and direct bindings even when another handler stops bubbling.
-            var target = event && event.target instanceof HTMLElement ? event.target : null;
+            var target = null;
+
+            if (event && event.target && event.target.nodeType === 1) {
+                target = event.target;
+            } else if (event && event.target && event.target.nodeType === 3 && event.target.parentElement) {
+                target = event.target.parentElement;
+            }
 
             if (!target && event && event.currentTarget === addCustomerButton) {
                 target = addCustomerButton;
             }
 
-            var trigger = target && typeof target.closest === 'function'
-                ? target.closest('#smooth-booking-calendar-add-customer')
-                : null;
+            var trigger = null;
+
+            if (target && typeof target.closest === 'function') {
+                trigger = target.closest('#smooth-booking-calendar-add-customer');
+            }
+
+            if (!trigger && event && typeof event.composedPath === 'function') {
+                var path = event.composedPath();
+                if (Array.isArray(path)) {
+                    path.some(function (node) {
+                        if (node && node.nodeType === 1 && node.id === 'smooth-booking-calendar-add-customer') {
+                            trigger = node;
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+            }
 
             if (!trigger && event && event.currentTarget === addCustomerButton) {
                 trigger = addCustomerButton;
