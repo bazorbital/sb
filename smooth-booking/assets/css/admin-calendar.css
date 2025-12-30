@@ -305,27 +305,42 @@
     padding-right: 0;
 }
 
-.smooth-booking-calendar-customer-dialog {
-    max-width: 760px;
+.smooth-booking-calendar-customer-accordion {
+    border: 1px solid var(--sba-gt-gray-200);
+    border-radius: 12px;
+    padding: 16px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    margin-top: 8px;
 }
 
-.smooth-booking-calendar-customer-dialog__body {
-    max-height: 70vh;
+.smooth-booking-calendar-customer-accordion__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
 }
 
 .smooth-booking-calendar-customer-scroll {
-    max-height: 58vh;
+    max-height: 320px;
     overflow: auto;
     padding-right: 6px;
 }
 
-.smooth-booking-calendar-customer-dialog table.form-table th {
+.smooth-booking-calendar-customer-accordion__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.smooth-booking-calendar-customer-accordion table.form-table th {
     width: 200px;
 }
 
-.smooth-booking-calendar-customer-dialog table.form-table td input,
-.smooth-booking-calendar-customer-dialog table.form-table td select,
-.smooth-booking-calendar-customer-dialog table.form-table td textarea {
+.smooth-booking-calendar-customer-accordion table.form-table td input,
+.smooth-booking-calendar-customer-accordion table.form-table td select,
+.smooth-booking-calendar-customer-accordion table.form-table td textarea {
     width: 100%;
 }
 
