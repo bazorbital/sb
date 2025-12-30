@@ -2605,8 +2605,6 @@
 
             if (customerAccordion.hidden) {
                 openCustomerAccordion();
-            } else {
-                closeCustomerAccordion();
             }
         }
 
