@@ -2,6 +2,13 @@
 
 All notable changes to Smooth Booking will be documented here.
 
+# [0.18.30] - 2026-11-18
+### Fixed
+- Captured the calendar booking modal **Add new customer** trigger on both pointer and click events and guard against duplicate firings so the inline customer dialog opens even when other handlers stop bubbling.
+
+### Added
+- Introduced optional customer trigger tracing via `window.SmoothBookingCalendarDebug.toggleCustomerTriggerTracing()` and explicit console warnings when `showModal()` fails, making it easier to debug why the inline customer dialog might stay hidden while the booking dialog is open.
+
 # [0.18.29] - 2026-11-11
 ### Fixed
 - Strengthened the **Add new customer** trigger binding in the calendar booking modal by capturing clicks before other handlers

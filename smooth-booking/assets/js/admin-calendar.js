@@ -589,6 +589,8 @@
         var scheduleAbortController = null;
         var customersAbortController = null;
         var customerDetailRequests = {};
+        var customerTriggerTraceEnabled = false;
+        var customerTriggerLastTimestamp = 0;
 
         /**
          * Refresh booking field references and bind time synchronisation listeners.
@@ -1873,6 +1875,10 @@
                     customerDialog.setAttribute('open', 'open');
                 }
             } catch (error) {
+                logConsole('warn', 'Smooth Booking: falling back to non-modal customer dialog', {
+                    bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
+                    errorMessage: error && error.message ? error.message : String(error),
+                });
                 customerDialog.setAttribute('open', 'open');
                 customerDialog.open = true;
 
@@ -2526,15 +2532,48 @@
                 ? target.closest('#smooth-booking-calendar-add-customer')
                 : null;
 
+            if (!trigger) {
+                return;
+            }
+
+            var now = Date.now();
+            var context = {
+                eventType: event && event.type ? event.type : '',
+                defaultPrevented: !!(event && event.defaultPrevented),
+                bookingDialogOpen: !!(bookingDialog && bookingDialog.open),
+                customerDialogOpen: !!(customerDialog && customerDialog.open),
+            };
+
+            if (customerTriggerTraceEnabled) {
+                logConsole('log', 'Smooth Booking debug: customer trigger captured', Object.assign({}, context, {
+                    targetId: target ? target.id : '',
+                }));
+            }
+
+            if (now - customerTriggerLastTimestamp < 300) {
+                if (customerTriggerTraceEnabled) {
+                    logConsole('log', 'Smooth Booking debug: skipping duplicate customer trigger', Object.assign({}, context, {
+                        skipReason: 'duplicate_event',
+                    }));
+                }
+                return;
+            }
+
+            customerTriggerLastTimestamp = now;
+
             // Lazily refresh the dialog reference in case the markup is injected later.
             customerDialog = customerDialog || document.getElementById('smooth-booking-calendar-customer-dialog');
 
-            if (!trigger || !customerDialog) {
+            if (!customerDialog) {
                 logConsole('warn', 'Smooth Booking: customer dialog trigger ignored because required elements are missing', {
                     hasTrigger: !!trigger,
                     hasDialog: !!customerDialog,
                 });
                 return;
+            }
+
+            if (event && event.defaultPrevented && customerTriggerTraceEnabled) {
+                logConsole('warn', 'Smooth Booking: add customer trigger click was defaultPrevented; forcing dialog open', context);
             }
 
             if (event && typeof event.preventDefault === 'function') {
@@ -2552,8 +2591,12 @@
             openCustomerDialog();
         }
 
+        var customerTriggerEvents = ['click', 'pointerdown'];
+
         if (addCustomerButton) {
-            addCustomerButton.addEventListener('click', handleCustomerDialogOpen, true);
+            customerTriggerEvents.forEach(function (eventName) {
+                addCustomerButton.addEventListener(eventName, handleCustomerDialogOpen, true);
+            });
             logConsole('log', 'Smooth Booking: add customer trigger bound directly to button');
         } else {
             logConsole('warn', 'Smooth Booking: add customer button not found; relying on delegated listener only');
@@ -2563,7 +2606,9 @@
             logConsole('warn', 'Smooth Booking: customer dialog markup was not found in the DOM');
         }
 
-        document.addEventListener('click', handleCustomerDialogOpen, { capture: true, passive: false });
+        customerTriggerEvents.forEach(function (eventName) {
+            document.addEventListener(eventName, handleCustomerDialogOpen, { capture: true, passive: false });
+        });
 
         if (customerUserAction) {
             customerUserAction.addEventListener('change', function () {
@@ -2656,6 +2701,17 @@
             },
             openCustomerDialog: function () {
                 return openCustomerDialog();
+            },
+            toggleCustomerTriggerTracing: function (enabled) {
+                if (typeof enabled === 'undefined') {
+                    customerTriggerTraceEnabled = !customerTriggerTraceEnabled;
+                } else {
+                    customerTriggerTraceEnabled = !!enabled;
+                }
+
+                logConsole('log', 'Smooth Booking debug: customer trigger tracing ' + (customerTriggerTraceEnabled ? 'enabled' : 'disabled'));
+
+                return customerTriggerTraceEnabled;
             },
         });
 
