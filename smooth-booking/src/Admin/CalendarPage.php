@@ -368,20 +368,19 @@ class CalendarPage {
                             <label class="smooth-booking-calendar-dialog__field">
                                 <span><?php echo esc_html__( 'Customer', 'smooth-booking' ); ?></span>
                                 <select id="smooth-booking-calendar-booking-customer" name="booking-customer"></select>
-                                <button
-                                    type="button"
-                                    class="button button-link smooth-booking-calendar-add-customer"
-                                    id="smooth-booking-calendar-add-customer"
-                                    aria-expanded="false"
-                                    aria-controls="smooth-booking-calendar-customer-accordion"
-                                ><?php echo esc_html__( 'Add new customer', 'smooth-booking' ); ?></button>
                             </label>
 
-                            <div id="smooth-booking-calendar-customer-accordion" class="smooth-booking-calendar-customer-accordion" hidden>
+                            <div id="smooth-booking-calendar-customer-accordion" class="smooth-booking-calendar-customer-accordion">
                                 <div class="smooth-booking-calendar-customer-accordion__header">
                                     <div>
                                         <p class="smooth-booking-calendar-dialog__eyebrow"><?php echo esc_html__( 'New customer', 'smooth-booking' ); ?></p>
-                                        <h3 class="smooth-booking-calendar-dialog__title"><?php echo esc_html__( 'Add new customer', 'smooth-booking' ); ?></h3>
+                                        <button
+                                            type="button"
+                                            class="button-link smooth-booking-calendar-add-customer smooth-booking-calendar-customer-accordion__toggle"
+                                            id="smooth-booking-calendar-add-customer"
+                                            aria-expanded="false"
+                                            aria-controls="smooth-booking-calendar-customer-accordion-body"
+                                        ><?php echo esc_html__( 'Add new customer', 'smooth-booking' ); ?></button>
                                         <p class="smooth-booking-calendar-dialog__description"><?php echo esc_html__( 'Create a customer without leaving the calendar. The new profile will be added to the list and preselected for this booking.', 'smooth-booking' ); ?></p>
                                     </div>
                                     <button
@@ -392,7 +391,7 @@ class CalendarPage {
                                     >×</button>
                                 </div>
 
-                                <div class="smooth-booking-calendar-customer-accordion__body">
+                                <div id="smooth-booking-calendar-customer-accordion-body" class="smooth-booking-calendar-customer-accordion__body" hidden>
                                     <div class="smooth-booking-calendar-customer-scroll">
                                         <table class="form-table" role="presentation">
                                             <tbody>
