@@ -2589,6 +2589,15 @@
                 ? target.closest('#smooth-booking-calendar-add-customer')
                 : null;
 
+            if (!trigger && event && event.currentTarget === addCustomerButton) {
+                trigger = addCustomerButton;
+            }
+
+            logConsole('log', 'Smooth Booking: add customer trigger clicked', {
+                hasTrigger: !!trigger,
+                eventType: event && event.type ? event.type : '',
+            });
+
             if (!trigger) {
                 return;
             }
