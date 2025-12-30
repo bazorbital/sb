@@ -1898,11 +1898,38 @@
         }
 
         /**
+         * Retrieve the customer accordion body element.
+         *
+         * @returns {HTMLElement|null} Accordion body element.
+         */
+        function getCustomerAccordionBody() {
+            if (customerAccordionBody && customerAccordionBody.isConnected) {
+                return customerAccordionBody;
+            }
+
+            customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
+
+            if (!customerAccordion) {
+                return null;
+            }
+
+            customerAccordionBody = customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body');
+
+            if (!customerAccordionBody) {
+                customerAccordionBody = document.getElementById('smooth-booking-calendar-customer-accordion-body');
+            }
+
+            return customerAccordionBody || null;
+        }
+
+        /**
          * Open the customer creation accordion.
          *
          * @returns {void}
          */
         function openCustomerAccordion() {
+            customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
+
             if (!customerAccordion) {
                 return;
             }
@@ -1912,7 +1939,7 @@
             resetCustomerAvatar();
             toggleCustomerExistingUserField(customerUserAction ? customerUserAction.value : 'none');
 
-            customerAccordionBody = customerAccordionBody || customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body');
+            customerAccordionBody = getCustomerAccordionBody();
             if (customerAccordionBody) {
                 customerAccordionBody.removeAttribute('hidden');
                 customerAccordionBody.hidden = false;
@@ -1934,12 +1961,14 @@
          * @returns {void}
          */
         function closeCustomerAccordion() {
+            customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
+
             if (!customerAccordion) {
                 return;
             }
 
             customerAccordion.classList.remove('is-open');
-            customerAccordionBody = customerAccordionBody || customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body');
+            customerAccordionBody = getCustomerAccordionBody();
             if (customerAccordionBody) {
                 customerAccordionBody.setAttribute('hidden', 'hidden');
                 customerAccordionBody.hidden = true;
@@ -2591,8 +2620,7 @@
 
             // Lazily refresh the dialog reference in case the markup is injected later.
             customerAccordion = customerAccordion || document.getElementById('smooth-booking-calendar-customer-accordion');
-            customerAccordionBody = customerAccordionBody
-                || (customerAccordion ? customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body') : null);
+            customerAccordionBody = getCustomerAccordionBody();
 
             if (!customerAccordion || !customerAccordionBody) {
                 logConsole('warn', 'Smooth Booking: customer accordion trigger ignored because required elements are missing', {
@@ -2615,9 +2643,7 @@
                 event.stopPropagation();
             }
 
-            if (customerAccordionBody.hidden) {
-                openCustomerAccordion();
-            }
+            openCustomerAccordion();
         }
 
         var customerTriggerEvents = ['click', 'pointerdown'];
