@@ -507,7 +507,8 @@
             var bookingError = document.getElementById('smooth-booking-calendar-booking-error');
             var bookingCancel = document.getElementById('smooth-booking-calendar-booking-cancel');
             var bookingCancelAlt = document.getElementById('smooth-booking-calendar-booking-cancel-alt');
-            var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer');
+            var addCustomerButton = document.getElementById('smooth-booking-calendar-add-customer')
+                || document.querySelector('.smooth-booking-calendar-add-customer');
             var customerAccordion = document.getElementById('smooth-booking-calendar-customer-accordion');
             var customerAccordionBody = customerAccordion
                 ? customerAccordion.querySelector('.smooth-booking-calendar-customer-accordion__body')
@@ -2594,14 +2595,15 @@
             var trigger = null;
 
             if (target && typeof target.closest === 'function') {
-                trigger = target.closest('#smooth-booking-calendar-add-customer');
+                trigger = target.closest('#smooth-booking-calendar-add-customer, .smooth-booking-calendar-add-customer');
             }
 
             if (!trigger && event && typeof event.composedPath === 'function') {
                 var path = event.composedPath();
                 if (Array.isArray(path)) {
                     path.some(function (node) {
-                        if (node && node.nodeType === 1 && node.id === 'smooth-booking-calendar-add-customer') {
+                        if (node && node.nodeType === 1 && (node.id === 'smooth-booking-calendar-add-customer'
+                            || node.classList.contains('smooth-booking-calendar-add-customer'))) {
                             trigger = node;
                             return true;
                         }
