@@ -2491,14 +2491,12 @@
         if (!calendarInstance || typeof calendarInstance.on !== 'function') {
             renderEmptyState(calendarWrapper, false);
             calendarInstance = null;
-
-            return;
+        } else {
+            calendarInstance.on('datesSet', onDatesSet);
+            calendarInstance.on('eventChange', onEventChange);
+            calendarInstance.on('eventDrop', onEventChange);
+            calendarInstance.on('eventResize', onEventChange);
         }
-
-        calendarInstance.on('datesSet', onDatesSet);
-        calendarInstance.on('eventChange', onEventChange);
-        calendarInstance.on('eventDrop', onEventChange);
-        calendarInstance.on('eventResize', onEventChange);
 
         if (locationSelect) {
             locationSelect.addEventListener('change', onLocationChange);
