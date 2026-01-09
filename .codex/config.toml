@@ -1,0 +1,227 @@
+# .codex/config.toml
+# Bugfix-first AI configuration for WordPress plugin development
+# License: GPL-2.0-or-later
+
+[assistant]
+role = "Senior WordPress fejlesztő és code reviewer"
+preferred_language = "hu"
+explain_changes = true
+output_format = "full_project"   # teljes futtatható példa (mappastruktúrával és fájltartalmakkal)
+no_snippets = true
+
+# Default task mode (override it in your prompt): "bugfix" | "feature"
+task_mode_default = "bugfix"
+
+[project]
+name = "Smooth Booking Plugin"
+plugin_slug = "smooth-booking"      # TODO: állítsd be a valós slugra
+text_domain = "smooth-booking"      # TODO: állítsd be a valós text domainre
+license = "GPL-2.0-or-later"
+semver = true
+
+[environment]
+wordpress = "6.x"
+php_min = "8.1"
+mysql = "5.7+"
+multisite_compatible = true
+
+[compatibility]
+editor_support = ["gutenberg", "elementor"]
+classic_editor_fallback = "only_when_explicitly_required"
+
+[architecture]
+entrypoint = "smooth-booking.php"   # csak bootstrap
+oop_required = true
+namespaces = "optional"
+autoload = "recommended"         # Composer PSR-4 javasolt
+service_container = "simple"     # ServiceProvider/Loader
+
+[architecture.layers]
+admin = "src/Admin"
+frontend = "src/Frontend"
+rest = "src/Rest"
+cron = "src/Cron"
+domain = "src/Domain"
+infrastructure = "src/Infrastructure"
+
+[repo]
+# Add meg a valós belépési pontokat, hogy ne keressen rossz helyen (különösen bugfixnél)
+plugin_main_file = "smooth-booking.php"
+admin_entrypoints = [
+  "src/Admin",
+  "src/Admin/Calendar"
+]
+js_entrypoints = [
+  "assets/js"
+]
+
+[coding_standards]
+phpcs = ["WordPress", "WordPress-Extra", "WordPress-Docs"]
+docblocks_required_for_public = true
+follow_wordpress_hooks_style = true
+
+[security]
+sanitize_all_input = true
+escape_all_output = true
+nonce_required_for_admin_actions = true
+capability_check = "manage_options_or_custom"
+wpdb_prepare_required = true
+no_raw_sql_in_app_layer = true
+
+[i18n]
+required = true
+load_textdomain = true
+text_domain_source = "{project.text_domain}"
+use_functions = ["__", "_e", "_x", "esc_html__", "esc_html_e", "esc_attr__", "esc_attr_e"]
+
+[performance]
+conditional_hooks = true
+lazy_load = true
+assets_dependency_management = true
+assets_versioning = true
+cache_prefer = ["transients", "object_cache"]
+avoid_global_asset_load = true
+
+[reliability]
+use_wp_error = true
+logging = ["error_log", "plugin_logger_if_present"]
+exceptions = "internal_only"
+graceful_user_messages = true
+
+[extensibility]
+public_hooks_required = true
+hooks_docblock_required = true
+
+[database]
+use_dbdelta_for_schema_changes = true
+store_db_version_in_option = true
+use_prefix = true
+
+[files.do_not_touch]
+paths = [
+  "vendor/",
+  "node_modules/",
+  "composer.lock",
+  "package-lock.json",
+  "yarn.lock"
+]
+
+[guardrails]
+do_not_invent_files = true
+do_not_invent_hooks = true
+if_file_missing = "ask_or_search_repo"
+
+[javascript]
+runtime = "wp-admin"
+prefer_event_delegation = true
+selectors_must_be_specific = true
+avoid_inline_js = true
+use_wp_enqueue_script = true
+jquery_allowed = true
+
+[debugging]
+require_root_cause = true
+require_repro_steps = true
+require_fix_explanation = true
+
+[review_checklist]
+must_check = [
+  "nonce_and_capability",
+  "escaping_output",
+  "sanitizing_input",
+  "wpdb_prepare",
+  "i18n_textdomain",
+  "script_enqueue_dependencies",
+  "multisite_side_effects"
+]
+
+[output.required_files]
+# Alap elvárások: feature feladatnál is törekedjen rá, bugfixnél ne erőltesse új fájlok generálását.
+base = [
+  "readme.txt",
+  "phpcs.xml"
+]
+include_when_relevant = [
+  "composer.json",
+  "languages/{text_domain}.pot",
+  "tests/bootstrap.php",
+  "CHANGELOG.md",
+  "uninstall.php"
+]
+
+# -------------------------
+# Task modes: BUGFIX vs FEATURE
+# -------------------------
+
+[task_mode.bugfix]
+label = "BUGFIX"
+strict_scope = true
+
+# Refaktor tiltás bugfixnél
+no_refactor = true
+no_file_moves = true
+no_renames = true
+no_new_dependencies = true
+
+# Diff limit bugfixnél
+[task_mode.bugfix.change_budget]
+max_files_changed = 3
+max_lines_changed = 120
+allow_override_with_reason = true
+
+# Kötelező bugfix kimenet: lépések + ok + ellenőrzés
+[task_mode.bugfix.output]
+require_reason_per_file_changed = true
+require_manual_test_steps = true
+require_console_or_ui_confirmation = true
+
+# UI/JS bugokra extra fókusz
+[task_mode.bugfix.ui_debugging]
+admin_js_debug_first = true
+event_binding_checks = true
+delegated_events_prefer = true
+no_unrelated_refactors = true
+
+# Bugfixnél ne generáljon teljes “plugin vázat” nulláról, ha meglévő repóban dolgozunk
+[task_mode.bugfix.scaffolding]
+avoid_new_scaffold_if_repo_exists = true
+only_touch_needed_files = true
+
+[task_mode.feature]
+label = "FEATURE"
+strict_scope = false
+
+# Feature esetén engedjük a strukturált bővítést, de kontroll alatt
+allow_refactor = "limited"       # csak ha indokolt a funkció miatt
+allow_new_files = true
+allow_new_dependencies = "optional_but_justified"
+
+# Diff budget feature-nél tágabb
+[task_mode.feature.change_budget]
+max_files_changed = 12
+max_lines_changed = 800
+allow_override_with_reason = true
+
+# Feature kimenet: dokumentáció/hookok/tartós fájlok
+[task_mode.feature.output]
+require_readme_update = true
+require_changelog_update = true
+require_hooks_list = true
+require_migration_notes_if_db_changes = true
+
+# Feature-nél teszt scaffold ajánlott, de nem mindig kötelező
+[task_mode.feature.tests]
+phpunit_scaffold = "recommended"
+require_manual_test_steps = true
+
+[features.defaults]
+activation_hook = true
+deactivation_hook = true
+uninstall_cleanup = true
+settings_page = true
+rest_api = true
+shortcode_sample = true
+template_tag_sample = true
+wp_cli_sample = true
+cron_sample = true
+gutenberg_block = "only_when_ui_output_requires_it"
